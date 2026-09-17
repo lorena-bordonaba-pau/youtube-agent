@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎬 youtube-coach-harness
+# 🎬 youtube-agent
 
 **Un coach de YouTube que mide antes de opinar.**
 
