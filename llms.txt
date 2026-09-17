@@ -15,14 +15,14 @@ only required for the channel owner's private analytics.
 
 ## Docs
 
-- [README](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/README.md): what it is, what you can ask it, how it works
-- [Install guide](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/docs/install.md): step by step, written for an agent to follow
-- [Operating contract](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/CLAUDE.md): identity, honesty rules, transparency protocol
-- [Tool catalogue](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/TOOLS.md): all 28 tools, their commands and quota cost
-- [Limits](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/LIMITS.md): what it cannot do and why
-- [Troubleshooting](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/docs/troubleshooting.md): exit codes and known failure modes
-- [Contributing](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/CONTRIBUTING.md): the one non-negotiable rule
-- [Spanish README](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/docs/README_es.md)
+- [README](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/README.md): what it is, what you can ask it, how it works
+- [Install guide](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/docs/install.md): step by step, written for an agent to follow
+- [Operating contract](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/CLAUDE.md): identity, honesty rules, transparency protocol
+- [Tool catalogue](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/TOOLS.md): all 28 tools, their commands and quota cost
+- [Limits](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/LIMITS.md): what it cannot do and why
+- [Troubleshooting](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/docs/troubleshooting.md): exit codes and known failure modes
+- [Contributing](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/CONTRIBUTING.md): the one non-negotiable rule
+- [Spanish README](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/docs/README_es.md)
 
 ## Optional
 

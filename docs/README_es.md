@@ -7,7 +7,7 @@
 Un agente de [Claude Code](https://claude.com/claude-code) que analiza tu canal con datos
 reales de la API y que es honesto sobre qué ha medido y qué está estimando.
 
-[![tests](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/actions/workflows/tests.yml/badge.svg)](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/actions/workflows/tests.yml)
+[![tests](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml)
 [![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-informational.svg)](../LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![28 herramientas](https://img.shields.io/badge/herramientas-28-success.svg)](../TOOLS.md)
@@ -68,8 +68,8 @@ público: stats de cualquier canal, datos de vídeo, búsqueda, miniaturas,
 transcripciones.
 
 ```bash
-git clone https://github.com/lorena-bordonaba-pau/youtube-coach-harness.git
-cd youtube-coach-harness
+git clone https://github.com/lorena-bordonaba-pau/youtube-agent.git
+cd youtube-agent
 pip3 install -r requirements.txt
 
 cp .env.example .env        # escribe dentro tu YOUTUBE_API_KEY

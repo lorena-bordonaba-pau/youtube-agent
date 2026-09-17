@@ -7,7 +7,7 @@
 A [Claude Code](https://claude.com/claude-code) agent that analyses your channel with real
 API data and is honest about what it measured and what it is guessing.
 
-[![tests](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/actions/workflows/tests.yml/badge.svg)](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/actions/workflows/tests.yml)
+[![tests](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-agent-8A63D2.svg)](https://claude.com/claude-code)
@@ -66,8 +66,8 @@ Three things follow from that, and they are unusual:
 public — any channel's stats, video data, search, thumbnails, transcripts:
 
 ```bash
-git clone https://github.com/lorena-bordonaba-pau/youtube-coach-harness.git
-cd youtube-coach-harness
+git clone https://github.com/lorena-bordonaba-pau/youtube-agent.git
+cd youtube-agent
 pip3 install -r requirements.txt
 
 cp .env.example .env        # put YOUTUBE_API_KEY in it
@@ -85,7 +85,7 @@ missing.
 >
 > ```
 > Install this YouTube coach harness for me, following its install guide:
-> https://raw.githubusercontent.com/lorena-bordonaba-pau/youtube-coach-harness/main/docs/install.md
+> https://raw.githubusercontent.com/lorena-bordonaba-pau/youtube-agent/main/docs/install.md
 > ```
 
 **[→ Full install guide, including your own channel's analytics](docs/install.md)**

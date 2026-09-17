@@ -18,8 +18,8 @@ person, it works for you too — it is just unusually explicit.
 - Optional: a [fal.ai](https://fal.ai) key or an image MCP, for the visual branch
 
 ```bash
-git clone https://github.com/lorena-bordonaba-pau/youtube-coach-harness.git
-cd youtube-coach-harness
+git clone https://github.com/lorena-bordonaba-pau/youtube-agent.git
+cd youtube-agent
 pip3 install -r requirements.txt
 ```
 

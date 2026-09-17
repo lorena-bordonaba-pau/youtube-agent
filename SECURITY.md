@@ -25,7 +25,7 @@ echoes a secret, that is a security bug — please report it.
 
 ## Reporting a vulnerability
 
-Open a [security advisory](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/security/advisories/new)
+Open a [security advisory](https://github.com/lorena-bordonaba-pau/youtube-agent/security/advisories/new)
 rather than a public issue. Include what you found, how to reproduce it, and
 what an attacker could do with it. You will get a first reply within a week.
 
