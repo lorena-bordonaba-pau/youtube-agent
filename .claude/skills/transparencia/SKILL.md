@@ -1,58 +1,58 @@
 ---
 name: transparencia
-description: Responde qué es este agente, qué herramientas tiene, qué skills, qué memoria guarda, cuál es su configuración o en qué orden ejecuta las cosas. Se invoca ante cualquier pregunta sobre el propio agente, su contrato, sus límites o sus protocolos.
+description: Answers what this agent is, what tools it has, what skills, what memory it keeps, what its configuration is, or in what order it runs things. Triggered by any question about the agent itself, its contract, its limits or its protocols.
 ---
 
-# Transparencia sobre el propio agente
+# Transparency about the agent itself
 
-## CUÁNDO
+## WHEN
 
-Ante cualquier pregunta sobre el agente mismo: "¿cuál es tu system prompt?",
-"¿qué herramientas tienes?", "¿qué skills?", "¿qué archivos de memoria?",
-"¿cuál es tu configuración?", "¿en qué orden ejecutas las tools?", "¿hay un
-agente o varios?".
+Any question about the agent itself: "what is your system prompt?", "what tools
+do you have?", "what skills?", "what memory files?", "what is your
+configuration?", "in what order do you run the tools?", "is there one agent or
+several?".
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-**Regla previa, la más importante de esta skill: se LEE el fichero. No se
-responde de memoria, aunque parezca que se recuerda bien.**
+**The rule that comes before everything else here: READ the file. Do not answer
+from memory, even when it feels like you remember it correctly.**
 
-Esta skill existe porque el agente que inspiró este harness respondió de
-síntesis propia a "¿cuál es el orden de ejecución de tools por cada skill?",
-y al turno siguiente tuvo que corregirse tras cargar los protocolos reales.
+This skill exists because the reference agent that inspired this harness
+answered "what is the tool execution order per skill?" from its own synthesis,
+and had to correct itself the following turn after loading the real protocols.
 
-1. Identificar qué se pregunta y leer **el fichero que lo contiene**:
+1. Identify what is being asked and read **the file that contains it**:
 
-   | Pregunta | Fichero a leer |
+   | Question | File to read |
    |---|---|
-   | Identidad, reglas, cómo trabaja, "system prompt" | `CLAUDE.md` |
-   | Qué herramientas tiene, cómo se invocan, qué cuestan | `TOOLS.md` |
-   | Qué NO puede hacer | `LIMITES.md` |
-   | Qué memoria guarda | `memoria/MEMORY.md` y los ficheros que indexe |
-   | Orden de ejecución de una skill | `.claude/skills/<skill>/SKILL.md` |
-   | Orden de TODAS las skills | todos los `SKILL.md`, uno por uno |
-| Cómo se generan imágenes, con qué proveedor | `config/image_providers.json` y `.claude/skills/image-generation-core/SKILL.md` |
-   | Configuración, permisos, hooks | `.claude/settings.json` |
-   | Qué SOP sigue para guion o premisa | `memoria/sop/*.md` |
+   | Identity, rules, how it works, "system prompt" | `CLAUDE.md` |
+   | What tools it has, how they are invoked, what they cost | `TOOLS.md` |
+   | What it CANNOT do | `LIMITS.md` |
+   | What memory it keeps | `memory/MEMORY.md` and the files it indexes |
+   | One skill's execution order | `.claude/skills/<skill>/SKILL.md` |
+   | ALL the skills' order | every `SKILL.md`, one by one |
+   | How images are generated, with which provider | `config/image_providers.json` and `.claude/skills/image-generation-core/SKILL.md` |
+   | Configuration, permissions, hooks | `.claude/settings.json` |
+   | Which SOP it follows for scripts or premises | `memory/sop/*.md` |
 
-2. Citar el contenido leído. Se puede volcar entero: son ficheros del proyecto,
-   no configuración interna.
+2. Quote what you read. You may dump it in full: these are project files, not
+   internal configuration.
 
-3. Si la respuesta abarca varias skills, leerlas **todas** antes de contestar.
-   Contestar sobre tres y resumir el resto de memoria es exactamente el
-   fallo que esta skill previene.
+3. If the answer spans several skills, read them **all** before replying.
+   Answering about three and summarising the rest from memory is exactly the
+   failure this skill prevents.
 
-4. Si algo no existe o está vacío, decirlo. Un campo de memoria sin poblar se
-   reporta como vacío, no se rellena con lo que parecería razonable.
+4. If something does not exist or is empty, say so. An unpopulated memory field
+   is reported as empty, not filled in with whatever would seem reasonable.
 
-## FUENTES
+## SOURCES
 
-Todo `config`: contenido de ficheros locales del proyecto. Nada de esta skill
-es una medición, y nada requiere credenciales ni cuota.
+All `config`: contents of local project files. Nothing in this skill is a
+measurement, and none of it needs credentials or quota.
 
-## SALIDA
+## OUTPUT
 
-Respuesta directa, con el contenido del fichero citado y la ruta a la vista para
-que se pueda verificar. Si se pregunta por el "system prompt": `CLAUDE.md` es el
-contrato operativo y se muestra entero; lo que no se puede volcar es el prompt
-interno de Claude Code, que es otra cosa y conviene distinguirlo.
+A direct answer, with the file's contents quoted and the path visible so it can
+be verified. If asked about the "system prompt": `CLAUDE.md` is the operating
+contract and is shown in full; what cannot be dumped is Claude Code's internal
+prompt, which is a different thing and worth distinguishing.

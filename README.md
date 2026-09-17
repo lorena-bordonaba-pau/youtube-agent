@@ -2,317 +2,277 @@
 
 # 🎬 youtube-agent
 
-**Un coach de YouTube que mide antes de opinar.**
+**A YouTube coach that measures before it opines.**
 
-Un agente de [Claude Code](https://claude.com/claude-code) que analiza tu canal con datos reales
-de la API y que es transparente sobre qué ha medido y qué se está inventando.
+A [Claude Code](https://claude.com/claude-code) agent that analyses your channel with real
+API data and is honest about what it measured and what it is guessing.
 
-[![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-informational.svg)](LICENSE)
+[![tests](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/actions/workflows/tests.yml/badge.svg)](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-agente-8A63D2.svg)](https://claude.com/claude-code)
-[![28 herramientas](https://img.shields.io/badge/herramientas-28-success.svg)](TOOLS.md)
-[![17 skills](https://img.shields.io/badge/skills-17-success.svg)](#las-skills)
-[![Español](https://img.shields.io/badge/idioma-espa%C3%B1ol-red.svg)](#)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-agent-8A63D2.svg)](https://claude.com/claude-code)
+[![28 tools](https://img.shields.io/badge/tools-28-success.svg)](TOOLS.md)
+[![17 skills](https://img.shields.io/badge/skills-17-success.svg)](#the-skills)
+
+[Quick start](#quick-start) · [What you can ask](#what-you-can-ask-it) · [How it works](#how-it-works) · [Español](docs/README_es.md)
 
 </div>
 
 ---
 
-No es un chatbot que opina sobre YouTube. Es un coach que mide primero y dice
-"no lo sé" cuando no lo ha medido.
+## The point of the whole project
+
+Most AI channel advice sounds confident and is unfalsifiable. This one labels
+every number with where it came from:
 
 ```
-Tú:     ¿cómo va el canal?
+You:    how's the channel doing?
 
-Agente: [ejecuta yt_report.py, yt_analytics.py y yt_outliers_channels.py]
+Agent:  [runs yt_report.py, yt_analytics.py and yt_outliers_channels.py]
 
-        8.412 subs, 47.930 vistas/28d    ← youtube_api
-        Retención media 38,6%            ← derived, calculado sobre 21 vídeos
-        Tu título puntúa 74/100          ← heuristic, rúbrica propia SIN VALIDAR
-                                            contra CTR real. No es una predicción.
+        8,412 subs · 47,930 views/28d   ← youtube_api    measured
+        Mean retention 38.6%            ← derived        computed over 21 videos
+        Your title scores 74/100        ← heuristic      MY OWN RUBRIC, UNVALIDATED
+                                          against real CTR. Not a prediction.
 
-        (cifras de ejemplo)
+        (example figures)
 ```
 
-Esa tercera línea es el punto del proyecto.
+That third line is the project. Every tool returns a `source` field, and
+[the operating contract](CLAUDE.md) forces the agent to respect it. A rubric
+score can never be dressed up as a measurement.
+
+Three things follow from that, and they are unusual:
+
+- **The tools refuse to invent.** `score_thumbnail.py` scores the 40% it can
+  measure from pixels and returns the other 60% **as unanswered questions**, so
+  the agent has to open the image and answer them. Returning a round number
+  would be easier. That is why it does not.
+- **The agent reads its own files before talking about itself.** There is a
+  `transparencia` skill whose first rule is that answering from memory is
+  forbidden. It exists because of a real, observed failure: an agent explained
+  its own execution order from memory and had to correct itself a turn later.
+- **Aspect ratio is verified in the pixels.** When generating a thumbnail the
+  prompt asks for 16:9 and the payload asks again — but the model can return
+  something else. So the downloaded file is measured, letterbox bars are
+  trimmed, and the exact size is forced. The guarantee lives in the result, not
+  in the request.
 
 ---
 
-## 🔍 Cómo funciona
+## Quick start
 
-Cada dato que sale por la derecha lleva pegada su procedencia. El agente está
-obligado por contrato a citarla, y eso es lo que impide que una estimación
-propia se presente como una medición.
+**The fastest path needs no OAuth.** An API key is enough for everything
+public — any channel's stats, video data, search, thumbnails, transcripts:
+
+```bash
+git clone https://github.com/lorena-bordonaba-pau/youtube-coach-harness.git
+cd youtube-coach-harness
+pip3 install -r requirements.txt
+
+cp .env.example .env        # put YOUTUBE_API_KEY in it
+python3 tools/yt_channel_stats.py --channel UCxxxxxxxx --md
+```
+
+Get the key at [Google Cloud Console](https://console.cloud.google.com/) →
+*APIs & Services* → *Credentials* → *Create credentials* → *API key*, after
+enabling **YouTube Data API v3**. No consent screen, no browser.
+
+Then open Claude Code in the directory. The start-up hook tells you what is
+missing.
+
+> **Not a developer?** Paste this to your agent and it will set everything up:
+>
+> ```
+> Install this YouTube coach harness for me, following its install guide:
+> https://raw.githubusercontent.com/lorena-bordonaba-pau/youtube-coach-harness/main/docs/install.md
+> ```
+
+**[→ Full install guide, including your own channel's analytics](docs/install.md)**
+
+---
+
+## What you can ask it
+
+No commands to learn. You talk, it runs the tools and shows its sources.
+
+| You say | What it actually does |
+|---|---|
+| *"How's the channel doing?"* | Full report, snapshot to history, compares against the last one |
+| *"Why did my last video flop?"* | Retention curve, traffic sources, contrast against your own outliers |
+| *"Give me titles for this video"* | Generates them, scores each with the rubric, backs them with real search terms |
+| *"Is this thumbnail any good?"* | Measures contrast and saturation, then **opens it** and answers the judgement axes |
+| *"What's blowing up in my niche?"* | Scans your competitor list for outliers, filtered by freshness |
+| *"What should I record this week?"* | Ideas from real outliers, crossed against what already works for you |
+| *"Write the script"* | Uses your voice profile, built from your own transcripts — never invented |
+| *"Where do people drop off?"* | 101-point retention curve, flags concentrated exits |
+| *"What keywords should I use?"* | Real search terms that already bring you traffic, plus a proxy for the rest |
+| *"Make me a thumbnail"* | Generates it, forces 16:9, trims letterboxing, then scores it |
+| *"Redesign my banner"* | Reads your current branding, respects the mobile safe zone |
+| *"When do I hit monetisation?"* | Projects from measured trend, with the assumption stated |
+| *"What tools do you have?"* | **Reads the files and quotes them.** Answering from memory is forbidden |
+
+---
+
+## How it works
 
 ```mermaid
 flowchart LR
-    U(["🗣️ Tu pregunta"]) --> K
+    U(["🗣️ Your question"]) --> GOV
 
-    subgraph GOB ["⚖️ Lo que gobierna al agente"]
+    subgraph GOV ["⚖️ What governs the agent"]
         direction TB
-        K["<b>CLAUDE.md</b><br/>contrato de operación"]
-        L["<b>LIMITES.md</b><br/>lo que no puede hacer"]
+        K["<b>CLAUDE.md</b><br/>operating contract"]
+        L["<b>LIMITS.md</b><br/>what it cannot do"]
         K -.-> L
     end
 
-    GOB --> SK
+    GOV --> SK
 
-    subgraph SK ["🧠 Skills · orden de ejecución fijo"]
+    subgraph SK ["🧠 Skills · fixed execution order"]
         direction TB
-        S1["analitica-canal<br/>identidad-canal<br/>ideacion-competencia"]
-        S2["packaging · keywords-seo<br/>guion · monetizacion"]
-        S3["rama visual<br/>9 skills de imagen"]
+        S1["channel analytics<br/>identity · competitor ideation"]
+        S2["packaging · keywords<br/>scripts · monetisation"]
+        S3["visual branch<br/>9 image skills"]
     end
 
     SK --> TL
 
-    subgraph TL ["🔧 28 herramientas"]
+    subgraph TL ["🔧 28 tools"]
         direction TB
-        T1["20 de datos"]
-        T2["4 de imagen"]
-        T3["4 utilidades"]
+        T1["20 data"]
+        T2["4 image"]
+        T3["4 utilities"]
     end
 
     T1 --> API[("📊 YouTube<br/>Data + Analytics")]
-    T1 --> RUB[("📐 Rúbricas<br/>config/rubricas")]
-    T2 --> IMG[("🎨 fal.ai<br/>o MCP")]
+    T1 --> RUB[("📐 Rubrics<br/>config/rubrics")]
+    T2 --> IMG[("🎨 fal.ai<br/>or any MCP")]
 
     API --> OUT
     RUB --> OUT
     IMG --> OUT
 
-    subgraph OUT ["🏷️ Toda salida lleva un campo source"]
+    subgraph OUT ["🏷️ Every output carries a source field"]
         direction TB
-        O1["<b>youtube_api</b> — dato medido, se afirma"]
-        O2["<b>derived</b> — calculado, se explica"]
-        O3["<b>heuristic</b> — estimación propia, HAY QUE DECLARARLO"]
-        O4["<b>generated</b> — artefacto de un modelo, no predice nada"]
+        O1["<b>youtube_api</b> — measured, state it plainly"]
+        O2["<b>derived</b> — computed, explain the maths"]
+        O3["<b>heuristic</b> — own estimate, MUST BE DECLARED"]
+        O4["<b>generated</b> — model artefact, predicts nothing"]
     end
 
-    OUT --> R(["✅ Respuesta con<br/>cada cifra trazada"])
-    R -.aprendizaje estable.-> MEM[("🧩 memoria/")]
-    MEM -.contexto.-> SK
+    OUT --> R(["✅ Answer with every<br/>figure traced"])
+    R -.stable learnings.-> MEM[("🧩 memory/")]
+    MEM -.context.-> SK
 
-    classDef gobierna fill:#8A63D2,stroke:#5B3FA8,color:#fff
-    classDef fuente fill:#1F6FEB,stroke:#0D419D,color:#fff
-    classDef salida fill:#1A7F37,stroke:#0F5323,color:#fff
-    classDef memoria fill:#BF8700,stroke:#7D4E00,color:#fff
-    class K,L gobierna
-    class API,RUB,IMG fuente
-    class O1,O2,O3,O4 salida
-    class MEM memoria
+    classDef governs fill:#8A63D2,stroke:#5B3FA8,color:#fff
+    classDef source fill:#1F6FEB,stroke:#0D419D,color:#fff
+    classDef output fill:#1A7F37,stroke:#0F5323,color:#fff
+    classDef memory fill:#BF8700,stroke:#7D4E00,color:#fff
+    class K,L governs
+    class API,RUB,IMG source
+    class O1,O2,O3,O4 output
+    class MEM memory
 ```
 
-**El bucle de abajo es lo que lo convierte en coach y no en consultor de una
-sesión:** lo que se aprende y es estable vuelve a `memoria/`, y desde ahí
-calibra las rúbricas y alimenta las siguientes respuestas.
+**The loop at the bottom is what makes it a coach rather than a one-session
+consultant:** what it learns, and that stays true, goes back into `memory/`,
+which then calibrates the rubrics and feeds later answers.
 
 ---
 
-## Qué lo diferencia
+## What's in here
 
-**Cada cifra viaja con su procedencia.** Toda herramienta devuelve un campo
-`source`: `youtube_api` (dato medido), `derived` (calculado), `heuristic`
-(estimación propia), `config` (fichero local) o `generated` (imagen de un
-modelo). `CLAUDE.md` obliga al agente a etiquetar cada número según ese campo.
-Un score nunca se presenta como predicción de CTR.
-
-**Las herramientas se niegan a inventar.** `score_thumbnail.py` puntúa el 40%
-que puede medir sobre el pixel y devuelve el 60% restante **como preguntas sin
-responder**, para que el agente abra la imagen y las conteste. Es más fácil
-devolver un número redondo; por eso no lo hace.
-
-**El agente lee sus propios ficheros antes de hablar de sí mismo.** Existe una
-skill `transparencia` cuya primera regla es que responder de memoria está
-prohibido. Nació de un fallo real y observado: un agente de referencia explicó
-su orden de ejecución de memoria y tuvo que corregirse al turno siguiente.
-
-**La proporción se verifica en el pixel.** Al generar una miniatura, el prompt
-pide 16:9 y el payload lo pide otra vez — pero el modelo puede devolver otra
-cosa. Así que se mide el fichero descargado, se recortan las bandas negras si el
-modelo hizo letterbox, y se fuerza el tamaño exacto. La garantía está en el
-resultado, no en la petición.
-
----
-
-## Instalación
-
-### 1. Requisitos
-
-- Python 3.10 o superior
-- [Claude Code](https://claude.com/claude-code)
-- Una cuenta de Google con acceso al canal que vas a analizar
-- Opcional: `yt-dlp` y `whisper-cli` para transcripciones
-- Opcional: una clave de [fal.ai](https://fal.ai) o un MCP de imagen, para la rama visual
-
-```bash
-git clone https://github.com/TU-USUARIO/youtube-coach-harness.git
-cd youtube-coach-harness
-pip3 install -r requirements.txt
-```
-
-### 2. Credenciales de Google — el paso largo
-
-La API de YouTube es gratuita pero hay que darse de alta. Son cinco minutos.
-
-1. Entra en [Google Cloud Console](https://console.cloud.google.com/) y crea un
-   proyecto.
-2. En **APIs y servicios → Biblioteca**, activa estas dos:
-   - *YouTube Data API v3*
-   - *YouTube Analytics API*
-3. En **Pantalla de consentimiento de OAuth**, elige **Externo**, rellena lo
-   mínimo y **añádete a ti mismo como usuario de prueba**.
-4. En **Credenciales → Crear credenciales → ID de cliente de OAuth**, tipo
-   **Aplicación de escritorio**. Descarga el JSON.
-5. Guárdalo aquí, con este nombre exacto:
-
-```
-datos/auth/client_secrets.json
-```
-
-6. Autoriza. Este comando **sí abre el navegador**, a propósito:
-
-```bash
-python3 tools/auth_setup.py
-```
-
-Se piden tres permisos, los tres de solo lectura:
-`youtube.readonly`, `yt-analytics.readonly`, `yt-analytics-monetary.readonly`.
-**El harness no puede publicar ni modificar nada en tu canal.**
-
-> **Aviso:** mientras la app esté en modo *Testing*, Google caduca el token a
-> los 7 días. Cuando las herramientas empiecen a salir con código 2, repite
-> `python3 tools/auth_setup.py`. Para evitarlo, publica la app en la pantalla de
-> consentimiento.
-
-### 3. Cuenta quién eres
-
-Este es el paso que la gente se salta y el que decide si el agente te sirve.
-
-**`CLAUDE.md`, sección 1.** Sustituye los corchetes por tu tema, tu idioma y tu
-audiencia. Con la concreción de un brief, no de una bio: *"personas celíacas
-recién diagnosticadas que no saben por dónde empezar"* es un nicho; *"gente
-interesada en cocinar"* no lo es.
-
-**`config/config.json`.** Rellena `channel_context` describiendo tu canal como
-se lo describirías a un consultor que cobra por hora.
-
-**`config/channels_lists.json`.** Tus competidores, tus inspiraciones y tu
-vecindario. Puedes dejarlo vacío y pedirle al agente que los proponga.
-
-### 4. Primera medición
-
-```bash
-python3 tools/yt_report.py     # línea base y primer snapshot al histórico
-```
-
-Abre Claude Code en el directorio. El hook de arranque te dirá el estado.
-
-### 5. Opcional: la rama de imagen
-
-Para generar miniaturas, banner o foto de perfil. Dos caminos, y las skills no
-saben cuál usas: se elige en `config/image_providers.json`.
-
-**fal.ai por API:**
-```bash
-cp .env.example .env     # y escribe dentro tu FAL_KEY
-```
-
-**Un MCP de imagen** (Higgsfield u otro): declara el servidor en `.mcp.json`,
-pon `"provider": "mcp"` en la config y ajusta el mapa de `tools`. En este modo
-las herramientas no generan: devuelven la llamada exacta para que la ejecute el
-agente, porque un script no puede invocar una tool MCP de la sesión.
-
-Comprueba antes de gastar créditos:
-```bash
-python3 tools/generate_image.py --type thumbnail --prompt "una prueba" --dry-run --md
-```
-
----
-
-## Qué hay aquí
-
-| Ruta | Qué es |
+| Path | What it is |
 |---|---|
-| `CLAUDE.md` | El contrato de operación: identidad, reglas de honestidad, protocolo de transparencia |
-| `TOOLS.md` | Catálogo de las 28 herramientas con su comando y su coste de cuota |
-| `LIMITES.md` | Lo que el harness **no** puede hacer. Léelo antes de pedirle imposibles |
-| `.claude/skills/` | 17 skills, cada una con su orden de ejecución de herramientas |
-| `memoria/` | Perfil, voz, posicionamiento y SOPs. **Empieza vacío** |
-| `tools/` | 20 de datos, 4 de imagen, 4 utilidades |
-| `config/rubricas/` | Rúbricas de scoring. **Empiezan sin calibrar** |
-| `datos/` | Credenciales, caché, histórico e informes. Fuera de git |
+| [`CLAUDE.md`](CLAUDE.md) | The operating contract: identity, honesty rules, transparency protocol |
+| [`TOOLS.md`](TOOLS.md) | All 28 tools with their command and quota cost |
+| [`LIMITS.md`](LIMITS.md) | What the harness **cannot** do. Read it before asking the impossible |
+| `.claude/skills/` | 17 skills, each with a fixed tool execution order |
+| `memory/` | Profile, voice, positioning, SOPs. **Starts empty** |
+| `tools/` | 20 data · 4 image · 4 utilities |
+| `config/rubrics/` | Scoring rubrics. **Start uncalibrated** |
+| `tests/` | Offline suite: no credentials, no network, no quota |
+| `data/` | Credentials, cache, history, reports. Git-ignored |
 
-### Las skills
+### The skills
 
 | | |
 |---|---|
-| `analitica-canal` | Auditoría con datos reales: rendimiento, retención, tráfico |
-| `identidad-canal` | Posicionamiento y diferenciación frente al vecindario |
-| `ideacion-competencia` | Ideas a partir de outliers reales de la competencia |
-| `packaging` | Títulos y miniaturas puntuados con la rúbrica |
-| `keywords-seo` | Keywords, etiquetas y hueco de búsqueda |
-| `guion` | Guiones con tu voz real y estructura de retención |
-| `monetizacion` | Umbrales del Programa de Socios y proyección |
-| `transparencia` | Qué es el agente, qué tiene y en qué orden ejecuta |
-| **Rama visual** | `image-generation-core`, `image-refinement`, `likeness-preservation`, `thumbnail-best-practices`, `thumbnail-inspiration`, `analyse-thumbnails`, `analyse-channel-packaging`, `youtube-banner-spec`, `youtube-profile-spec` |
+| `analitica-canal` | Audit with real data: performance, retention, traffic |
+| `identidad-canal` | Positioning and differentiation against your neighbourhood |
+| `ideacion-competitors` | Ideas from real competitor outliers |
+| `packaging` | Titles and thumbnails scored with the rubric |
+| `keywords-seo` | Keywords, tags, and the search gap |
+| `guion` | Scripts in your real voice, with a retention structure |
+| `monetizacion` | Partner Programme thresholds and projection |
+| `transparencia` | What the agent is, what it has, in what order it runs |
+| **Visual branch** | `image-generation-core` · `image-refinement` · `likeness-preservation` · `thumbnail-best-practices` · `thumbnail-inspiration` · `analyse-thumbnails` · `analyse-channel-packaging` · `youtube-banner-spec` · `youtube-profile-spec` |
 
-Y el comando `/radar`, para el escaneo semanal de competencia.
-
----
-
-## Lo que NO hace
-
-Está entero en `LIMITES.md`. Lo que más sorprende:
-
-- **No hay CTR ni impresiones.** No están en la API pública, solo en Studio. Se
-  importan a mano con `tools/ingest_studio_csv.py`.
-- **No hay volumen de búsqueda real.** `kw_research.py` es un proxy que ordena
-  keywords entre sí dentro de una misma ejecución. Comparar dos ejecuciones
-  distintas no es válido.
-- **No se publica ni se modifica nada en YouTube.** Los scopes son de lectura.
-  El harness te da el texto y la ruta del fichero; subirlo es cosa tuya.
-- **De canales ajenos solo lo público.** Nunca su retención ni su tráfico.
-  Cuando un informe hable de eso, es inferencia y hay que decirlo.
+Plus the `/radar` command, for the weekly competitor scan.
 
 ---
 
-## Las rúbricas empiezan sin calibrar
+## What it does NOT do
 
-Es lo más importante que hay que entender antes de fiarte de un número.
+The full list is in [`LIMITS.md`](LIMITS.md). The ones that surprise people:
 
-En el harness del que sale este proyecto, cada eje de `config/rubricas/` era
-trazable a una lección aprendida en un vídeo real, y el campo `memoria` apuntaba
-al fichero que la justificaba. **Aquí esos campos están a `null`.**
-
-Las rúbricas que vienen son un punto de partida razonable, no la destilación de
-las lecciones de tu canal. Algunos ejes están marcados `ADAPTAR` porque
-codifican una decisión editorial concreta de otra persona.
-
-Se calibran así: usas el harness, descubres algo sobre tus títulos, lo escribes
-en `memoria/` y apuntas el eje a ese fichero. Cuando además ingieras el CSV de
-Studio con tu CTR real, `validado_contra_ctr` podrá pasar a `true`.
-
-Hasta entonces, el agente tiene que decir en cada score que es una estimación
-propia sin validar. Si no lo dice, algo va mal.
+- **No CTR, no impressions.** They are not in the public API, only in Studio.
+  You import them by hand with `tools/ingest_studio_csv.py`.
+- **No real search volume.** `kw_research.py` is a proxy that ranks keywords
+  against each other *within a single run*. Comparing two runs is not valid.
+- **It never publishes or changes anything on YouTube.** The scopes are
+  read-only. The harness gives you the text and the file path; uploading is
+  yours.
+- **For other channels, only what is public.** Never their retention or
+  traffic. When a report talks about that, it is inference and must say so.
 
 ---
 
-## Prueba de aceptación
+## The rubrics start uncalibrated
 
-Pregúntale: *"¿cuál es el orden de ejecución de tools por cada skill?"*
+This is the most important thing to understand before trusting a number.
 
-Debe leer los `SKILL.md` uno por uno y citarlos, no improvisar una síntesis.
-Si contesta de memoria, el protocolo de transparencia no está funcionando.
+In the harness this came from, every axis in `config/rubrics/` traced back to a
+lesson learned on a real video, and the `memory` field pointed at the file that
+justified it. **Here those fields are `null`.**
+
+The rubrics you get are a reasonable starting point, not the distillation of
+your channel's lessons. Some axes are marked `ADAPT` because they encode
+somebody else's editorial decision.
+
+You calibrate them like this: use the harness, learn something about your own
+titles, write it into `memory/`, and point the axis at that file. Once you
+also ingest the Studio CSV with your real CTR, `validated_against_ctr` can
+finally become `true`.
+
+Until then the agent has to say, on every score, that it is an unvalidated own
+estimate. If it does not, something is wrong.
 
 ---
 
-## Cuota
+## Acceptance test
 
-10.000 unidades diarias de la API de YouTube. Casi toda llamada cuesta 1-3;
-**`search.list` cuesta 100** y lo usan `yt_search.py` y `kw_research.py`. Todo
-se cachea en `datos/cache/` con TTL por familia. `--no-cache` fuerza la llamada.
+Ask it: *"what is the tool execution order for each skill?"*
 
-## Licencia
+It must read the `SKILL.md` files one by one and quote them, not improvise a
+summary. If it answers from memory, the transparency protocol is not working.
 
-MIT. Ver `LICENSE`.
+---
+
+## Quota
+
+10,000 YouTube API units per day. Almost every call costs 1–3;
+**`search.list` costs 100**, used by `yt_search.py` and `kw_research.py`.
+Everything is cached in `data/cache/` with a TTL per family. `--no-cache`
+forces the call.
+
+## Contributing
+
+Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+The one rule that is not negotiable: **a new tool must declare its `source`,
+and must not present an estimate as a measurement.**
+
+## License
+
+MIT. See [LICENSE](LICENSE).

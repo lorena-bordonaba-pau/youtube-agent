@@ -1,97 +1,100 @@
 ---
 name: image-generation-core
-description: Reglas base para generar cualquier imagen del canal — miniaturas, banner, perfil, gráficos. Se invoca ante "genera una imagen", "hazme una miniatura", "créame el banner", o antes de cualquier otra skill de la rama visual.
+description: Base rules for generating any channel image — thumbnails, banner, profile picture, graphics. Triggered by "generate an image", "make me a thumbnail", "create the banner", or before any other skill in the visual branch.
 ---
 
-# Generación de imagen: reglas base
+# Image generation: base rules
 
-## CUÁNDO
+## WHEN
 
-Cualquier generación. Las demás skills visuales dependen de esta: si se va a
-llamar a `generate_image.py`, estas reglas aplican.
+Any generation. The other visual skills depend on this one: if
+`generate_image.py` is going to be called, these rules apply.
 
-Para **editar** una imagen que ya existe, no es esta skill: es
-`image-refinement`. Para cambiar solo tamaño o peso, ninguna de las dos:
-`export_image.py`, que es local y gratis.
+To **edit** an image that already exists, this is not the skill: that is
+`image-refinement`. To change only size or weight, neither of them:
+`export_image.py`, which is local and free.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Elegir el formato antes que el prompt**
-   `--type` decide qué requisitos técnicos se anteponen al prompt.
+1. **Pick the format before the prompt**
+   `--type` decides which technical requirements get prepended to the prompt.
 
-   | `--type` | Para qué | Píxeles |
+   | `--type` | For what | Pixels |
    |---|---|---|
-   | `thumbnail` | Miniatura de vídeo | 1280x720 (16:9) |
-   | `profile_image` | Foto de perfil | 800x800 |
-   | `banner` | Banner del canal | 2560x1440 |
-   | `general` | Gráfico, ilustración, cualquier otra cosa | 1920x1080 |
+   | `thumbnail` | Video thumbnail | 1280x720 (16:9) |
+   | `profile_image` | Profile picture | 800x800 |
+   | `banner` | Channel banner | 2560x1440 |
+   | `general` | A graphic, an illustration, anything else | 1920x1080 |
 
-   Aquí **no existe una tool separada para miniaturas de vídeo largo**: es
-   `generate_image.py --type thumbnail`. No buscar un `generate_thumbnail`.
+   There is **no separate tool for video thumbnails** here: it is
+   `generate_image.py --type thumbnail`. Do not go looking for a
+   `generate_thumbnail`.
 
-   **Las miniaturas son siempre 16:9** y la tool valida la proporción antes
-   de llamar al proveedor. Si tu canal publica vertical, restaura el formato
-   `vertical_thumbnail` desde `_formatos_retirados` en
-   `config/image_providers.json`, y revisa antes `memoria/rules.md` por si
-   hay una restricción que lo impida.
+   **Thumbnails are always 16:9** and the tool validates the ratio before
+   calling the provider. If your channel publishes vertical, restore the
+   `vertical_thumbnail` format from `_retired_formats` in
+   `config/image_providers.json`, and check `memory/rules.md` first in case a
+   restriction forbids it.
 
-2. **Etiquetar cada referencia con su rol — es obligatorio**
-   `--ref ORIGEN:ROL`, con `ROL` en `likeness`, `style`, `composition`,
-   `packaging`. El origen puede ser una ruta local, una URL o un `video_id`.
+2. **Label every reference with its role — mandatory**
+   `--ref SOURCE:ROLE`, with `ROLE` in `likeness`, `style`, `composition`,
+   `packaging`. The source can be a local path, a URL or a `video_id`.
 
-   La tool **rechaza una referencia sin rol** a propósito: el rol decide el
-   orden en que se le pasan al modelo y si se aplica la cláusula de identidad
-   facial. Adivinarlo estropea la cara.
+   The tool **rejects a reference with no role** on purpose: the role decides
+   the order they are handed to the model and whether the facial identity
+   clause applies. Guessing it ruins the face.
 
-   El orden lo impone la tool: personas primero, estilo después, composición al
-   final. Máximo 3 referencias; más diluyen el resultado.
+   The tool imposes the order: people first, style next, composition last.
+   Three references maximum; more dilute the result.
 
-3. **Si aparece una persona, cargar `likeness-preservation` antes de generar.**
-   Una cara mal resuelta no se arregla iterando el prompt.
+3. **If a person appears, load `likeness-preservation` before generating.**
+   A badly resolved face is not fixed by iterating the prompt.
 
-4. **Dry-run antes de gastar**
+4. **Dry run before spending**
    `python3 tools/generate_image.py --prompt "..." --type banner --dry-run --md`
-   Devuelve el prompt final compuesto sin llamar al proveedor. Si el prompt
-   final no dice lo que se quería, se corrige aquí y no después de pagar.
+   Returns the composed final prompt without calling the provider. If the final
+   prompt does not say what you meant, fix it here rather than after paying.
 
-5. **Generar**
-   `python3 tools/generate_image.py --prompt "..." --type thumbnail --ref foto.jpg:likeness`
+5. **Generate**
+   `python3 tools/generate_image.py --prompt "..." --type thumbnail --ref photo.jpg:likeness`
 
-6. **Mirar el resultado.** Abrir el fichero devuelto con la herramienta de
-   lectura de imágenes. Entregar una imagen sin haberla visto es el fallo más
-   fácil de cometer en esta rama.
+6. **Look at the result.** Open the returned file with the image reading tool.
+   Delivering an image you have not seen is the easiest mistake to make in this
+   branch.
 
-7. **Ajustar dimensiones con `export_image.py`, nunca regenerando.**
-   `python3 tools/export_image.py --image RUTA --type thumbnail`
-   Es determinista, local y sin créditos. YouTube rechaza miniaturas de más de
-   2 MB y esta tool las deja por debajo sin repetir la generación.
+7. **Adjust dimensions with `export_image.py`, never by regenerating.**
+   `python3 tools/export_image.py --image PATH --type thumbnail`
+   It is deterministic, local and costs no credits. YouTube rejects thumbnails
+   over 2 MB and this brings them under without repeating the generation.
 
-## REGLAS DE PROMPT
+## PROMPT RULES
 
-- **Sin texto que no se haya pedido.** La tool ya lo pide; no contradecirlo.
-- **Llenar el encuadre.** Sin bordes, sin marcos, sin margen blanco.
-- **Sujeto grande**: entre el 50% y el 70% del encuadre.
-- **Regla de tercios**: el foco en una intersección, no en el centro muerto.
-- **Marcas de agua y logos ajenos fuera.** La tool lo pide en cada prompt.
-- **Ante la duda, sin cara.** Objetos, texto, gráficos o abstracto antes que
-  una persona genérica inventada.
+- **No text that was not asked for.** The tool already requests this; do not
+  contradict it.
+- **Fill the frame.** No borders, no frames, no white margin.
+- **Large subject**: between 50% and 70% of the frame.
+- **Rule of thirds**: the focal point on an intersection, not dead centre.
+- **Other people's watermarks and logos out.** The tool asks for this in every
+  prompt.
+- **When in doubt, no face.** Objects, text, graphics or abstract before an
+  invented generic person.
 
-## PROVEEDOR
+## PROVIDER
 
-No se nombra en ninguna skill. Vive en `config/image_providers.json`:
+No skill names one. It lives in `config/image_providers.json`:
 
-- `provider: "fal"` — llama a fal.ai por REST. Necesita `FAL_KEY` en el
-  entorno (`~/.claude/scripts/set-fal-key.sh`, y sesión nueva).
-- `provider: "mcp"` — la tool **no genera**: devuelve la llamada MCP exacta
-  para que el agente la ejecute, porque un script no puede invocar una tool MCP
-  de la sesión.
+- `provider: "fal"` — calls fal.ai over REST. Needs `FAL_KEY` in the
+  environment (put it in `.env`).
+- `provider: "mcp"` — the tool **does not generate**: it returns the exact MCP
+  call for the agent to run, because a script cannot invoke an MCP tool from
+  the session.
 
-Los slots de modelo a `null` en la config hacen fallar la tool con
-instrucciones. **Es a propósito**: un slug inventado gasta créditos y devuelve
-404, o genera con otro modelo sin avisar.
+Model slots left at `null` in the config make the tool fail with instructions.
+**That is deliberate**: an invented slug burns credits and returns 404, or
+generates with a different model without saying so.
 
-## FUENTES
+## SOURCES
 
-`generate_image` devuelve `source: generated`. No es un dato ni una medición:
-**no dice nada sobre cómo va a rendir**. Al entregar la imagen hay que nombrar
-el modelo que la produjo. `export_image` es `derived`.
+`generate_image` returns `source: generated`. It is neither data nor a
+measurement: **it says nothing about how it will perform**. When delivering the
+image, name the model that produced it. `export_image` is `derived`.

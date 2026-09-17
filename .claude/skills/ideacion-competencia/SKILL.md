@@ -1,56 +1,57 @@
 ---
-name: ideacion-competencia
-description: Ideas de próximos vídeos a partir de outliers reales de competencia e inspiración. Se invoca ante "ideas para la semana", "qué grabo ahora", "qué está petando en mi nicho", "analiza a mi competencia".
+name: ideacion-competitors
+description: Next-video ideas drawn from real outliers among competitors and inspirations. Triggered by "ideas for this week", "what should I record", "what's blowing up in my niche", "analyse my competition".
 ---
 
-# Ideación desde competencia
+# Ideation from competitors
 
-## CUÁNDO
+## WHEN
 
-Ideas de próximos vídeos, análisis de competencia, "qué está funcionando en el
-nicho", revisión semanal de oportunidades.
+Next-video ideas, competitor analysis, "what is working in the niche", the
+weekly opportunity review.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Outliers de los canales configurados**
+1. **Outliers across the configured channels**
    `python3 tools/yt_outliers_channels.py --min-ratio 2.0 --sample 30`
-   17 canales de competencia y 7 de inspiración en `config/channels_lists.json`.
-   Si salen muy pocos, bajar a `--min-ratio 1.5` antes de dar por hecho que no
-   hay nada.
+   Reads the competitor and inspiration lists from
+   `config/channels_lists.json`. If very few come back, drop to
+   `--min-ratio 1.5` before concluding there is nothing.
 
-2. **Outliers guardados a mano**
+2. **Hand-saved outliers**
    `python3 tools/yt_outliers_playlist.py --days 7`
-   Lo que se ha ido guardando durante la semana. Si la playlist no está
-   configurada, la herramienta lo dice con código 4; no es un fallo.
+   Whatever was saved during the week. If the playlist is not configured the
+   tool says so with exit code 4; that is not a failure.
 
-3. **Filtrar por relevancia antes de gastar cuota**
-   Descartar por título lo que no encaje con el canal. Solo entonces:
-   `python3 tools/yt_transcript.py --video ID --plano`
-   sobre los que sí encajan. Transcribir todo es tirar tiempo.
+3. **Filter for relevance before spending quota**
+   Discard by title anything that does not fit the channel. Only then:
+   `python3 tools/yt_transcript.py --video ID --plain`
+   on the ones that do. Transcribing everything is wasted time.
 
-4. **Validar cada idea**
+4. **Validate each idea**
    `python3 tools/kw_research.py --kw "idea 1; idea 2; idea 3"`
-   Score `heuristic`: ordena las ideas entre sí, no mide demanda absoluta.
+   `heuristic` score: it ranks the ideas against each other, it does not
+   measure absolute demand.
 
-5. **Priorizar contra el canal, no en abstracto**
-   Leer `memoria/creator_profile.md` y `memoria/MEMORY.md`. Una idea con buen
-   outlier pero que no encaja con el arquetipo del canal se descarta y se dice
-   por qué.
+5. **Prioritise against the channel, not in the abstract**
+   Read `memory/creator_profile.md` and `memory/MEMORY.md`. An idea with a
+   good outlier that does not fit the channel's archetype gets dropped, and you
+   say why.
 
-**El orden se adapta.** Si el paso 1 devuelve un outlier de 10x, se prioriza y
-se profundiza en él aunque el manual dijera transcribir todo primero.
+**The order adapts.** If step 1 returns a 10x outlier, prioritise it and go
+deep even though the manual said transcribe everything first.
 
-## FUENTES
+## SOURCES
 
-Pasos 1-2 `derived` (el ratio es un cálculo sobre la media de cada canal).
-Paso 3 `youtube_api`. Paso 4 `heuristic` — declararlo.
+Steps 1-2 `derived` (the ratio is computed over each channel's mean). Step 3
+`youtube_api`. Step 4 `heuristic` — declare it.
 
-## SALIDA
+## OUTPUT
 
-Ideas priorizadas. Cada una con:
-- El outlier que la respalda: título, canal, ratio y URL **verbatim** de la
-  herramienta.
-- Por qué funcionó allí y qué cambia al traerla a este canal.
-- El ángulo propio, no una copia.
+Prioritised ideas. Each with:
+- The outlier backing it: title, channel, ratio and URL **verbatim** from the
+  tool.
+- Why it worked there and what changes when bringing it to this channel.
+- Your own angle, not a copy.
 
-Al final, una recomendación única y el motivo.
+At the end, a single recommendation and the reason for it.

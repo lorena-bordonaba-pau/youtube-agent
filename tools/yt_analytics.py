@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Analítica diaria del canal propio: vistas, retención media, subs, engagement."""
+"""Daily analytics for your own channel: views, mean retention, subs, engagement."""
 from lib import base  # noqa: F401
 from lib import cache
 from lib import yt_analytics as ya
-from lib.contrato import SOURCE_API, emitir, main, parser, sobre
+from lib.contract import SOURCE_API, emit, main, parser, envelope
 
 TOOL = "yt_analytics"
 
@@ -13,20 +13,20 @@ def run():
     p.add_argument("--days", type=int, default=28)
     args = p.parse_args()
 
-    datos, hit = cache.memo("analitica_propia", f"{TOOL}:{args.days}",
-                            lambda: ya.canal(args.days), not args.no_cache)
+    payload_data, hit = cache.memo("own_analytics", f"{TOOL}:{args.days}",
+                            lambda: ya.channel(args.days), not args.no_cache)
 
-    totales = {
-        "views": sum(d["views"] for d in datos),
-        "estimatedMinutesWatched": sum(d["estimatedMinutesWatched"] for d in datos),
-        "subscribersNet": sum(d["subscribersGained"] - d["subscribersLost"] for d in datos),
-        "likes": sum(d["likes"] for d in datos),
-        "comments": sum(d["comments"] for d in datos),
+    totals = {
+        "views": sum(d["views"] for d in payload_data),
+        "estimatedMinutesWatched": sum(d["estimatedMinutesWatched"] for d in payload_data),
+        "subscribersNet": sum(d["subscribersGained"] - d["subscribersLost"] for d in payload_data),
+        "likes": sum(d["likes"] for d in payload_data),
+        "comments": sum(d["comments"] for d in payload_data),
     }
-    env = sobre(TOOL, SOURCE_API, {"dias": datos, "totales": totales},
+    env = envelope(TOOL, SOURCE_API, {"days": payload_data, "totals": totals},
                 {"days": args.days}, hit,
-                notas=["`totales` es una suma sobre datos de la API (source: derived)."])
-    emitir(env, args, lambda e: base.cabecera_md(e) + "\n" + base.tabla_md(e["data"]["dias"]))
+                notes=["`totals` is a sum over API data (source: derived)."])
+    emit(env, args, lambda e: base.md_header(e) + "\n" + base.md_table(e["data"]["days"]))
 
 
 if __name__ == "__main__":

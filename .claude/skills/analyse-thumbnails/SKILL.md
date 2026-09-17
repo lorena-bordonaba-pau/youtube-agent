@@ -1,64 +1,65 @@
 ---
 name: analyse-thumbnails
-description: Extrae el estilo de miniaturas de un canal, propio o ajeno, antes de generar una nueva. Se invoca ante "cómo son mis miniaturas", "analiza el estilo de este canal", "qué patrón visual sigue mi competencia".
+description: Extract a channel's thumbnail style, your own or someone else's, before generating a new one. Triggered by "what are my thumbnails like", "analyse this channel's style", "what visual pattern does my competition follow".
 ---
 
-# Análisis de estilo de miniaturas
+# Thumbnail style analysis
 
-## CUÁNDO
+## WHEN
 
-Estudio proactivo del estilo de un canal, **sin que nadie haya aportado una
-referencia concreta**. Si la creadora trae una miniatura suelta que le gusta,
-eso es `thumbnail-inspiration`, no esta skill.
+Proactive study of a channel's style, **with nobody having provided a specific
+reference**. If the creator brings one thumbnail they like, that is
+`thumbnail-inspiration`, not this skill.
 
-Sirve para dos cosas: conocer la propia marca antes de generar algo que la
-rompa, y leer el patrón visual de un competidor.
+It serves two purposes: knowing your own brand before generating something that
+breaks it, and reading a competitor's visual pattern.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Elegir de 3 a 5 vídeos representativos**
+1. **Pick 3 to 5 representative videos**
    ```
    python3 tools/yt_recent_videos.py [--channel ID] --limit 15 --stats
    ```
-   Representativos del estilo **actual**: se saltan colaboraciones y
-   experimentos fuera de línea. Si el canal cambió de estilo, solo lo posterior
-   al cambio.
+   Representative of the **current** style: skip collaborations and
+   off-brand experiments. If the channel changed style, only what came after.
 
-2. **Descargar y medir el pixel**
+2. **Download and measure the pixels**
    `python3 tools/yt_thumbnails.py --video ID1,ID2,ID3`
-   Da contraste, luminancia, saturación y resolución. Objetivo, no opinable.
+   Gives contrast, luminance, saturation and resolution. Objective, not
+   arguable.
 
-3. **Mirarlas.** Abrir cada fichero de `fichero` con la herramienta de lectura
-   de imágenes. **Este paso no es opcional**: el pixel no dice qué se ve.
+3. **Look at them.** Open each `file` path with the image reading tool. **This
+   step is not optional**: the pixels do not tell you what is shown.
 
-4. **Puntuar una o dos** para tener el contraste cuantitativo:
-   `python3 tools/score_thumbnail.py --video ID --titulo "..."`
+4. **Score one or two** to get the quantitative contrast:
+   `python3 tools/score_thumbnail.py --video ID --title "..."`
 
-5. **Extraer el patrón**, anotando en cuántas de las N aparece cada rasgo:
-   - Paleta de color y temperatura dominante.
-   - Tipografía: tamaño relativo al ancho, contorno, número de palabras.
-     Marcar si el texto ocupa menos de un tercio del ancho.
-   - Layout: dónde cae el sujeto, dónde el texto, qué espacio queda libre.
-   - Uso de rostro: si aparece, **anotar el `video_id` donde mejor se ve**,
-     que es la referencia de likeness para generar después.
-   - Motivos recurrentes: flechas, marcos, pantalla partida, logos, emoji.
+5. **Extract the pattern**, noting in how many of the N each trait appears:
+   - Colour palette and dominant temperature.
+   - Typography: size relative to width, outline, word count. Flag it if the
+     text occupies less than a third of the width.
+   - Layout: where the subject falls, where the text does, what space is left.
+   - Face usage: if one appears, **note the `video_id` where it reads best** —
+     that is the likeness reference for generating later.
+   - Recurring motifs: arrows, frames, split screens, logos, emoji.
 
-   Un rasgo que aparece en 1 de 5 no es el estilo del canal, es una excepción.
+   A trait appearing in 1 of 5 is not the channel's style, it is an exception.
 
-6. **Cruzar con rendimiento.** El patrón solo importa si se contrasta con lo
-   que funcionó: `python3 tools/yt_outliers_channels.py --min-ratio 2.0`.
-   Un estilo consistente que rinde mal es un estilo consistente que rinde mal.
+6. **Cross against performance.** The pattern only matters against what worked:
+   `python3 tools/yt_outliers_channels.py --min-ratio 2.0`.
+   A consistent style that performs badly is a consistent style that performs
+   badly.
 
-## SALIDA
+## OUTPUT
 
-1. **Brief de estilo en 5-8 viñetas**, cada una con su frecuencia ("4 de 5").
-2. **Los 1-2 `video_id` más representativos** y por qué lo son.
-3. Si hay rostro, el `video_id` de la mejor referencia de likeness.
-4. Qué hay que **mantener** para no romper la marca y qué está **flojo**
-   medido contra la rúbrica.
+1. **A style brief in 5-8 bullets**, each with its frequency ("4 of 5").
+2. **The 1-2 most representative `video_id`s** and why they are.
+3. If there is a face, the `video_id` of the best likeness reference.
+4. What must be **kept** so the brand is not broken, and what is **weak**
+   measured against the rubric.
 
-## FUENTES
+## SOURCES
 
-Métricas de pixel `derived`. Vistas y outliers `derived` sobre `youtube_api`.
-La lectura de estilo es juicio del agente sobre imágenes que ha abierto: se
-declara como tal. La rúbrica es `heuristic` sin validar contra CTR.
+Pixel metrics `derived`. Views and outliers `derived` over `youtube_api`. The
+style reading is the agent's judgement over images it has opened, and is
+declared as such. The rubric is `heuristic`, unvalidated against CTR.

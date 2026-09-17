@@ -1,14 +1,15 @@
 {
-  "_instrucciones": [
-    "Tres listas de canales, cada una con un papel distinto:",
-    "  competencia  — compiten por tu mismo espectador. El baremo de si vas bien.",
-    "  inspiracion  — formatos que quieres portar, aunque sean de otro nicho o idioma.",
-    "  vecindario   — canales que YouTube asocia al tuyo (salen en 'related').",
-    "Rellénalas a mano, o deja que el agente las proponga tras analizar tu canal.",
-    "`origen` documenta de dónde salió cada uno: 'curado' o 'related_video'.",
-    "Listar con: python3 tools/yt_channels_list.py --list competencia"
+  "_instructions": [
+    "Three lists of channels, each with a different job:",
+    "  competitors   — compete for your same viewer. Your benchmark.",
+    "  inspiration   — formats you want to port, even from another niche or language.",
+    "  neighbourhood — channels YouTube associates with yours (they show up in 'related').",
+    "Fill them in by hand, or let the agent propose them after analysing your channel.",
+    "Each entry: {channel_id, name, notes, origin}. `origin` records where it came",
+    "from: 'curated' or 'related_video'.",
+    "List them with: python3 tools/yt_channels_list.py --list competitors"
   ],
-  "competencia": [],
-  "inspiracion": [],
-  "vecindario": []
+  "competitors": [],
+  "inspiration": [],
+  "neighbourhood": []
 }

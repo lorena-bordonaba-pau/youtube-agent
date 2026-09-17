@@ -1,115 +1,115 @@
 #!/usr/bin/env python3
-"""Puntúa títulos 0-100 con la rúbrica calibrada del canal.
+"""Score titles 0-100 with the channel's calibrated rubric.
 
-NO PREDICE CTR. Es una lista de comprobación ponderada que codifica las
-lecciones ya aprendidas en vídeos reales (config/rubricas/titulos.yaml).
-Cada punto sumado o restado cita la memoria que lo justifica.
+IT DOES NOT PREDICT CTR. It is a weighted checklist encoding lessons already
+learned from real videos (config/rubrics/titles.yaml). Every point added or
+subtracted cites the memory that justifies it.
 """
 import re
 
 import yaml
 
 from lib import base  # noqa: F401
-from lib.contrato import (CONFIG_DIR, EXIT_NO_DATA, SOURCE_HEURISTIC, ToolError,
-                          emitir, main, parser, sobre)
+from lib.contract import (CONFIG_DIR, EXIT_NO_DATA, SOURCE_HEURISTIC, ToolError,
+                          emit, main, parser, envelope)
 
 TOOL = "score_titles"
-RUBRICA = CONFIG_DIR / "rubricas" / "titulos.yaml"
+RUBRIC = CONFIG_DIR / "rubrics" / "titles.yaml"
 
 
 def cargar_rubrica() -> dict:
-    if not RUBRICA.exists():
-        raise ToolError(f"Falta la rubrica en {RUBRICA}", EXIT_NO_DATA)
-    with open(RUBRICA, encoding="utf-8") as f:
+    if not RUBRIC.exists():
+        raise ToolError(f"Missing rubric at {RUBRIC}", EXIT_NO_DATA)
+    with open(RUBRIC, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
-def evaluar_eje(titulo: str, eje: dict) -> dict:
-    peso = eje["peso"]
-    puntos, razones = 0, []
+def evaluar_eje(title: str, axis: dict) -> dict:
+    weight = axis["weight"]
+    points, reasons = 0, []
 
-    for b in eje.get("bonus", []):
-        if re.search(b["patron"], titulo, re.IGNORECASE):
-            puntos += b["puntos"]
-            razones.append(f"+{b['puntos']} {b['motivo']}")
-            break  # el bonus de un eje no se acumula consigo mismo
+    for b in axis.get("bonus", []):
+        if re.search(b["patron"], title, re.IGNORECASE):
+            points += b["points"]
+            reasons.append(f"+{b['points']} {b['reason']}")
+            break  # an axis bonus does not stack with itself
 
-    for p in eje.get("penalizaciones", []):
-        if re.search(p["patron"], titulo, re.IGNORECASE):
-            puntos += p["puntos"]
-            razones.append(f"{p['puntos']} {p['motivo']}")
+    for p in axis.get("penalties", []):
+        if re.search(p["patron"], title, re.IGNORECASE):
+            points += p["points"]
+            reasons.append(f"{p['points']} {p['reason']}")
 
-    if "rangos" in eje:
-        n = len(titulo)
-        for r in eje["rangos"]:
+    if "ranges" in axis:
+        n = len(title)
+        for r in axis["ranges"]:
             if n <= r.get("max", 10 ** 9):
-                puntos += r["puntos"]
-                razones.append(f"+{r['puntos']} {r['motivo']} ({n} caracteres)")
+                points += r["points"]
+                reasons.append(f"+{r['points']} {r['reason']} ({n} characters)")
                 break
 
-    # Los ejes sin señal detectada parten de la mitad del peso: la ausencia de
-    # una marca no es prueba de que el título sea malo en ese eje.
-    if not razones:
-        puntos = round(peso * 0.5)
-        razones.append(f"+{puntos} Sin senal detectada en este eje (neutro)")
+    # Axes with no signal detected start at half weight: the absence of a
+    # marker is not proof the title is bad on that axis.
+    if not reasons:
+        points = round(weight * 0.5)
+        reasons.append(f"+{points} No signal detected on this axis (neutral)")
 
     return {
-        "eje": eje["id"],
-        "peso": peso,
-        "puntos": max(0, min(peso, puntos)),
-        "memoria": eje.get("memoria"),
-        "razones": razones,
+        "axis": axis["id"],
+        "weight": weight,
+        "points": max(0, min(weight, points)),
+        "memory": axis.get("memory"),
+        "reasons": reasons,
     }
 
 
-def puntuar(titulo: str, rubrica: dict) -> dict:
-    ejes = [evaluar_eje(titulo, e) for e in rubrica["ejes"]]
+def puntuar(title: str, rubric: dict) -> dict:
+    axes = [evaluar_eje(title, e) for e in rubric["axes"]]
     return {
-        "titulo": titulo,
-        "caracteres": len(titulo),
-        "score": sum(e["puntos"] for e in ejes),
-        "desglose": ejes,
+        "title": title,
+        "characters": len(title),
+        "score": sum(e["points"] for e in axes),
+        "breakdown": axes,
     }
 
 
 def run():
     p = parser(__doc__)
     p.add_argument("--title", required=True,
-                   help="título, o varios separados por ' || '")
+                   help="title, or several separated by ' || '")
     args = p.parse_args()
 
-    rubrica = cargar_rubrica()
+    rubric = cargar_rubrica()
     titulos = [t.strip() for t in args.title.split("||") if t.strip()]
-    resultados = sorted((puntuar(t, rubrica) for t in titulos),
+    results = sorted((puntuar(t, rubric) for t in titulos),
                         key=lambda r: r["score"], reverse=True)
 
-    env = sobre(TOOL, SOURCE_HEURISTIC,
-                {"rubrica_version": rubrica["version"],
-                 "calibrado_con": rubrica["calibrado_con"],
-                 "validado_contra_ctr": rubrica["validado_contra_ctr"],
-                 "resultados": resultados},
-                {"n_titulos": len(titulos)}, False,
-                notas=[
-                    "NO es una prediccion de CTR. Es una lista de comprobacion "
-                    "ponderada con las lecciones ya aprendidas del canal.",
-                    "La rubrica NO esta validada contra CTR real: hace falta "
-                    "ingerir el CSV de YouTube Studio (ingest_studio_csv.py).",
-                    "Un titulo con score bajo puede funcionar; el score solo "
-                    "dice cuanto se parece a lo que ya funciono antes.",
+    env = envelope(TOOL, SOURCE_HEURISTIC,
+                {"rubric_version": rubric["version"],
+                 "calibrated_with": rubric["calibrated_with"],
+                 "validated_against_ctr": rubric["validated_against_ctr"],
+                 "results": results},
+                {"n_titles": len(titulos)}, False,
+                notes=[
+                    "NOT a CTR prediction. It is a weighted checklist built from "
+                    "lessons already learned on this channel.",
+                    "The rubric is NOT validated against real CTR: you need to "
+                    "ingest the YouTube Studio CSV (ingest_studio_csv.py).",
+                    "A low-scoring title can still work; the score only says how "
+                    "closely it resembles what worked before.",
                 ])
 
     def md(e):
-        out = [base.cabecera_md(e), ""]
-        for r in e["data"]["resultados"]:
-            out.append(f"\n## {r['score']}/100 — {r['titulo']}  \n"
-                       f"_{r['caracteres']} caracteres_\n")
-            for d in r["desglose"]:
-                mem = f" _(memoria: {d['memoria']})_" if d["memoria"] else ""
-                out.append(f"- **{d['eje']}** {d['puntos']}/{d['peso']}{mem}")
-                out.extend(f"    - {x}" for x in d["razones"])
+        out = [base.md_header(e), ""]
+        for r in e["data"]["results"]:
+            out.append(f"\n## {r['score']}/100 — {r['title']}  \n"
+                       f"_{r['characters']} characters_\n")
+            for d in r["breakdown"]:
+                mem = f" _(memory: {d['memory']})_" if d["memory"] else ""
+                out.append(f"- **{d['axis']}** {d['points']}/{d['weight']}{mem}")
+                out.extend(f"    - {x}" for x in d["reasons"])
         return "\n".join(out)
 
-    emitir(env, args, md)
+    emit(env, args, md)
 
 
 if __name__ == "__main__":

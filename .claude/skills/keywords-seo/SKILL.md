@@ -1,42 +1,43 @@
 ---
 name: keywords-seo
-description: Keywords, etiquetas, descripción y hueco de búsqueda. Se invoca ante "qué keywords uso", "optimiza el SEO", "dame las etiquetas", "cómo me encuentran".
+description: Keywords, tags, description and the search gap. Triggered by "what keywords should I use", "optimise the SEO", "give me the tags", "how do people find me".
 ---
 
-# Keywords y SEO
+# Keywords and SEO
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **La verdad de campo primero**
+1. **Field truth first**
    ```
-   python3 tools/yt_search_terms.py --days 90 --tipo YT_SEARCH
-   python3 tools/yt_search_terms.py --days 90 --tipo RELATED_VIDEO
+   python3 tools/yt_search_terms.py --days 90 --type YT_SEARCH
+   python3 tools/yt_search_terms.py --days 90 --type RELATED_VIDEO
    ```
-   Estos son los términos **reales** con los que la gente llega, y los vídeos
-   que están sugiriendo los tuyos. No es estimación. Empezar por aquí y no por
-   el proxy es lo que separa esta skill de un generador genérico de keywords.
+   These are the **real** terms people arrive through, and the videos
+   suggesting yours. Not an estimate. Starting here rather than with the proxy
+   is what separates this skill from a generic keyword generator.
 
-2. **Expandir con el proxy**
-   `python3 tools/kw_research.py --kw "semilla 1; semilla 2" --profundo`
-   `--profundo` expande con el alfabeto: 26 llamadas más de autocompletado, sin
-   coste de cuota de API. `heuristic`.
+2. **Expand with the proxy**
+   `python3 tools/kw_research.py --kw "seed 1; seed 2" --deep`
+   `--deep` expands with the alphabet: 26 more autocomplete calls, no API quota
+   cost. `heuristic`.
 
-3. **Hueco competitivo**
-   `python3 tools/yt_search.py --query "keyword candidata"`
-   **Cuesta 100 unidades de cuota por consulta.** Se cachea 24 h. Mirar la
-   antigüedad mediana de los resultados: un top viejo es un hueco de
-   actualización.
+3. **Competitive gap**
+   `python3 tools/yt_search.py --query "candidate keyword"`
+   **Costs 100 quota units per query.** Cached for 24 h. Look at the median age
+   of the results: an old top is a refresh opportunity.
 
-4. Etiquetas y descripción, cruzando lo real del paso 1 con lo expandido del 2.
+4. Tags and description, crossing the real data from step 1 with the expansion
+   from step 2.
 
-## FUENTES
+## SOURCES
 
-Paso 1 `youtube_api` — es el único dato duro de esta skill. Pasos 2 y 3
-`heuristic` y `derived`. Al dar un score hay que decir que es propio.
+Step 1 `youtube_api` — the only hard data in this skill. Steps 2 and 3
+`heuristic` and `derived`. When giving a score, say it is your own.
 
-## SALIDA
+## OUTPUT
 
-- Keyword principal, con la evidencia de por qué (preferiblemente del paso 1).
-- 8-12 etiquetas.
-- Descripción de 120-180 palabras con las keywords integradas de forma natural.
-- Si alguna keyword sale solo del proxy y no del tráfico real, se marca.
+- Main keyword, with the evidence for it (preferably from step 1).
+- 8-12 tags.
+- A 120-180 word description with the keywords woven in naturally.
+- Any keyword that comes only from the proxy and not from real traffic is
+  flagged as such.

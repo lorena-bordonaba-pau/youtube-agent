@@ -1,132 +1,135 @@
-# Catálogo de herramientas
+# Tool catalogue
 
-28 scripts: 20 herramientas de datos, 4 de la rama visual y 4 utilidades. Todas se ejecutan desde la raíz
-del proyecto y devuelven JSON por defecto; `--md` da salida legible.
+28 scripts: 20 data tools, 4 for the visual branch and 4 utilities. All are run
+from the project root and return JSON by default; `--md` gives readable output.
 
-**Cómo leer la columna `source`** — es lo que determina cómo se puede citar cada
-cifra. Ver la tabla de la sección 3 de `CLAUDE.md`.
+**How to read the `source` column** — it determines how each figure may be
+cited. See the table in section 3 of `CLAUDE.md`.
 
-Flags comunes a todas: `--md`, `--no-cache`.
-Códigos de salida: `0` OK · `2` credenciales · `3` cuota agotada · `4` sin datos · `64` uso incorrecto.
+Flags common to all: `--md`, `--no-cache`.
+Exit codes: `0` OK · `2` credentials · `3` quota exhausted · `4` no data · `64` bad usage.
 
-## Analítica del canal propio
+## Authentication: two levels
 
-Requieren credenciales. Datos privados del canal autorizado.
+| What you have | What works |
+|---|---|
+| `YOUTUBE_API_KEY` in `.env` | Everything public: any channel, video stats, search, thumbnails, transcripts, keywords, outliers |
+| OAuth (`data/auth/`) | The above, **plus** your own channel's private analytics |
 
-| Herramienta | Qué hace | Comando | `source` | Cuota |
+Tools marked 🔑 need only a key. The rest need OAuth because the data is
+private and no key can reach it.
+
+## Your own channel's analytics
+
+Require OAuth. Private data for the authorised channel.
+
+| Tool | What it does | Command | `source` | Quota |
 |---|---|---|---|---|
-| `yt_report` | Informe completo + snapshot al histórico | `python3 tools/yt_report.py [--days 28]` | `youtube_api` | baja |
-| `yt_analytics` | Serie diaria: vistas, retención, subs, engagement | `python3 tools/yt_analytics.py [--days 28]` | `youtube_api` | baja |
-| `yt_top_videos` | Vídeos por vistas o por retención | `python3 tools/yt_top_videos.py [--days 90] [--limit 25] [--by-retention]` | `youtube_api` | baja |
-| `yt_video_analytics` | Evolución diaria de un vídeo | `python3 tools/yt_video_analytics.py --video ID` | `youtube_api` | baja |
-| `yt_retention` | **Curva de retención: dónde abandonan** | `python3 tools/yt_retention.py --video ID [--umbral 1.5]` | `youtube_api` | baja |
-| `yt_search_terms` | **Términos de búsqueda reales que traen tráfico** | `python3 tools/yt_search_terms.py [--tipo YT_SEARCH\|RELATED_VIDEO]` | `youtube_api` | baja |
-| `yt_traffic` | Fuentes de tráfico, etiquetadas en español | `python3 tools/yt_traffic.py [--days 28]` | `youtube_api` | baja |
-| `yt_demographics` | Edad y género de la audiencia | `python3 tools/yt_demographics.py [--days 90]` | `youtube_api` | baja |
-| `yt_geography` | Audiencia por país | `python3 tools/yt_geography.py [--days 90]` | `youtube_api` | baja |
+| `yt_report` | Full report + snapshot to history | `python3 tools/yt_report.py [--days 28]` | `youtube_api` | low |
+| `yt_analytics` | Daily series: views, retention, subs, engagement | `python3 tools/yt_analytics.py [--days 28]` | `youtube_api` | low |
+| `yt_top_videos` | Videos by views or by retention | `python3 tools/yt_top_videos.py [--days 90] [--limit 25] [--by-retention]` | `youtube_api` | low |
+| `yt_video_analytics` | Day-by-day evolution of one video | `python3 tools/yt_video_analytics.py --video ID` | `youtube_api` | low |
+| `yt_retention` | **Retention curve: where people leave** | `python3 tools/yt_retention.py --video ID [--threshold 1.5]` | `youtube_api` | low |
+| `yt_search_terms` | **Real search terms bringing traffic** | `python3 tools/yt_search_terms.py [--type YT_SEARCH\|RELATED_VIDEO]` | `youtube_api` | low |
+| `yt_traffic` | Traffic sources, with readable labels | `python3 tools/yt_traffic.py [--days 28]` | `youtube_api` | low |
+| `yt_demographics` | Audience age and gender | `python3 tools/yt_demographics.py [--days 90]` | `youtube_api` | low |
+| `yt_geography` | Audience by country | `python3 tools/yt_geography.py [--days 90]` | `youtube_api` | low |
 
-## Datos públicos (cualquier canal)
+## Public data (any channel) 🔑
 
-| Herramienta | Qué hace | Comando | `source` | Cuota |
+| Tool | What it does | Command | `source` | Quota |
 |---|---|---|---|---|
-| `yt_channel_stats` | Subs, vistas, nº de vídeos de un canal | `python3 tools/yt_channel_stats.py [--channel ID]` | `youtube_api` | baja |
-| `yt_recent_videos` | Vídeos recientes, con o sin estadísticas | `python3 tools/yt_recent_videos.py [--channel ID] [--limit 15] [--stats]` | `youtube_api` | baja |
-| `yt_video_stats` | Vistas, likes, duración, tags de vídeos | `python3 tools/yt_video_stats.py --video ID[,ID2]` | `youtube_api` | baja |
-| `yt_outliers_channels` | Outliers en competencia e inspiración | `python3 tools/yt_outliers_channels.py [--min-ratio 2.0] [--sample 30] [--list competencia]` | `derived` | media |
-| `yt_outliers_playlist` | Outliers de la playlist de guardados | `python3 tools/yt_outliers_playlist.py [--days 7]` | `derived` | media |
-| `yt_search` | Busca en YouTube y detecta outliers | `python3 tools/yt_search.py --query "..." [--limit 10]` | `derived` | **100 u/consulta** |
-| `yt_thumbnails` | Descarga miniaturas + métricas de pixel | `python3 tools/yt_thumbnails.py --video ID` | `derived` | baja |
-| `yt_transcript` | Transcripción (subtítulos, o Whisper) | `python3 tools/yt_transcript.py --video ID [--plano]` | `youtube_api` / `derived` | ninguna |
+| `yt_channel_stats` | Subs, views, video count | `python3 tools/yt_channel_stats.py [--channel ID]` | `youtube_api` | low |
+| `yt_recent_videos` | Recent videos, with or without stats | `python3 tools/yt_recent_videos.py [--channel ID] [--limit 15] [--stats]` | `youtube_api` | low |
+| `yt_video_stats` | Views, likes, duration, tags | `python3 tools/yt_video_stats.py --video ID[,ID2]` | `youtube_api` | low |
+| `yt_outliers_channels` | Outliers across competitors and inspirations | `python3 tools/yt_outliers_channels.py [--min-ratio 2.0] [--sample 30] [--list competitors]` | `derived` | medium |
+| `yt_outliers_playlist` | Outliers from your saved playlist | `python3 tools/yt_outliers_playlist.py [--days 7]` | `derived` | medium |
+| `yt_search` | Search YouTube and flag outliers | `python3 tools/yt_search.py --query "..." [--limit 10]` | `derived` | **100 u/query** |
+| `yt_thumbnails` | Download thumbnails + pixel metrics | `python3 tools/yt_thumbnails.py --video ID` | `derived` | low |
+| `yt_transcript` | Transcript (captions, or Whisper) | `python3 tools/yt_transcript.py --video ID [--plain]` | `youtube_api` / `derived` | none |
 
-## Heurísticas propias
+## Own heuristics
 
-**Nada de aquí es un dato medido.** Al citar cualquier salida de esta sección
-hay que declarar que es estimación propia.
+**Nothing here is measured data.** When citing any output from this section you
+must declare it is an own estimate.
 
-| Herramienta | Qué hace | Comando | `source` |
+| Tool | What it does | Command | `source` |
 |---|---|---|---|
-| `kw_research` | Keywords por proxy: demanda + competencia | `python3 tools/kw_research.py --kw "a; b" [--profundo] [--sin-competencia]` | `heuristic` |
-| `score_titles` | Puntúa títulos 0-100 con la rúbrica del canal | `python3 tools/score_titles.py --title "A \|\| B"` | `heuristic` |
-| `score_thumbnail` | Puntúa el 40% automático; el 60% queda a juicio visual | `python3 tools/score_thumbnail.py --video ID \| --image RUTA [--titulo "..."]` | `heuristic` |
+| `kw_research` 🔑 | Keywords by proxy: demand + competition | `python3 tools/kw_research.py --kw "a; b" [--deep] [--no-competition]` | `heuristic` |
+| `score_titles` | Scores titles 0-100 with the channel's rubric | `python3 tools/score_titles.py --title "A \|\| B"` | `heuristic` |
+| `score_thumbnail` 🔑 | Scores the automatic 40%; the 60% is left to visual judgement | `python3 tools/score_thumbnail.py --video ID \| --image PATH [--title "..."]` | `heuristic` |
 
-Las rúbricas viven en `config/rubricas/*.yaml` y están calibradas con las
-memorias de feedback del canal. Cada punto sumado o restado cita la memoria que
-lo justifica.
+The rubrics live in `config/rubrics/*.yaml`. **On a fresh install they are
+uncalibrated**: each axis's `memory` field is `null`. Calibrating them — one
+lesson from your own channel at a time — is what turns them from a checklist
+into an advantage.
 
-## Rama visual
+## Visual branch
 
-Generan o transforman imágenes. **Nada de aquí es un dato**: una imagen
-generada no mide nada y no predice cómo va a rendir.
+These generate or transform images. **Nothing here is data**: a generated image
+measures nothing and predicts nothing about performance.
 
-El proveedor no se nombra en ninguna skill: vive en
-`config/image_providers.json`. Con `provider: "fal"` se llama a fal.ai por REST
-(necesita `FAL_KEY`); con `provider: "mcp"` la tool no genera y devuelve la
-llamada MCP exacta para que la ejecute el agente.
+No skill names a provider: that lives in `config/image_providers.json`. With
+`provider: "fal"` it calls fal.ai over REST (needs `FAL_KEY`); with
+`provider: "mcp"` the tool does not generate and instead returns the exact MCP
+call for the agent to run.
 
-| Herramienta | Qué hace | Comando | `source` | Coste |
+| Tool | What it does | Command | `source` | Cost |
 |---|---|---|---|---|
-| `generate_image` | Genera una imagen según el formato de destino | `python3 tools/generate_image.py --prompt "..." --type thumbnail\|banner\|profile_image\|general [--ref ORIGEN:ROL] [--dry-run]` | `generated` | **créditos** |
-| `refine_image` | Edita una imagen existente sin redibujarla | `python3 tools/refine_image.py --image RUTA --instruction "..." [--ref cara.jpg:likeness] [--dry-run]` | `generated` | **créditos** |
-| `export_image` | Dimensiones y peso exactos, local y determinista | `python3 tools/export_image.py --image RUTA --type thumbnail \| --size 1280x720` | `derived` | ninguno |
-| `view_channel_packaging` | Descarga avatar y banner de un canal + métricas | `python3 tools/view_channel_packaging.py [--channel ID] [--only avatar\|banner\|both]` | `derived` | baja |
+| `generate_image` | Generates according to the target format | `python3 tools/generate_image.py --prompt "..." --type thumbnail\|banner\|profile_image\|general [--ref SOURCE:ROLE] [--dry-run]` | `generated` | **credits** |
+| `refine_image` | Edits an existing image without redrawing it | `python3 tools/refine_image.py --image PATH --instruction "..." [--ref face.jpg:likeness] [--dry-run]` | `generated` | **credits** |
+| `export_image` | Exact dimensions and weight, local and deterministic | `python3 tools/export_image.py --image PATH --type thumbnail \| --size 1280x720` | `derived` | none |
+| `view_channel_packaging` | Downloads a channel's avatar and banner + metrics | `python3 tools/view_channel_packaging.py [--channel ID] [--only avatar\|banner\|both]` | `derived` | low |
 
-**`--dry-run` antes de gastar.** Devuelve el prompt final compuesto sin llamar
-al proveedor. Si el prompt no dice lo que se quería, se corrige ahí.
+**`--dry-run` before spending.** It returns the composed final prompt without
+calling the provider. If the prompt does not say what you meant, fix it there.
 
-**Los roles de referencia son obligatorios.** `--ref ORIGEN:ROL` con `ROL` en
-`likeness`, `style`, `composition`, `packaging`. La tool rechaza una referencia
-sin rol: el rol decide el orden y si se aplica la cláusula de identidad facial.
+**Reference roles are mandatory.** `--ref SOURCE:ROLE` with `ROLE` in
+`likeness`, `style`, `composition`, `packaging`. The tool rejects a reference
+with no role: the role decides ordering and whether the facial identity clause
+is applied.
 
-**Las miniaturas son siempre 16:9.** `thumbnail` lleva `ratio_fijo` en la
-configuración y la tool valida la proporción antes de llamar al proveedor. No
-hay formato vertical: se retiró de `formatos` y queda documentado en
-`_formatos_retirados` por si algún día se restaura.
+**Thumbnails are always 16:9.** `thumbnail` carries `fixed_ratio` in the config
+and the tool validates the ratio before calling the provider.
 
-**El tamaño va como `image_size: {width, height}`**, que es la forma universal
-de fal. Qué claves se envían está en `fal.claves_tamano`: si un modelo rechaza
-una, se quita de ahí sin tocar código.
+**No model slug is ever invented.** A `null` slot makes the tool fail with
+instructions instead of guessing. Probing slugs with an invalid payload **does
+not work**: fal's queue returns 200 and the path error only appears on a real
+call.
 
-**Ningún slug de modelo se inventa.** Un slot a `null` hace fallar la tool con
-instrucciones, en vez de adivinar. Los actuales están verificados con llamadas
-reales del 2026-09-17: `fal-ai/nano-banana` para generar. Sondear con un payload
-inválido **no vale**: la cola devuelve 200 y el error de ruta solo aparece al
-llamar de verdad.
+**The ratio is verified in the file, not trusted to the model.** After
+downloading, `generate_image` measures the image, trims black bars if the model
+letterboxed, and forces the exact size when the format pins a ratio. All of it
+is recorded in the envelope's `notes`.
 
-**`--image` cierra el ciclo.** `score_thumbnail` acepta un fichero local, no
-solo un `video_id`, así que una miniatura recién generada se puntúa con la misma
-rúbrica calibrada que una publicada. Puntuarla no la convierte en un dato.
+**Every generation is logged** to `data/images/ledger.jsonl`: model, type,
+prompt, file and references. It warns about a repeated prompt before you pay
+for it twice, and it is what would one day let you cross which generated
+thumbnail was uploaded against the CTR it earned. The `uploaded_to_youtube`
+field is filled in by hand.
 
-**Toda generación queda anotada** en `datos/imagenes/registro.jsonl`: modelo,
-tipo, prompt, fichero y referencias. Sirve para avisar de un prompt repetido
-antes de pagarlo otra vez, y para poder cruzar algún día qué miniatura generada
-se subió y qué CTR tuvo. El campo `subida_a_youtube` se rellena a mano.
+## Utilities
 
-**La proporción se verifica en el fichero, no se confía al modelo.** Tras
-descargar, `generate_image` mide la imagen, recorta las bandas negras si el
-modelo ha hecho letterbox, y fuerza el tamaño exacto cuando el formato tiene
-`ratio_fijo`. Todo eso queda anotado en `notas` del sobre.
-
-## Utilidades
-
-| Herramienta | Qué hace | Comando |
+| Tool | What it does | Command |
 |---|---|---|
-| `init` | Estado del harness (lo ejecuta el hook de arranque) | `python3 tools/init.py` |
-| `auth_setup` | Re-autoriza con Google. **Abre el navegador** | `python3 tools/auth_setup.py` |
-| `ingest_studio_csv` | Ingiere CTR e impresiones del CSV de Studio | `python3 tools/ingest_studio_csv.py --csv ruta.csv` |
-| `yt_channels_list` | Lista los canales configurados | `python3 tools/yt_channels_list.py [--list competencia]` |
+| `init` | Harness status (run by the start-up hook) | `python3 tools/init.py` |
+| `auth_setup` | Re-authorise with Google. **Opens a browser** | `python3 tools/auth_setup.py` |
+| `ingest_studio_csv` | Ingests CTR and impressions from the Studio CSV | `python3 tools/ingest_studio_csv.py --csv path.csv` |
+| `yt_channels_list` | Lists the configured channels | `python3 tools/yt_channels_list.py [--list competitors]` |
 
-## Cuota
+## Quota
 
-La cuota diaria de la API de YouTube son 10.000 unidades. Casi todas las
-llamadas cuestan 1-3 unidades; **`search.list` cuesta 100**, y lo usan
-`yt_search.py` y `kw_research.py` (salvo con `--sin-competencia`).
+The daily YouTube API quota is 10,000 units. Almost every call costs 1–3;
+**`search.list` costs 100**, and it is used by `yt_search.py` and
+`kw_research.py` (unless you pass `--no-competition`).
 
-Todo se cachea en `datos/cache/` con TTL por familia: 6 h para analítica propia,
-24 h para canales ajenos y búsquedas, 30 días para transcripciones y miniaturas.
-`--no-cache` fuerza la llamada.
+Everything is cached in `data/cache/` with a TTL per family: 6 h for your own
+analytics, 24 h for other channels and searches, 30 days for transcripts and
+thumbnails. `--no-cache` forces the call.
 
-## Lo que NO existe aquí
+## What does NOT exist here
 
-Ver `LIMITES.md`. En resumen: no hay CTR ni impresiones por API, no hay volumen
-de búsqueda real, no se publica ni se modifica nada en YouTube —tampoco se sube
-una imagen generada: eso es manual en Studio—, y no se genera ni se edita vídeo.
+See `LIMITS.md`. In short: no CTR or impressions via the API, no real search
+volume, nothing is published or modified on YouTube — not even a generated
+image, which you upload by hand in Studio — and no video is generated or
+edited.

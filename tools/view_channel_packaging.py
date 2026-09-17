@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-"""Descarga el avatar y el banner de un canal y mide su pixel.
+"""Download a channel's avatar and banner and measure their pixels.
 
-Es el paso previo a generar packaging nuevo: sin ver la marca actual, lo que se
-genere será genérico o romperá la identidad que ya existe.
+This is the step before generating new packaging: without seeing the current
+brand, whatever gets generated will be generic or will break an identity that
+already works.
 
-Las métricas son objetivas. La lectura de marca — qué transmite, qué falla — la
-hace el agente abriendo los ficheros con visión.
+The metrics are objective. Reading the brand — what it conveys, what fails —
+is done by the agent opening the files with vision.
 """
 from pathlib import Path
 
 from lib import auth, base  # noqa: F401
 from lib import cache
-from lib.contrato import (DATOS_DIR, EXIT_NO_DATA, SOURCE_DERIVED, ToolError,
-                          emitir, main, parser, sobre)
-from lib.imagegen import descargar
-from yt_thumbnails import metricas
+from lib.contract import (DATA_DIR, EXIT_NO_DATA, SOURCE_DERIVED, ToolError,
+                          emit, main, parser, envelope)
+from lib.imagegen import download
+from yt_thumbnails import metrics
 
 TOOL = "view_channel_packaging"
-DIR = DATOS_DIR / "packaging"
+DIR = DATA_DIR / "packaging"
 
 
 def paquete(channel_id: str | None) -> dict:
@@ -27,14 +28,14 @@ def paquete(channel_id: str | None) -> dict:
            else yt.channels().list(part=parts, id=channel_id))
     items = req.execute().get("items", [])
     if not items:
-        raise ToolError(f"Canal no encontrado: {channel_id or 'propio'}", EXIT_NO_DATA)
+        raise ToolError(f"Canal no encontrado: {channel_id or 'own'}", EXIT_NO_DATA)
     c = items[0]
     thumbs = c["snippet"].get("thumbnails", {})
-    mejor = thumbs.get("high") or thumbs.get("medium") or thumbs.get("default") or {}
+    best = thumbs.get("high") or thumbs.get("medium") or thumbs.get("default") or {}
     return {
         "channel_id": c["id"],
         "title": c["snippet"]["title"],
-        "avatar_url": mejor.get("url"),
+        "avatar_url": best.get("url"),
         "banner_url": (c.get("brandingSettings", {})
                        .get("image", {}).get("bannerExternalUrl")),
         "keywords": c.get("brandingSettings", {}).get("channel", {}).get("keywords"),
@@ -43,51 +44,51 @@ def paquete(channel_id: str | None) -> dict:
 
 def run():
     p = parser(__doc__)
-    p.add_argument("--channel", help="channel_id; omitir para el canal propio")
+    p.add_argument("--channel", help="channel_id; omit for your own channel")
     p.add_argument("--only", choices=["avatar", "banner", "both"], default="both")
     args = p.parse_args()
 
-    propio = args.channel is None
-    familia = "analitica_propia" if propio else "canal_ajeno"
-    info, hit = cache.memo(familia, f"{TOOL}:{args.channel or 'mine'}",
+    own = args.channel is None
+    family = "own_analytics" if own else "other_channel"
+    info, hit = cache.memo(family, f"{TOOL}:{args.channel or 'mine'}",
                            lambda: paquete(args.channel), not args.no_cache)
 
     DIR.mkdir(parents=True, exist_ok=True)
     cid = info["channel_id"]
-    piezas = []
-    objetivo = {"avatar": ["avatar"], "banner": ["banner"],
+    pieces = []
+    target = {"avatar": ["avatar"], "banner": ["banner"],
                 "both": ["avatar", "banner"]}[args.only]
 
-    for pieza in objetivo:
-        url = info.get(f"{pieza}_url")
+    for piece in target:
+        url = info.get(f"{piece}_url")
         if not url:
-            piezas.append({"pieza": pieza, "estado": "el canal no tiene"})
+            pieces.append({"piece": piece, "status": "the channel has none"})
             continue
-        # El banner se sirve recortado por defecto; =w2560 pide el original.
-        if pieza == "banner":
+        # The banner is served cropped by default; =w2560 asks for the original.
+        if piece == "banner":
             url = f"{url}=w2560-fcrop64=1,00000000ffffffff-k-c0xffffffff-no-nd-rj"
-        destino = DIR / f"{cid}_{pieza}.jpg"
+        dest = DIR / f"{cid}_{piece}.jpg"
         try:
-            if not destino.exists():
-                descargar(url, destino)
-            piezas.append({"pieza": pieza, "estado": "ok", **metricas(destino)})
-        except Exception as e:  # noqa: BLE001 — una pieza rota no tumba la otra
-            piezas.append({"pieza": pieza, "estado": f"no descargada: {e}"})
+            if not dest.exists():
+                download(url, dest)
+            pieces.append({"piece": piece, "status": "ok", **metrics(dest)})
+        except Exception as e:  # noqa: BLE001 — one broken piece must not take down the other
+            pieces.append({"piece": piece, "status": f"no descargada: {e}"})
 
-    env = sobre(TOOL, SOURCE_DERIVED,
-                {**info, "piezas": piezas}, {"channel": args.channel or "mine"}, hit,
-                notas=[
-                    "Metricas de pixel, no juicio de marca.",
-                    "Para leer la identidad visual, ABRE los ficheros de `fichero` "
-                    "con la herramienta de lectura de imagenes.",
-                    "El banner se juzga por su banda central: en movil se recorta "
-                    "el tercio superior y el inferior.",
+    env = envelope(TOOL, SOURCE_DERIVED,
+                {**info, "pieces": pieces}, {"channel": args.channel or "mine"}, hit,
+                notes=[
+                    "Pixel metrics, not a brand judgement.",
+                    "To read the visual identity, OPEN the paths in `file` with the "
+                    "image reading tool.",
+                    "Judge the banner by its centre band: on mobile the top and "
+                    "bottom thirds are cropped away.",
                 ])
-    emitir(env, args, lambda e: base.cabecera_md(e) +
+    emit(env, args, lambda e: base.md_header(e) +
            f"\n\n**{e['data']['title']}** — `{e['data']['channel_id']}`\n\n" +
-           base.tabla_md(e["data"]["piezas"],
-                         ["pieza", "estado", "resolucion", "contraste_global",
-                          "saturacion_media", "fichero"]))
+           base.md_table(e["data"]["pieces"],
+                         ["piece", "status", "resolution", "global_contrast",
+                          "mean_saturation", "file"]))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Andamiaje compartido por las tools: bootstrap de sys.path y helpers de MD."""
+"""Shared scaffolding for the tools: sys.path bootstrap and Markdown helpers."""
 from __future__ import annotations
 
 import sys
@@ -6,58 +6,58 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-_RAIZ = Path(__file__).resolve().parent.parent.parent
+_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
-def cargar_env(ruta: Path | None = None) -> list[str]:
-    """Carga `.env` de la raíz del proyecto en el entorno del proceso.
+def load_env(path: Path | None = None) -> list[str]:
+    """Load the project root's `.env` into the process environment.
 
-    Sin dependencias: `python-dotenv` no está en requirements y esto son veinte
-    líneas. Una variable que ya venga del entorno real **no se pisa**, para que
-    exportarla en la shell siga mandando sobre el fichero.
+    No dependency: `python-dotenv` is not in requirements and this is twenty
+    lines. A variable already present in the real environment is **not
+    overwritten**, so exporting it in your shell still wins over the file.
 
-    Devuelve los nombres cargados, nunca los valores: ninguna clave debe acabar
-    en un log ni en la salida de una tool.
+    Returns the names it loaded, never the values: no key should ever end up
+    in a log or in a tool's output.
     """
     import os
 
-    fichero = ruta or _RAIZ / ".env"
-    cargadas = []
-    if not fichero.exists():
-        return cargadas
-    for linea in fichero.read_text(encoding="utf-8").splitlines():
-        linea = linea.strip()
-        if not linea or linea.startswith("#") or "=" not in linea:
+    file = path or _ROOT / ".env"
+    loaded = []
+    if not file.exists():
+        return loaded
+    for line in file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
             continue
-        clave, _, valor = linea.partition("=")
-        clave = clave.strip()
-        valor = valor.strip().strip('"').strip("'")
-        if clave and valor and not os.environ.get(clave):
-            os.environ[clave] = valor
-            cargadas.append(clave)
-    return cargadas
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and value and not os.environ.get(key):
+            os.environ[key] = value
+            loaded.append(key)
+    return loaded
 
 
-# Se ejecuta al importar: todas las tools hacen `from lib import base`.
-cargar_env()
+# Runs on import: every tool does `from lib import base`.
+load_env()
 
 
-def tabla_md(filas: list[dict], columnas: list[str] | None = None) -> str:
-    """Renderiza una lista de dicts como tabla Markdown."""
-    if not filas:
-        return "_Sin datos._"
-    cols = columnas or list(filas[0].keys())
+def md_table(rows: list[dict], columns: list[str] | None = None) -> str:
+    """Render a list of dicts as a Markdown table."""
+    if not rows:
+        return "_No data._"
+    cols = columns or list(rows[0].keys())
     out = ["| " + " | ".join(cols) + " |",
            "|" + "|".join("---" for _ in cols) + "|"]
-    for f in filas:
-        celdas = [str(f.get(c, "")).replace("|", "\\|").replace("\n", " ") for c in cols]
-        out.append("| " + " | ".join(celdas) + " |")
+    for r in rows:
+        cells = [str(r.get(c, "")).replace("|", "\\|").replace("\n", " ") for c in cols]
+        out.append("| " + " | ".join(cells) + " |")
     return "\n".join(out)
 
 
-def cabecera_md(envelope: dict) -> str:
-    """Cabecera que deja la procedencia del dato a la vista también en Markdown."""
+def md_header(envelope: dict) -> str:
+    """Header that keeps a figure's provenance visible in Markdown too."""
     return (f"# {envelope['tool']}\n\n"
-            f"**Fuente:** `{envelope['source']}` — {envelope['aviso']}  \n"
-            f"**Generado:** {envelope['generated_at']}"
+            f"**Source:** `{envelope['source']}` — {envelope['notice']}  \n"
+            f"**Generated:** {envelope['generated_at']}"
             f"{' (cache)' if envelope['cache_hit'] else ''}\n")

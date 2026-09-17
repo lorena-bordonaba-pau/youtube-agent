@@ -1,63 +1,63 @@
 ---
 name: guion
-description: Escribe guiones de vídeo con la voz real del canal y la estructura de retención validada. Se invoca ante "escribe el guion", "dame el hook", "estructura este vídeo", "cómo abro este vídeo".
+description: Write video scripts in the channel's real voice with a validated retention structure. Triggered by "write the script", "give me the hook", "structure this video", "how do I open this one".
 ---
 
-# Guion
+# Script
 
-## CUÁNDO
+## WHEN
 
-Escribir o reestructurar un guion, diseñar el gancho de los primeros 30
-segundos, colocar los re-hooks, revisar una estructura ya escrita.
+Writing or restructuring a script, designing the first-30-seconds hook, placing
+re-hooks, reviewing a structure already written.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Comprobar el perfil de voz**
-   Leer `memoria/voice_profile.md`.
+1. **Check the voice profile**
+   Read `memory/voice_profile.md`.
 
-   - Si está poblado (más de 150 palabras, con frases textuales), se usa y se
-     salta al paso 3.
-   - Si está vacío o es genérico, **se construye antes de escribir nada**:
+   - If it is populated (more than 150 words, with verbatim phrases), use it
+     and skip to step 3.
+   - If it is empty or generic, **build it before writing anything**:
      ```
      python3 tools/yt_top_videos.py --days 180 --by-retention --limit 5
-     python3 tools/yt_transcript.py --video ID --plano    # los 3 mejores
+     python3 tools/yt_transcript.py --video ID --plain    # the best 3
      ```
-     Se analizan muletillas, aperturas, transiciones y cierres reales, y se
-     escribe `memoria/voice_profile.md` con citas textuales.
+     Analyse the real fillers, openings, transitions and closings, and write
+     `memory/voice_profile.md` with verbatim quotes.
 
-   Inventarse la voz cuando hay transcripciones disponibles es el error que este
-   paso previene.
+   Inventing the voice when transcripts are available is the error this step
+   prevents.
 
-2. **Primacía estructural del SOP**
-   Leer `memoria/sop/scripting_sop.md`. **Es la fuente de verdad de la
-   estructura.** Si existe una fórmula ahí, los outliers y las keywords de los
-   pasos siguientes informan el TEMA, nunca reescriben la estructura.
+2. **The SOP has structural primacy**
+   Read `memory/sop/scripting_sop.md`. **It is the source of truth for
+   structure.** If a formula exists there, the outliers and keywords from the
+   next steps inform the TOPIC, they never rewrite the structure.
 
-3. **Validar el tema**
+3. **Validate the topic**
    ```
    python3 tools/yt_outliers_channels.py --min-ratio 2.0
-   python3 tools/kw_research.py --kw "tema principal; variante"
+   python3 tools/kw_research.py --kw "main topic; variant"
    ```
-   Los outliers dicen qué ganchos están dando vistas ahora. El score de
-   keywords es `heuristic`: sirve para ordenar opciones, no para afirmar
-   demanda.
+   The outliers say which hooks are earning views right now. The keyword score
+   is `heuristic`: it orders options, it does not assert demand.
 
-4. **Verificar el hook contra retención real** — si existe un vídeo comparable
+4. **Verify the hook against real retention** — if a comparable video exists
    `python3 tools/yt_retention.py --video ID`
-   Mirar dónde cayó la audiencia en ese vídeo y no repetir el patrón. Esto
-   convierte el SOP en algo verificable en vez de una convención heredada.
+   Look at where the audience dropped in that video and do not repeat the
+   pattern. This turns the SOP into something verifiable rather than an
+   inherited convention.
 
-5. Escribir, aplicando el SOP y la voz del paso 1.
+5. Write, applying the SOP and the voice from step 1.
 
-## FUENTES
+## SOURCES
 
-Paso 1 `youtube_api` (transcripciones). Paso 3 `derived` + `heuristic`.
-Paso 4 `youtube_api`. Al citar el score de keywords hay que declararlo.
+Step 1 `youtube_api` (transcripts). Step 3 `derived` + `heuristic`. Step 4
+`youtube_api`. When citing the keyword score, declare it.
 
-## SALIDA
+## OUTPUT
 
-Según lo que se haya pedido: gancho por segundos, outline resumido, o guion
-completo. Por defecto el resumido; el completo solo si se confirma.
+Whatever was asked for: a hook broken down by seconds, a summary outline, or a
+full script. Summary by default; the full script only on confirmation.
 
-Cada bloque lleva su función declarada (promesa, prueba, plan, re-hook) para que
-se pueda medir después con `yt_retention.py`.
+Each block declares its job (promise, proof, plan, re-hook) so it can be
+measured afterwards with `yt_retention.py`.

@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "_comentario": [
-    "Configuración de la rama de imagen. El adaptador es agnóstico: las skills",
-    "nunca nombran un proveedor, solo piden una imagen. Cambiar de fal.ai a un",
-    "MCP se hace aquí, sin tocar ninguna skill.",
-    "NINGÚN slug de modelo se inventa. Los que están a null hay que resolverlos",
-    "en fal.ai/explore/models y escribirlos aquí; la tool falla en vez de adivinar."
+  "_comment": [
+    "Configuration for the image branch. The adapter is provider-agnostic: skills",
+    "never name a provider, they just ask for an image. Switching from fal.ai to",
+    "an MCP happens here, without touching a single skill.",
+    "NO model slug is ever invented. Slots left at null must be resolved at",
+    "fal.ai/explore/models and written here; the tool fails rather than guess."
   ],
   "provider": "fal",
   "fallback": "mcp",
@@ -14,33 +14,33 @@
     "queue_base": "https://queue.fal.run",
     "timeout_s": 300,
     "poll_s": 3,
-    "modelos": {
+    "models": {
       "generate": "fal-ai/nano-banana",
       "edit": "fal-ai/nano-banana/edit",
       "generate_gpt": "openai/gpt-image-2",
       "edit_gpt": "openai/gpt-image-2/edit"
     },
-    "_modelos_nota": [
-      "Verificado el 2026-09-17 con llamadas REALES, no por sondeo:",
-      "el sondeo con payload invalido NO sirve — la cola devuelve 200 y el error",
-      "de ruta solo aparece con un payload valido. fal-ai/nano-banana/v2 dio 200",
-      "al sondear y 404 'Path /v2 not found' al llamar de verdad.",
-      "Cada slug de aqui se marca como verificado solo tras una llamada real."
+    "_models_note": [
+      "Verified 2026-09-17 with REAL calls, not by probing: probing with an invalid",
+      "payload does NOT work — the queue returns 200 and the path error only shows",
+      "up on a real call. fal-ai/nano-banana/v2 returned 200 when probed and 404",
+      "'Path /v2 not found' when actually called.",
+      "Each slug here is marked verified only after a real call."
     ],
-    "modelos_resueltos_el": "2026-09-17",
-    "claves_tamano": [
+    "models_resolved_on": "2026-09-17",
+    "size_keys": [
       "image_size",
       "aspect_ratio"
     ],
-    "_claves_tamano_nota": [
-      "Verificado el 2026-09-17: fal-ai/nano-banana IGNORA image_size y devuelve",
-      "1024x1024 cuadrado. Usa aspect_ratio ('16:9'). Se envian las dos claves:",
-      "el modelo que no entiende una la ignora. Si alguna da 422, quitarla de aqui."
+    "_size_keys_note": [
+      "Verified 2026-09-17: fal-ai/nano-banana IGNORES image_size and returns a",
+      "1024x1024 square. It uses aspect_ratio ('16:9'). Both keys are sent: a model",
+      "that does not understand one ignores it. If one returns 422, remove it here."
     ],
     "upload_initiate_url": "https://rest.alpha.fal.ai/storage/upload/initiate"
   },
   "mcp": {
-    "servidor": "higgsfield",
+    "server": "higgsfield",
     "tools": {
       "generate": "generate_image",
       "edit": "generate_image",
@@ -48,21 +48,21 @@
       "import_url": "media_import_url",
       "explore": "models_explore"
     },
-    "modelo_por_defecto": "marketing_studio_image",
-    "max_concurrentes": 4,
-    "_nota": [
-      "Ejemplo con Higgsfield. Sirve cualquier MCP que genere imagenes: cambia",
-      "`servidor` y el mapa de `tools` por los de tu conector.",
-      "Declara el servidor en .mcp.json del proyecto.",
-      "Las tools MCP no leen ficheros locales: hay que subirlos o pasar URL."
+    "default_model": "marketing_studio_image",
+    "max_concurrent": 4,
+    "_note": [
+      "Example using Higgsfield. Any image-generating MCP works: change `server`",
+      "and the `tools` map to match your connector.",
+      "Declare the server in the project's .mcp.json.",
+      "MCP tools cannot read local files: upload them or pass a URL."
     ]
   },
-  "formatos": {
+  "formats": {
     "thumbnail": {
       "ratio": "16:9",
       "px": "1280x720",
       "max_bytes": 2097152,
-      "ratio_fijo": true,
+      "fixed_ratio": true,
       "enum_fal": "landscape_16_9"
     },
     "profile_image": {
@@ -84,19 +84,19 @@
       "enum_fal": "landscape_16_9"
     }
   },
-  "roles_de_referencia": [
+  "reference_roles": [
     "likeness",
     "style",
     "composition",
     "packaging"
   ],
-  "max_referencias": 3,
-  "_formatos_retirados": {
+  "max_references": 3,
+  "_retired_formats": {
     "vertical_thumbnail": {
       "ratio": "9:16",
       "px": "1080x1920",
       "max_bytes": 2097152,
-      "motivo": "Las miniaturas son siempre 16:9 (decision de la creadora, 2026-09-17). Ademas memoria/rules.md prohibe proponer contenido vertical propio. Para restaurarlo, mover esta entrada de vuelta a `formatos`."
+      "reason": "Thumbnails are always 16:9 by default. If your channel publishes vertical content, move this entry back into `formats`."
     }
   }
 }

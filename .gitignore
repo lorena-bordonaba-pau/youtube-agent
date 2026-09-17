@@ -1,6 +1,6 @@
 # --- Credenciales. Nunca, bajo ningún concepto. ---
 .env
-datos/auth/
+data/auth/
 client_secrets.json
 *.pickle
 *.enc
@@ -8,17 +8,17 @@ client_secrets.json
 
 # --- Datos de TU canal. Si haces fork de este repo, esto es lo que no debe
 #     salir de tu máquina: métricas, informes, imágenes y transcripciones. ---
-datos/cache/
-datos/historico/
-datos/informes/
-datos/transcripciones/
-datos/miniaturas/
-datos/packaging/
-datos/imagenes/
+data/cache/
+data/history/
+data/reports/
+data/transcripts/
+data/thumbnails/
+data/packaging/
+data/images/
 
 # La memoria es tuya. Descomenta la línea siguiente si prefieres no versionarla
 # ni siquiera en un repo privado.
-# memoria/
+# memory/
 
 # --- Python ---
 __pycache__/

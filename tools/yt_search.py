@@ -1,56 +1,53 @@
 #!/usr/bin/env python3
-"""Busca vídeos en YouTube y detecta outliers dentro de los resultados.
+"""Search YouTube and flag outliers within the results.
 
-CUESTA 100 UNIDADES DE CUOTA por consulta (la cuota diaria son 10.000).
-Siempre cacheado 24h.
-
-El script original tenía las consultas hardcodeadas, y por comas ausentes en el
-array las tres últimas se concatenaban en una sola cadena con un typo incluido.
-Aquí la consulta es un argumento.
+COSTS 100 QUOTA UNITS per query (the daily quota is 10,000).
+Always cached for 24h.
+Here the query is an argument.
 """
 import statistics
 
 from lib import base  # noqa: F401
 from lib import cache, yt_data
-from lib.contrato import SOURCE_DERIVED, emitir, main, parser, sobre
+from lib.contract import SOURCE_DERIVED, emit, main, parser, envelope
 
 TOOL = "yt_search"
 
 
 def run():
     p = parser(__doc__)
-    p.add_argument("--query", required=True, help="consulta, o varias separadas por ';'")
+    p.add_argument("--query", required=True, help="query, or several separated by ';'")
     p.add_argument("--limit", type=int, default=10)
     p.add_argument("--duration", default="medium",
                    choices=["any", "short", "medium", "long"])
-    p.add_argument("--days", type=int, help="limita a vídeos publicados en N días")
+    p.add_argument("--days", type=int, help="limit to videos published in the last N days")
     args = p.parse_args()
 
     consultas = [q.strip() for q in args.query.split(";") if q.strip()]
-    resultados, hits = [], []
+    results, hits = [], []
     for q in consultas:
-        clave = f"{TOOL}:{q}:{args.limit}:{args.duration}:{args.days}"
-        datos, hit = cache.memo(
-            "busqueda", clave,
-            lambda q=q: yt_data.buscar(q, args.limit, duracion=args.duration,
-                                       dias=args.days),
+        key = f"{TOOL}:{q}:{args.limit}:{args.duration}:{args.days}"
+        payload_data, hit = cache.memo(
+            "search_query", key,
+            lambda q=q: yt_data.search(q, args.limit, duration=args.duration,
+                                       days=args.days),
             not args.no_cache)
         hits.append(hit)
-        vistas = [d["views"] for d in datos] or [0]
-        mediana = statistics.median(vistas)
-        for d in datos:
+        views = [d["views"] for d in payload_data] or [0]
+        median = statistics.median(views)
+        for d in payload_data:
             d["query"] = q
-            d["ratio_vs_mediana"] = round(d["views"] / mediana, 2) if mediana else 0
-        resultados.extend(datos)
+            d["ratio_vs_mediana"] = round(d["views"] / median, 2) if median else 0
+        results.extend(payload_data)
 
-    resultados.sort(key=lambda d: d["ratio_vs_mediana"], reverse=True)
-    env = sobre(TOOL, SOURCE_DERIVED, resultados,
+    results.sort(key=lambda d: d["ratio_vs_mediana"], reverse=True)
+    env = envelope(TOOL, SOURCE_DERIVED, results,
                 {"query": consultas, "limit": args.limit, "duration": args.duration},
                 all(hits),
-                notas=["`ratio_vs_mediana` compara con la MEDIANA de los resultados "
-                       "de esa busqueda, no con la media del canal de origen.",
-                       "Cada consulta no cacheada cuesta 100 unidades de cuota."])
-    emitir(env, args, lambda e: base.cabecera_md(e) + "\n" + base.tabla_md(
+                notes=["`ratio_vs_median` compares against the MEDIAN of that query's "
+                       "results, not the source channel's mean.",
+                       "Each uncached query costs 100 quota units."])
+    emit(env, args, lambda e: base.md_header(e) + "\n" + base.md_table(
         e["data"], ["query", "title", "channel_title", "views", "ratio_vs_mediana",
                     "duration", "published_at"]))
 

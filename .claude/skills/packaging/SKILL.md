@@ -1,85 +1,86 @@
 ---
 name: packaging
-description: Títulos, miniaturas y descripción de un vídeo, puntuados con la rúbrica calibrada del canal. Se invoca ante "dame títulos", "puntúa este título", "revisa mi miniatura", "mejora el packaging".
+description: A video's titles, thumbnail and description, scored with the channel's calibrated rubric. Triggered by "give me titles", "score this title", "review my thumbnail", "improve the packaging".
 ---
 
-# Packaging: títulos y miniaturas
+# Packaging: titles and thumbnails
 
-## CUÁNDO
+## WHEN
 
-Generar o evaluar títulos, diagnosticar una miniatura, revisar el conjunto
-título+miniatura, escribir descripción y etiquetas.
+Generating or evaluating titles, diagnosing a thumbnail, reviewing the
+title+thumbnail pair, writing the description and tags.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Puntuar los títulos — obligatorio, nunca se opina antes**
+1. **Score the titles — mandatory, never opine first**
    `python3 tools/score_titles.py --title "A || B || C"`
-   Devuelve 0-100 con desglose por eje y la memoria que justifica cada punto.
-   Es `heuristic`: **hay que declarar que es rúbrica propia, no predicción de
-   CTR**, y que no está validada mientras no se ingiera el CSV de Studio.
+   Returns 0-100 with a per-axis breakdown and the memory justifying each
+   point. It is `heuristic`: **you must declare it is an own rubric, not a CTR
+   prediction**, and that it is unvalidated until the Studio CSV is ingested.
 
-1b. **Dos reglas sobre el número, antes de mirarlo**
+1b. **Two rules about the number, before you look at it**
 
-   **No perseguir el score.** Si un título honesto puntúa 78 y uno que exagera
-   puntúa 95, se recomienda el de 78 y se dice por qué. La rúbrica mide
-   parecido con lo que funcionó, no si el título es cierto; un clickbait bien
-   construido puntúa alto y hace daño al canal.
+   **Do not chase the score.** If an honest title scores 78 and an exaggerated
+   one scores 95, recommend the 78 and say why. The rubric measures resemblance
+   to what worked, not whether the title is true; well-built clickbait scores
+   high and damages the channel.
 
-   **Los scores solo se comparan dentro de la misma llamada.** Se puntúa el
-   título actual JUNTO a las candidatas, en una sola ejecución
-   (`--title "actual || A || B || C"`). Comparar el número de hoy con el de
-   otra sesión no es válido. Y solo se propone una candidata que supere
-   **estrictamente** a la actual: empatar no es mejorar.
+   **Scores are only comparable within the same call.** Score the current title
+   ALONGSIDE the candidates, in one run
+   (`--title "current || A || B || C"`). Comparing today's number with another
+   session's is not valid. And only propose a candidate that beats the current
+   one **strictly**: a tie is not an improvement.
 
-2. **Respaldo de demanda**
+2. **Demand backing**
    ```
-   python3 tools/yt_search_terms.py --days 90        # demanda REAL, primero
-   python3 tools/kw_research.py --kw "candidata 1; candidata 2"
+   python3 tools/yt_search_terms.py --days 90        # REAL demand, first
+   python3 tools/kw_research.py --kw "candidate 1; candidate 2"
    ```
-   El primero manda: son términos con los que la gente ya llegó al canal. El
-   segundo es proxy y solo ordena candidatas entre sí.
+   The first one wins: those are terms people already reached the channel
+   with. The second is a proxy and only ranks candidates against each other.
 
-3. **Referencias reales, no intuición**
+3. **Real references, not intuition**
    `python3 tools/yt_outliers_channels.py --min-ratio 2.5`
-   Se mira cómo titulan los outliers vivos del nicho ahora mismo.
+   Look at how the niche's live outliers are titling right now.
 
-4. **La miniatura**
+4. **The thumbnail**
    ```
    python3 tools/yt_thumbnails.py --video ID
-   python3 tools/score_thumbnail.py --video ID --titulo "el título elegido"
+   python3 tools/score_thumbnail.py --video ID --title "the chosen title"
    ```
-   `score_thumbnail` solo puntúa el 40% automático. **El 60% restante lo
-   devuelve como preguntas sin responder, y hay que responderlas abriendo el
-   fichero JPG con visión.** Inventar ese 60% es el fallo que la herramienta
-   está diseñada para impedir.
+   `score_thumbnail` only scores the automatic 40%. **It returns the other 60%
+   as unanswered questions, and you must answer them by opening the JPG with
+   vision.** Inventing that 60% is the failure this tool is designed to
+   prevent.
 
-5. **Si hay que CREAR la miniatura, no solo juzgarla**
-   Esta skill puntúa lo que existe. Para generarla:
-   `image-generation-core` (reglas base) + `thumbnail-best-practices` (diseño),
-   y `likeness-preservation` si aparece la cara. Si hay una referencia
-   concreta que imitar, `thumbnail-inspiration`. Una imagen generada sale con
-   `source: generated`: **no se puede puntuar y presentar el score como
-   pronóstico de CTR**.
+5. **If the thumbnail has to be CREATED, not just judged**
+   This skill scores what exists. To generate it: `image-generation-core`
+   (base rules) + `thumbnail-best-practices` (design), and
+   `likeness-preservation` if a face appears. If there is a specific reference
+   to work from, `thumbnail-inspiration`. A generated image comes back as
+   `source: generated`: **you cannot score it and then present that score as a
+   CTR forecast**.
 
-6. **Contraste anti-redundancia — el paso que más se salta**
-   Comprobar que título y miniatura no comunican el mismo concepto. Si el número
-   duro va en el título, la miniatura muestra el resultado visual.
-   Si existe `memoria/sop/niche_bend_sop.md`, sus lecciones mandan sobre
-   cualquier regla general.
+6. **Anti-redundancy contrast — the step most often skipped**
+   Check that title and thumbnail are not communicating the same concept. If
+   the hard number is in the title, the thumbnail shows the visual result. If
+   `memory/sop/niche_bend_sop.md` exists, its lessons outrank any general
+   rule.
 
-## FUENTES
+## SOURCES
 
-Paso 1 y 2b `heuristic` — declararlo siempre. Paso 2a `youtube_api`.
-Pasos 3 y 4a `derived`. Paso 4b mixto: `derived` en el pixel, juicio del agente
-en el resto.
+Steps 1 and 2b `heuristic` — always declare it. Step 2a `youtube_api`.
+Steps 3 and 4a `derived`. Step 4b is mixed: `derived` in the pixels, the
+agent's judgement for the rest.
 
-## SALIDA
+## OUTPUT
 
-1. Los títulos ordenados por score, con el desglose por eje.
-2. Una línea por título explicando qué eje lo sube o lo baja, citando la memoria.
-3. El diagnóstico de miniatura con los ejes de juicio ya respondidos tras mirar
-   la imagen.
-4. El contraste título-miniatura: qué ángulo cubre cada uno.
+1. The titles ranked by score, with the per-axis breakdown.
+2. One line per title explaining which axis lifts or sinks it, citing the
+   memory.
+3. The thumbnail diagnosis with the judgement axes already answered after
+   looking at the image.
+4. The title-thumbnail contrast: which angle each one covers.
 
-Nunca se dice que un título "va a funcionar". Se dice a qué vídeo real se parece
-y por qué.
+Never say a title "is going to work". Say which real video it resembles, and
+why.

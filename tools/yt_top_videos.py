@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Vídeos propios ordenados por vistas, con retención media real."""
+"""Your videos ranked by views, with real mean retention."""
 from lib import base  # noqa: F401
 from lib import cache, yt_data
 from lib import yt_analytics as ya
-from lib.contrato import SOURCE_API, emitir, main, parser, sobre
+from lib.contract import SOURCE_API, emit, main, parser, envelope
 
 TOOL = "yt_top_videos"
 
@@ -13,26 +13,26 @@ def run():
     p.add_argument("--days", type=int, default=90)
     p.add_argument("--limit", type=int, default=25)
     p.add_argument("--by-retention", action="store_true",
-                   help="reordena por averageViewPercentage en vez de vistas")
+                   help="rank by averageViewPercentage instead of views")
     args = p.parse_args()
 
     def fetch():
-        filas = ya.top_videos(args.days, args.limit)
+        rows = ya.top_videos(args.days, args.limit)
         titulos = {s["video_id"]: s["title"]
-                   for s in yt_data.stats_videos([f["video"] for f in filas])}
-        for f in filas:
+                   for s in yt_data.video_stats([f["video"] for f in rows])}
+        for f in rows:
             f["title"] = titulos.get(f["video"], "?")
-        return filas
+        return rows
 
-    datos, hit = cache.memo("analitica_propia", f"{TOOL}:{args.days}:{args.limit}",
+    payload_data, hit = cache.memo("own_analytics", f"{TOOL}:{args.days}:{args.limit}",
                             fetch, not args.no_cache)
     if args.by_retention:
-        datos = sorted(datos, key=lambda d: d.get("averageViewPercentage", 0), reverse=True)
+        payload_data = sorted(payload_data, key=lambda d: d.get("averageViewPercentage", 0), reverse=True)
 
-    env = sobre(TOOL, SOURCE_API, datos,
+    env = envelope(TOOL, SOURCE_API, payload_data,
                 {"days": args.days, "limit": args.limit,
-                 "orden": "retencion" if args.by_retention else "vistas"}, hit)
-    emitir(env, args, lambda e: base.cabecera_md(e) + "\n" + base.tabla_md(
+                 "order": "retention" if args.by_retention else "views"}, hit)
+    emit(env, args, lambda e: base.md_header(e) + "\n" + base.md_table(
         e["data"], ["video", "title", "views", "averageViewPercentage",
                     "averageViewDuration", "subscribersGained"]))
 

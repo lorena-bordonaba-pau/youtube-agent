@@ -1,39 +1,40 @@
 ---
 name: monetizacion
-description: Umbrales del Programa de Socios, proyección de suscriptores y horas de visualización. Se invoca ante "cuándo monetizo", "cuánto me falta para YPP", "voy a llegar a los requisitos".
+description: Partner Programme thresholds, subscriber and watch-hour projection. Triggered by "when do I monetise", "how far am I from YPP", "will I hit the requirements".
 ---
 
-# Monetización
+# Monetisation
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Estado frente a los umbrales**
+1. **Status against the thresholds**
    `python3 tools/yt_channel_stats.py`
 
-2. **Tendencia real, no deseo**
+2. **Real trend, not hope**
    ```
    python3 tools/yt_analytics.py --days 90
    python3 tools/yt_report.py --days 28
    ```
-   De ahí salen subs netos y minutos vistos por ventana. La proyección se hace
-   sobre la tendencia medida, no sobre la mejor semana.
+   That gives net subs and minutes watched per window. The projection is built
+   on the measured trend, not on the best week.
 
-3. Proyectar. Toda proyección es `derived` y se declara como tal, con el
-   supuesto a la vista ("al ritmo de los últimos 90 días").
+3. Project. Every projection is `derived` and is declared as such, with the
+   assumption visible ("at the pace of the last 90 days").
 
-## FUENTES
+## SOURCES
 
-`youtube_api` para el estado, `derived` para la proyección.
+`youtube_api` for the status, `derived` for the projection.
 
-## LÍMITES DE ESTA SKILL
+## THIS SKILL'S LIMITS
 
-- **No hay datos de ingresos.** El scope monetario está concedido pero ninguna
-  herramienta pide métricas de revenue. No se estiman RPM ni ingresos.
-- Los umbrales del Programa de Socios los fija YouTube y cambian por país y por
-  tipo de contenido. Si hay duda sobre un requisito concreto, se dice y se
-  apunta a la documentación oficial en vez de afirmarlo de memoria.
+- **There is no revenue data.** The monetary scope is granted but no tool
+  requests revenue metrics. RPM and earnings are not estimated.
+- Partner Programme thresholds are set by YouTube and change by country and
+  content type. If there is doubt about a specific requirement, say so and
+  point at the official documentation rather than asserting it from memory.
 
-## SALIDA
+## OUTPUT
 
-Estado actual frente a cada umbral, ritmo medido, proyección con su supuesto
-declarado, y la palanca de mayor impacto según los datos del canal.
+Current status against each threshold, the measured pace, a projection with its
+assumption declared, and the highest-impact lever according to the channel's
+data.

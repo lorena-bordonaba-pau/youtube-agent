@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""Estadísticas públicas de uno o varios vídeos (cualquier canal)."""
+"""Public stats for one or more videos (any channel)."""
 from lib import base  # noqa: F401
 from lib import cache, yt_data
-from lib.contrato import SOURCE_API, emitir, main, parser, sobre
+from lib.contract import SOURCE_API, emit, main, parser, envelope
 
 TOOL = "yt_video_stats"
 
 
 def run():
     p = parser(__doc__)
-    p.add_argument("--video", required=True, help="video_id, o varios separados por coma")
+    p.add_argument("--video", required=True, help="video_id, or several separated by commas")
     args = p.parse_args()
 
     ids = [v.strip() for v in args.video.split(",") if v.strip()]
-    datos, hit = cache.memo("canal_ajeno", f"{TOOL}:{','.join(sorted(ids))}",
-                            lambda: yt_data.stats_videos(ids), not args.no_cache)
-    env = sobre(TOOL, SOURCE_API, datos, {"video": ids}, hit)
-    emitir(env, args, lambda e: base.cabecera_md(e) + "\n" + base.tabla_md(
+    payload_data, hit = cache.memo("other_channel", f"{TOOL}:{','.join(sorted(ids))}",
+                            lambda: yt_data.video_stats(ids), not args.no_cache)
+    env = envelope(TOOL, SOURCE_API, payload_data, {"video": ids}, hit)
+    emit(env, args, lambda e: base.md_header(e) + "\n" + base.md_table(
         e["data"], ["video_id", "title", "views", "likes", "comments", "duration"]))
 
 

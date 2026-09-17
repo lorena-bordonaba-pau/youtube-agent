@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Informe completo del canal y snapshot en el histórico.
+"""Full channel report, plus a snapshot appended to the history.
 
-Cada ejecución anexa una línea a datos/historico/snapshots.jsonl, lo que permite
-comparar entre fechas. El toolkit anterior generaba Markdown suelto y la
-comparación entre snapshots la hacía una persona a mano.
+Every run appends a line to data/history/snapshots.jsonl, which is what
+makes comparing across dates possible. Without that history, "is it going up?"
+has no answer the tools can give.
 """
 import json
 from datetime import datetime
@@ -12,18 +12,18 @@ from pathlib import Path
 from lib import base  # noqa: F401
 from lib import cache, yt_data
 from lib import yt_analytics as ya
-from lib.contrato import DATOS_DIR, SOURCE_API, emitir, main, parser, sobre
-from yt_traffic import ETIQUETAS
+from lib.contract import DATA_DIR, SOURCE_API, emit, main, parser, envelope
+from yt_traffic import LABELS
 
 TOOL = "yt_report"
-SNAPSHOTS = DATOS_DIR / "historico" / "snapshots.jsonl"
+SNAPSHOTS = DATA_DIR / "history" / "snapshots.jsonl"
 
 
 def snapshot_previo() -> dict | None:
     if not SNAPSHOTS.exists():
         return None
-    lineas = [l for l in SNAPSHOTS.read_text(encoding="utf-8").splitlines() if l.strip()]
-    return json.loads(lineas[-1]) if lineas else None
+    lines = [l for l in SNAPSHOTS.read_text(encoding="utf-8").splitlines() if l.strip()]
+    return json.loads(lines[-1]) if lines else None
 
 
 def run():
@@ -31,56 +31,56 @@ def run():
     p.add_argument("--days", type=int, default=28)
     p.add_argument("--top-days", type=int, default=90)
     p.add_argument("--no-snapshot", action="store_true",
-                   help="no anexa al histórico")
+                   help="do not append to the history")
     args = p.parse_args()
 
-    usar_cache = not args.no_cache
+    use_cache = not args.no_cache
 
-    def f(nombre, fn):
-        return cache.memo("analitica_propia", f"{TOOL}:{nombre}:{args.days}:{args.top_days}",
-                          fn, usar_cache)[0]
+    def f(name, fn):
+        return cache.memo("own_analytics", f"{TOOL}:{name}:{args.days}:{args.top_days}",
+                          fn, use_cache)[0]
 
-    info = f("info", lambda: yt_data.canal_info())
-    dias = f("dias", lambda: ya.canal(args.days))
+    info = f("info", lambda: yt_data.channel_info())
+    days = f("days", lambda: ya.channel(args.days))
     top = f("top", lambda: ya.top_videos(args.top_days, 20))
-    trafico = f("trafico", lambda: ya.trafico(args.days))
-    demo = f("demo", lambda: ya.demografia(args.top_days))
-    geo = f("geo", lambda: ya.geografia(args.top_days, 10))
+    traffic = f("traffic", lambda: ya.traffic(args.days))
+    demo = f("demo", lambda: ya.demographics(args.top_days))
+    geo = f("geo", lambda: ya.geography(args.top_days, 10))
 
     titulos = {s["video_id"]: s["title"]
-               for s in yt_data.stats_videos([t["video"] for t in top])}
+               for s in yt_data.video_stats([t["video"] for t in top])}
     for t in top:
         t["title"] = titulos.get(t["video"], "?")
 
-    vistas = sum(d["views"] for d in dias)
-    minutos = sum(d["estimatedMinutesWatched"] for d in dias)
-    subs_netos = sum(d["subscribersGained"] - d["subscribersLost"] for d in dias)
-    likes = sum(d["likes"] for d in dias)
-    comentarios = sum(d["comments"] for d in dias)
+    views = sum(d["views"] for d in days)
+    minutes = sum(d["estimatedMinutesWatched"] for d in days)
+    net_subs = sum(d["subscribersGained"] - d["subscribersLost"] for d in days)
+    likes = sum(d["likes"] for d in days)
+    comentarios = sum(d["comments"] for d in days)
 
-    total_trafico = sum(t["views"] for t in trafico) or 1
-    for t in trafico:
-        t["fuente"] = ETIQUETAS.get(t["insightTrafficSourceType"],
+    total_trafico = sum(t["views"] for t in traffic) or 1
+    for t in traffic:
+        t["fuente"] = LABELS.get(t["insightTrafficSourceType"],
                                     t["insightTrafficSourceType"])
         t["pct"] = round(t["views"] / total_trafico * 100, 1)
 
-    # Concentración: cuánto del tráfico depende de los dos vídeos principales.
+    # Concentration: how much of the traffic rests on the top two videos.
     top_vistas = sum(t["views"] for t in top) or 1
     dependencia = round(sum(t["views"] for t in top[:2]) / top_vistas * 100, 1)
 
-    resumen = {
-        "fecha": datetime.now().strftime("%Y-%m-%d"),
-        "canal": info["title"],
+    summary = {
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "channel": info["title"],
         "subs": info["subscribers"],
         "total_videos": info["total_videos"],
-        "ventana_dias": args.days,
-        "vistas": vistas,
-        "minutos_vistos": minutos,
-        "subs_netos": subs_netos,
-        "likes_pct": round(likes / vistas * 100, 2) if vistas else 0,
-        "comentarios_pct": round(comentarios / vistas * 100, 2) if vistas else 0,
+        "window_days": args.days,
+        "views": views,
+        "minutes_watched": minutes,
+        "net_subs": net_subs,
+        "likes_pct": round(likes / views * 100, 2) if views else 0,
+        "comments_pct": round(comentarios / views * 100, 2) if views else 0,
         "dependencia_top2_pct": dependencia,
-        "retencion_media_top": round(
+        "top_mean_retention": round(
             sum(t.get("averageViewPercentage", 0) for t in top) / len(top), 1)
         if top else 0,
     }
@@ -88,56 +88,56 @@ def run():
     previo = snapshot_previo()
     delta = None
     if previo:
-        delta = {k: round(resumen[k] - previo[k], 2)
-                 for k in ("subs", "vistas", "subs_netos", "dependencia_top2_pct")
+        delta = {k: round(summary[k] - previo[k], 2)
+                 for k in ("subs", "views", "net_subs", "dependencia_top2_pct")
                  if isinstance(previo.get(k), (int, float))}
-        delta["desde"] = previo["fecha"]
+        delta["desde"] = previo["date"]
 
     if not args.no_snapshot:
         SNAPSHOTS.parent.mkdir(parents=True, exist_ok=True)
         with open(SNAPSHOTS, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps(resumen, ensure_ascii=False) + "\n")
+            fh.write(json.dumps(summary, ensure_ascii=False) + "\n")
 
-    env = sobre(TOOL, SOURCE_API, {
-        "resumen": resumen,
-        "cambio_desde_ultimo_snapshot": delta,
+    env = envelope(TOOL, SOURCE_API, {
+        "summary": summary,
+        "change_since_last_snapshot": delta,
         "top_videos": top,
-        "retencion_excepcional": [t for t in top
+        "exceptional_retention": [t for t in top
                                   if t.get("averageViewPercentage", 0) > 40],
-        "trafico": trafico,
-        "demografia": demo[:8],
-        "geografia": geo,
-    }, {"days": args.days, "top_days": args.top_days}, False, notas=[
-        "Los agregados (%, netos, dependencia) son calculados (source: derived).",
-        "NO incluye CTR ni impresiones: no existen en la API publica. "
-        "Para eso hace falta ingest_studio_csv.py.",
+        "traffic": traffic,
+        "demographics": demo[:8],
+        "geography": geo,
+    }, {"days": args.days, "top_days": args.top_days}, False, notes=[
+        "Aggregates (%, net, concentration) are computed (source: derived).",
+        "Does NOT include CTR or impressions: they are not in the public API. "
+        "For those you need ingest_studio_csv.py.",
     ])
 
     def md(e):
         d = e["data"]
-        r = d["resumen"]
-        out = [base.cabecera_md(e),
-               f"\n# {r['canal']} — {r['fecha']}\n",
+        r = d["summary"]
+        out = [base.md_header(e),
+               f"\n# {r['channel']} — {r['date']}\n",
                f"{yt_data.fmt(r['subs'])} subs · {r['total_videos']} videos\n",
                "\n## Estado general\n",
-               base.tabla_md([{"metrica": k, "valor": v} for k, v in r.items()]),
+               base.md_table([{"metric": k, "value": v} for k, v in r.items()]),
                ]
-        if d["cambio_desde_ultimo_snapshot"]:
-            out += ["\n## Cambio desde el snapshot anterior\n",
-                    base.tabla_md([{"metrica": k, "delta": v} for k, v in
-                                   d["cambio_desde_ultimo_snapshot"].items()])]
+        if d["change_since_last_snapshot"]:
+            out += ["\n## Change since the previous snapshot\n",
+                    base.md_table([{"metric": k, "delta": v} for k, v in
+                                   d["change_since_last_snapshot"].items()])]
         out += ["\n## Top videos\n",
-                base.tabla_md(d["top_videos"][:10],
+                base.md_table(d["top_videos"][:10],
                               ["title", "views", "averageViewPercentage",
                                "subscribersGained"]),
                 "\n## Trafico\n",
-                base.tabla_md(d["trafico"], ["fuente", "views", "pct"]),
-                "\n## Audiencia\n", base.tabla_md(d["demografia"]),
+                base.md_table(d["traffic"], ["fuente", "views", "pct"]),
+                "\n## Audiencia\n", base.md_table(d["demographics"]),
                 "\n## Geografia\n",
-                base.tabla_md(d["geografia"], ["country", "views", "viewsPercent"])]
+                base.md_table(d["geography"], ["country", "views", "viewsPercent"])]
         return "\n".join(out)
 
-    emitir(env, args, md)
+    emit(env, args, md)
 
 
 if __name__ == "__main__":

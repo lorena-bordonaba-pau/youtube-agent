@@ -1,16 +1,17 @@
-"""Adaptador de generación de imagen, agnóstico al proveedor.
+"""Image generation adapter, agnostic to the provider.
 
-Ninguna skill nombra un proveedor. Piden una imagen; este módulo decide si la
-pide a fal.ai por REST o si devuelve una directiva para que el agente llame a
-un MCP. Cambiar de proveedor se hace en `config/image_providers.json`.
+No skill ever names a provider. They ask for an image; this module decides
+whether to request it from fal.ai over REST or to hand back a directive for the
+agent to call an MCP. You switch providers in `config/image_providers.json`.
 
-Dos reglas duras:
+Two hard rules:
 
-1. **No se inventa un slug de modelo.** Si el modelo pedido está a `null` en la
-   configuración, la tool falla con instrucciones en vez de adivinar. Un slug
-   inventado gasta créditos y devuelve 404, o peor, genera con otro modelo.
-2. **Una imagen generada nunca es un dato.** Todo lo que sale de aquí viaja con
-   `source: generated`, que el contrato traduce a "artefacto, no medición".
+1. **Model slugs are never invented.** If the requested model is `null` in the
+   config, the tool fails with instructions instead of guessing. A made-up slug
+   burns credits and returns 404 — or worse, generates with a different model.
+2. **A generated image is never data.** Everything leaving here carries
+   `source: generated`, which the contract translates to "artefact, not a
+   measurement".
 """
 from __future__ import annotations
 
@@ -22,15 +23,15 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import base  # noqa: F401 — al importarlo se carga el .env
-from .contrato import (CONFIG_DIR, DATOS_DIR, EXIT_AUTH, EXIT_NO_DATA, ToolError)
+from . import base  # noqa: F401 — importing it loads .env
+from .contract import (CONFIG_DIR, DATA_DIR, EXIT_AUTH, EXIT_NO_DATA, ToolError)
 
 CONFIG = CONFIG_DIR / "image_providers.json"
-SALIDA = DATOS_DIR / "imagenes"
+OUTPUT_DIR = DATA_DIR / "images"
 
-# Reglas de formato que se anteponen al prompt. No son estilo: son requisitos
-# técnicos del sitio donde va la imagen, y si no van en el prompt el modelo los
-# ignora. La zona segura del banner es la que más se olvida.
+# Format rules prepended to the prompt. Not style: technical requirements of
+# the place the image is going, and if they are not in the prompt the model
+# ignores them. The banner's mobile safe zone is the one people forget most.
 SPEC = {
     "thumbnail": (
         "Wide 16:9 horizontal image for a YouTube video thumbnail. "
@@ -55,8 +56,8 @@ SPEC = {
         "band. Upper and lower portions must contain ONLY simple backgrounds "
         "(gradients, blurs, patterns, solid colours)."
     ),
-    # `preserve` no impone forma: se usa al EDITAR, donde cambiar la proporción
-    # del original nunca es lo que se ha pedido salvo que se diga.
+    # `preserve` imposes no shape: used when EDITING, where changing the
+    # original's aspect ratio is never what was asked unless it is said.
     "preserve": (
         "Keep the exact same dimensions and aspect ratio as the source image. "
         "Do not reframe, do not crop, do not letterbox."
@@ -67,466 +68,464 @@ SPEC = {
     ),
 }
 
-# Se antepone a cualquier prompt que lleve una referencia de likeness. Es la
-# frase que evita que el modelo devuelva "alguien que se parece".
+# Prepended to any prompt carrying a likeness reference. This is the sentence
+# that stops the model returning "someone who looks a bit like them".
 LIKENESS = (
     "Use the EXACT facial identity and likeness of the person in "
-    "{etiqueta} — this must be recognisably the same individual, not merely "
+    "{label} — this must be recognisably the same individual, not merely "
     "someone who looks similar and not an AI-generated lookalike. Do not alter "
     "their facial features. Never crop at the neck: include the upper body."
 )
 
 
-def cargar() -> dict:
+def load() -> dict:
     if not CONFIG.exists():
         raise ToolError(f"Falta {CONFIG}", EXIT_NO_DATA)
     with open(CONFIG, encoding="utf-8") as f:
         return json.load(f)
 
 
-def proveedor(cfg: dict, pedido: str | None = None) -> str:
-    p = pedido or cfg.get("provider", "fal")
+def provider_name(cfg: dict, requested: str | None = None) -> str:
+    p = requested or cfg.get("provider", "fal")
     if p not in ("fal", "mcp"):
         raise ToolError(f"Proveedor desconocido: {p}", EXIT_NO_DATA,
-                        "Validos: fal, mcp. Se configura en image_providers.json")
+                        "Valid: fal, mcp. Set it in image_providers.json")
     return p
 
 
-def modelo(cfg: dict, accion: str, pedido: str | None = None) -> str:
-    """Resuelve el slug del modelo. Falla en vez de inventarlo."""
-    if pedido:
-        return pedido
-    modelos = cfg["fal"]["modelos"]
-    slug = modelos.get(accion)
+def model_slug(cfg: dict, action: str, requested: str | None = None) -> str:
+    """Resolve the model slug. Fails rather than inventing one."""
+    if requested:
+        return requested
+    models = cfg["fal"]["models"]
+    slug = models.get(action)
     if slug:
         return slug
-    alt = modelos.get(f"{accion}_gpt")
+    alt = models.get(f"{action}_gpt")
     if alt:
         return alt
     raise ToolError(
-        f"No hay slug de modelo para la accion '{accion}'.",
+        f"No model slug configured for action '{action}'.",
         EXIT_NO_DATA,
-        "Busca el modelo en https://fal.ai/explore/models y escribe su slug en "
-        f"config/image_providers.json (fal.modelos.{accion}), o pasa --model. "
-        "Esta tool no adivina slugs a proposito: uno inventado gasta creditos.",
+        "Find the model at https://fal.ai/explore/models and write its slug into "
+        f"config/image_providers.json (fal.models.{action}), o pasa --model. "
+        "This tool refuses to guess slugs on purpose: a made-up one burns credits.",
     )
 
 
-# Avisos que la tool acumula para que viajen dentro del sobre, no a un log.
-AVISOS: list[str] = []
+# Warnings the tool accumulates so they travel inside the envelope, not a log.
+WARNINGS: list[str] = []
 
 
-def clave_fal(cfg: dict) -> str:
-    """Devuelve la clave de fal, corrigiendo el pegado doble.
+def fal_key(cfg: dict) -> str:
+    """Return the fal key, correcting a double paste.
 
-    `set-fal-key.sh` pide la clave con `read -rs`, que oculta lo escrito: un
-    doble pegado no se ve y deja la clave escrita dos veces, lo que da 401. Se
-    detecta solo el caso exacto —longitud par y las dos mitades idénticas— y se
-    usa la mitad, dejando un aviso visible. No se corrige nada más: una clave
-    simplemente mal no se adivina.
+    Key prompts usually hide what you type, so pasting twice is invisible and
+    leaves the key written twice, which returns 401. Only the exact case is
+    detected — even length and two identical halves — and the first half is
+    used, leaving a visible warning. Nothing else is corrected: a key that is
+    simply wrong is never guessed at.
     """
     env = cfg["fal"].get("key_env", "FAL_KEY")
     key = os.environ.get(env, "").strip()
     if not key:
         raise ToolError(
-            f"No hay {env} en el entorno.",
+            f"{env} is not set in the environment.",
             EXIT_AUTH,
-            "Ejecuta ~/.claude/scripts/set-fal-key.sh y abre una sesion nueva. "
-            "Comprobar con ~/.claude/scripts/check-fal-key.sh",
+            "Set it in your .env (see .env.example) and start a new session. "
+            "Get a key at https://fal.ai/dashboard/keys",
         )
-    mitad = len(key) // 2
-    if len(key) % 2 == 0 and mitad > 8 and key[:mitad] == key[mitad:]:
-        AVISOS.append(
-            f"{env} esta guardada DOS VECES ({len(key)} caracteres en vez de "
-            f"{mitad}). Se ha usado la mitad para que la llamada funcione, pero "
+    half = len(key) // 2
+    if len(key) % 2 == 0 and half > 8 and key[:half] == key[half:]:
+        WARNINGS.append(
+            f"{env} is stored TWICE ({len(key)} characters instead of "
+            f"{half}). The first half was used so the call works, but "
             "conviene arreglarla: ejecuta ~/.claude/scripts/set-fal-key.sh y "
-            "pega la clave UNA sola vez (el campo esta oculto, por eso el doble "
-            "pegado no se ve).")
-        return key[:mitad]
+            "paste the key ONCE (the field is hidden, which is why a double "
+            "paste is invisible).")
+        return key[:half]
     return key
 
 
-def _peticion(url: str, key: str, datos: bytes | None = None,
-              content_type: str = "application/json", metodo: str | None = None):
-    req = urllib.request.Request(url, data=datos, method=metodo)
+def _request(url: str, key: str, payload_data: bytes | None = None,
+              content_type: str = "application/json", method: str | None = None):
+    req = urllib.request.Request(url, data=payload_data, method=method)
     req.add_header("Authorization", f"Key {key}")
-    if datos is not None:
+    if payload_data is not None:
         req.add_header("Content-Type", content_type)
     try:
         with urllib.request.urlopen(req, timeout=120) as r:
-            cuerpo = r.read()
+            body = r.read()
             if r.headers.get("Content-Type", "").startswith("application/json"):
-                return json.loads(cuerpo)
-            return cuerpo
+                return json.loads(body)
+            return body
     except urllib.error.HTTPError as e:
-        detalle = e.read().decode("utf-8", "replace")[:500]
-        raise ToolError(f"fal.ai devolvio {e.code}: {detalle}", EXIT_NO_DATA,
-                        "Si es 404, el slug del modelo no existe: verificalo en "
+        detail = e.read().decode("utf-8", "replace")[:500]
+        raise ToolError(f"fal.ai devolvio {e.code}: {detail}", EXIT_NO_DATA,
+                        "If it is a 404 the model slug does not exist: check it at "
                         "https://fal.ai/explore/models") from e
 
 
-def subir(ruta: Path, cfg: dict, key: str) -> str:
-    """Sube un fichero local a fal storage y devuelve su URL pública.
+def upload_file(path: Path, cfg: dict, key: str) -> str:
+    """Upload a local file to fal storage and return its public URL.
 
-    Son **dos pasos**, no uno: se pide una URL firmada a `/storage/upload/initiate`
-    y luego se hace `PUT` de los bytes contra ella. Verificado el 2026-09-17; la
-    versión anterior hacía un POST directo a `rest.fal.run`, un host que ni
-    siquiera resuelve por DNS.
+    It is **two steps**, not one: ask `/storage/upload/initiate` for a signed
+    URL, then `PUT` the bytes to it. Verified 2026-09-17; an earlier version
+    POSTed straight to `rest.fal.run`, a host that does not even resolve.
     """
-    tipo = mimetypes.guess_type(str(ruta))[0] or "application/octet-stream"
-    inicio = _peticion(
+    kind = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+    start = _request(
         cfg["fal"]["upload_initiate_url"], key,
-        json.dumps({"content_type": tipo, "file_name": ruta.name}).encode("utf-8"))
-    if not isinstance(inicio, dict) or not inicio.get("upload_url"):
-        raise ToolError(f"fal storage no devolvio upload_url para {ruta}",
+        json.dumps({"content_type": kind, "file_name": path.name}).encode("utf-8"))
+    if not isinstance(start, dict) or not start.get("upload_url"):
+        raise ToolError(f"fal storage returned no upload_url for {path}",
                         EXIT_NO_DATA)
 
-    req = urllib.request.Request(inicio["upload_url"], data=ruta.read_bytes(),
+    req = urllib.request.Request(start["upload_url"], data=path.read_bytes(),
                                  method="PUT")
-    req.add_header("Content-Type", tipo)
+    req.add_header("Content-Type", kind)
     try:
         with urllib.request.urlopen(req, timeout=180) as r:
             if r.status not in (200, 201, 204):
-                raise ToolError(f"La subida devolvio {r.status}", EXIT_NO_DATA)
+                raise ToolError(f"The upload returned {r.status}", EXIT_NO_DATA)
     except urllib.error.HTTPError as e:
-        raise ToolError(f"Fallo al subir {ruta.name}: {e.code}", EXIT_NO_DATA) from e
+        raise ToolError(f"Failed to upload {path.name}: {e.code}", EXIT_NO_DATA) from e
 
-    return inicio["file_url"]
+    return start["file_url"]
 
 
-def referencia_url(ref: str, cfg: dict, key: str) -> str:
-    """Una referencia puede ser URL, fichero local o video_id de YouTube."""
+def reference_url(ref: str, cfg: dict, key: str) -> str:
+    """A reference can be a URL, a local file, or a YouTube video_id."""
     if ref.startswith(("http://", "https://")):
         return ref
     p = Path(ref)
     if p.exists():
-        return subir(p, cfg, key)
+        return upload_file(p, cfg, key)
     if len(ref) == 11 and "/" not in ref:   # parece un video_id
         return f"https://i.ytimg.com/vi/{ref}/maxresdefault.jpg"
-    raise ToolError(f"Referencia no resoluble: {ref}", EXIT_NO_DATA,
-                    "Usa una ruta local existente, una URL, o un video_id.")
+    raise ToolError(f"Reference could not be resolved: {ref}", EXIT_NO_DATA,
+                    "Use an existing local path, a URL, or a video_id.")
 
 
-def encolar(slug: str, payload: dict, cfg: dict, key: str) -> dict:
-    """Encola el trabajo, espera a que termine y devuelve la respuesta."""
+def enqueue(slug: str, payload: dict, cfg: dict, key: str) -> dict:
+    """Enqueue the job, wait for it to finish, and return the response."""
     base = cfg["fal"]["queue_base"].rstrip("/")
-    envio = _peticion(f"{base}/{slug}", key,
+    submission = _request(f"{base}/{slug}", key,
                       json.dumps(payload).encode("utf-8"))
-    rid = envio.get("request_id")
+    rid = submission.get("request_id")
     if not rid:
-        raise ToolError(f"fal.ai no devolvio request_id: {envio}", EXIT_NO_DATA)
+        raise ToolError(f"fal.ai returned no request_id: {submission}", EXIT_NO_DATA)
 
-    estado_url = envio.get("status_url") or f"{base}/{slug}/requests/{rid}/status"
-    resp_url = envio.get("response_url") or f"{base}/{slug}/requests/{rid}"
+    status_url = submission.get("status_url") or f"{base}/{slug}/requests/{rid}/status"
+    resp_url = submission.get("response_url") or f"{base}/{slug}/requests/{rid}"
 
-    limite = time.time() + cfg["fal"].get("timeout_s", 300)
-    espera = cfg["fal"].get("poll_s", 3)
-    while time.time() < limite:
-        est = _peticion(estado_url, key)
-        situacion = est.get("status") if isinstance(est, dict) else None
-        if situacion == "COMPLETED":
-            return _peticion(resp_url, key)
-        if situacion in ("FAILED", "CANCELLED"):
-            raise ToolError(f"El trabajo de fal.ai termino en {situacion}: {est}",
+    limit = time.time() + cfg["fal"].get("timeout_s", 300)
+    wait = cfg["fal"].get("poll_s", 3)
+    while time.time() < limit:
+        st = _request(status_url, key)
+        state = st.get("status") if isinstance(st, dict) else None
+        if state == "COMPLETED":
+            return _request(resp_url, key)
+        if state in ("FAILED", "CANCELLED"):
+            raise ToolError(f"The fal.ai job ended as {state}: {st}",
                             EXIT_NO_DATA)
-        time.sleep(espera)
+        time.sleep(wait)
     raise ToolError(f"Timeout esperando a fal.ai ({rid})", EXIT_NO_DATA,
-                    f"El trabajo puede seguir vivo. Consulta {estado_url}")
+                    f"The job may still be running. Check {status_url}")
 
 
-def urls_de(respuesta: dict) -> list[str]:
-    """Extrae las URLs de imagen de una respuesta de fal, tolerando esquemas."""
-    salida = []
-    for clave in ("images", "image", "output", "outputs", "data"):
-        val = respuesta.get(clave) if isinstance(respuesta, dict) else None
+def urls_from(response: dict) -> list[str]:
+    """Pull image URLs out of a fal response, tolerating schema differences."""
+    out = []
+    for key in ("images", "image", "output", "outputs", "data"):
+        val = response.get(key) if isinstance(response, dict) else None
         if isinstance(val, dict):
             val = [val]
         if isinstance(val, list):
             for item in val:
                 if isinstance(item, dict) and item.get("url"):
-                    salida.append(item["url"])
+                    out.append(item["url"])
                 elif isinstance(item, str) and item.startswith("http"):
-                    salida.append(item)
+                    out.append(item)
         elif isinstance(val, str) and val.startswith("http"):
-            salida.append(val)
-    return salida
+            out.append(val)
+    return out
 
 
-def descargar(url: str, destino: Path) -> Path:
-    destino.parent.mkdir(parents=True, exist_ok=True)
+def download(url: str, dest: Path) -> Path:
+    dest.parent.mkdir(parents=True, exist_ok=True)
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=120) as r:
-        destino.write_bytes(r.read())
-    return destino
+        dest.write_bytes(r.read())
+    return dest
 
 
-def recortar_bandas(ruta: Path, umbral: int = 18) -> tuple[int, int]:
-    """Quita las bandas negras uniformes de arriba y abajo, si las hay.
+def trim_letterbox(path: Path, threshold: int = 18) -> tuple[int, int]:
+    """Trim uniform black bars from the top and bottom, if there are any.
 
-    `fal-ai/nano-banana` entrega el contenido con letterbox: en la prueba del
-    2026-09-17 devolvio 1344x768 con 80px de banda negra arriba y abajo. Como
-    las bandas son pixeles de la imagen, recortar al ratio no las elimina: hay
-    que detectarlas y quitarlas antes.
+    `fal-ai/nano-banana` letterboxes its output: in the 2026-09-17 test it
+    returned 1344x768 with 80px black bars top and bottom. Because the bars are
+    pixels of the image, cropping to the ratio does not remove them — they have
+    to be detected and trimmed first.
 
-    Devuelve (px recortados arriba, px recortados abajo).
+    Returns (pixels trimmed from the top, pixels trimmed from the bottom).
     """
     from PIL import Image
 
-    with Image.open(ruta) as original:
-        gris = original.convert("L")
-        w, h = gris.size
-        px = gris.load()
+    with Image.open(path) as original:
+        grey = original.convert("L")
+        w, h = grey.size
+        px = grey.load()
 
-        def uniforme(y: int) -> bool:
-            muestras = [px[x, y] for x in range(0, w, max(1, w // 80))]
-            return max(muestras) <= umbral
+        def uniform(y: int) -> bool:
+            samples = [px[x, y] for x in range(0, w, max(1, w // 80))]
+            return max(samples) <= threshold
 
-        arriba = next((y for y in range(h) if not uniforme(y)), 0)
-        abajo = next((y for y in range(h - 1, -1, -1) if not uniforme(y)), h - 1)
-        if arriba == 0 and abajo == h - 1:
+        top_edge = next((y for y in range(h) if not uniform(y)), 0)
+        bottom_edge = next((y for y in range(h - 1, -1, -1) if not uniform(y)), h - 1)
+        if top_edge == 0 and bottom_edge == h - 1:
             return 0, 0
-        # Una banda que se come mas de un tercio de la altura no es letterbox:
-        # es una imagen oscura de verdad. No se toca.
-        if (arriba + (h - 1 - abajo)) > h / 3:
+        # A bar eating more than a third of the height is not letterboxing:
+        # it is a genuinely dark image. Leave it alone.
+        if (top_edge + (h - 1 - bottom_edge)) > h / 3:
             return 0, 0
-        original.crop((0, arriba, w, abajo + 1)).save(ruta)
-    return arriba, h - 1 - abajo
+        original.crop((0, top_edge, w, bottom_edge + 1)).save(path)
+    return top_edge, h - 1 - bottom_edge
 
 
-def verificar_proporcion(ruta: Path, cfg: dict, tipo: str) -> tuple[str, Path | None]:
-    """Comprueba la proporción del fichero y la corrige si el formato la fija.
+def verify_ratio(path: Path, cfg: dict, kind: str) -> tuple[str, Path | None]:
+    """Check the file's aspect ratio and fix it when the format pins one.
 
-    El prompt pide 16:9 y el payload lo pide otra vez, pero el modelo puede
-    devolver otra cosa: `fal-ai/nano-banana` devuelve 1024x1024 pase lo que
-    pase. "Las miniaturas son siempre 16:9" solo es cierto si se verifica en el
-    pixel, así que aquí se mide y, si hace falta, se recorta.
+    The prompt asks for 16:9 and the payload asks again, but the model can
+    return something else: `fal-ai/nano-banana` returns 1024x1024 regardless.
+    "Thumbnails are always 16:9" is only true if it is checked in the pixels,
+    so here it is measured and, when needed, cropped.
 
-    Devuelve (resolución que llegó, ruta corregida o None si no hizo falta).
+    Returns (the resolution that arrived, the corrected path or None).
     """
     from PIL import Image
 
-    with Image.open(ruta) as img:
-        recibido = f"{img.size[0]}x{img.size[1]}"
+    with Image.open(path) as img:
+        received = f"{img.size[0]}x{img.size[1]}"
 
-    sup, inf = recortar_bandas(ruta)
-    if sup or inf:
-        AVISOS.append(
-            f"El modelo devolvio {recibido} CON BANDAS NEGRAS ({sup}px arriba, "
-            f"{inf}px abajo). Se han recortado. Si se repite, el modelo esta "
-            "ignorando la instruccion de llenar el encuadre.")
+    top, bottom = trim_letterbox(path)
+    if top or bottom:
+        WARNINGS.append(
+            f"The model returned {received} WITH BLACK BARS ({top}px top, "
+            f"{bottom}px bottom). They were trimmed. If this repeats, the model is "
+            "ignoring the instruction to fill the frame.")
 
-    with Image.open(ruta) as img:
-        ancho, alto = img.size
-    devuelto = recibido if not (sup or inf) else f"{recibido} -> {ancho}x{alto} sin bandas"
+    with Image.open(path) as img:
+        width, height = img.size
+    returned = received if not (top or bottom) else f"{received} -> {width}x{height} bars removed"
 
-    fmt = cfg["formatos"].get(tipo)
-    if fmt is None:                      # `preserve`: no hay forma que imponer
-        return devuelto, None
-    objetivo_w, objetivo_h = (int(x) for x in fmt["px"].split("x"))
-    if abs(ancho / alto - objetivo_w / objetivo_h) < 0.01:
-        return devuelto, None
-    if not fmt.get("ratio_fijo"):
-        AVISOS.append(
-            f"El modelo devolvio {devuelto}, no {fmt['ratio']}. Para forzarlo: "
-            f"python3 tools/export_image.py --image {ruta} --type {tipo}")
-        return devuelto, None
+    fmt = cfg["formats"].get(kind)
+    if fmt is None:                      # `preserve`: no shape to impose
+        return returned, None
+    target_w, target_h = (int(x) for x in fmt["px"].split("x"))
+    if abs(width / height - target_w / target_h) < 0.01:
+        return returned, None
+    if not fmt.get("fixed_ratio"):
+        WARNINGS.append(
+            f"The model returned {returned}, not {fmt['ratio']}. To force it: "
+            f"python3 tools/export_image.py --image {path} --type {kind}")
+        return returned, None
 
-    # Formato con proporción fija: se corrige aquí mismo, sin gastar créditos.
+    # Format with a pinned ratio: fixed right here, spending no credits.
     import subprocess
-    corregido = ruta.with_name(ruta.stem + f"_{objetivo_w}x{objetivo_h}.jpg")
+    fixed_path = path.with_name(path.stem + f"_{target_w}x{target_h}.jpg")
     subprocess.run(
         ["python3", str(Path(__file__).resolve().parent.parent / "export_image.py"),
-         "--image", str(ruta), "--type", tipo, "--out", str(corregido)],
+         "--image", str(path), "--type", kind, "--out", str(fixed_path)],
         check=True, capture_output=True)
-    AVISOS.append(
-        f"El modelo devolvio {devuelto}, que no es {fmt['ratio']}. Se ha "
-        f"recortado por el centro a {objetivo_w}x{objetivo_h}. ABRE el fichero: "
-        "si el sujeto no estaba centrado, el recorte lo habra cortado.")
-    return devuelto, corregido
+    WARNINGS.append(
+        f"The model returned {returned}, which is not {fmt['ratio']}. It was "
+        f"centre-cropped to {target_w}x{target_h}. OPEN the file: "
+        "if the subject was off-centre, the crop will have cut it.")
+    return returned, fixed_path
 
 
-REGISTRO = SALIDA / "registro.jsonl"
+LEDGER = OUTPUT_DIR / "ledger.jsonl"
 
 
-def _huella(slug: str, tipo: str, prompt: str) -> str:
+def _fingerprint(slug: str, kind: str, prompt: str) -> str:
     import hashlib
-    return hashlib.sha256(f"{slug}|{tipo}|{prompt}".encode()).hexdigest()[:16]
+    return hashlib.sha256(f"{slug}|{kind}|{prompt}".encode()).hexdigest()[:16]
 
 
-def avisar_si_repetida(slug: str, tipo: str, prompt: str, horas: int = 24) -> None:
-    """Avisa si este mismo prompt ya se generó hace poco.
+def warn_if_repeated(slug: str, kind: str, prompt: str, hours: int = 24) -> None:
+    """Warn if this same prompt was generated recently.
 
-    No se cachea la generación: pedir otra versión del mismo prompt es lo normal
-    y devolver el fichero viejo sería peor que cobrar dos veces. Lo que se evita
-    es la repetición *accidental* —un reintento, un bucle—, nombrando el fichero
-    que ya existe para poder reutilizarlo si sirve.
+    Generation is not cached: asking for another take on the same prompt is
+    normal, and returning the old file would be worse than charging twice.
+    What this avoids is *accidental* repetition — a retry, a loop — by naming
+    the file that already exists so it can be reused if it fits.
     """
     import time
 
-    if not REGISTRO.exists():
+    if not LEDGER.exists():
         return
-    huella = _huella(slug, tipo, prompt)
-    limite = time.time() - horas * 3600
-    for linea in reversed(REGISTRO.read_text(encoding="utf-8").splitlines()):
+    fingerprint = _fingerprint(slug, kind, prompt)
+    limit = time.time() - hours * 3600
+    for line in reversed(LEDGER.read_text(encoding="utf-8").splitlines()):
         try:
-            fila = json.loads(linea)
-        except Exception:  # noqa: BLE001 — una línea corrupta no rompe nada
+            row = json.loads(line)
+        except Exception:  # noqa: BLE001 — a corrupt line breaks nothing
             continue
-        if fila.get("huella") == huella and fila.get("ts", 0) >= limite:
-            AVISOS.append(
-                f"Este mismo prompt ya se genero hace poco con {slug}: "
-                f"{fila.get('fichero')}. Si vale, reutilizalo y no pagues otra "
-                "vez. Si buscabas una variante, ignora este aviso.")
+        if row.get("fingerprint") == fingerprint and row.get("ts", 0) >= limit:
+            WARNINGS.append(
+                f"This same prompt was already generated recently with {slug}: "
+                f"{row.get('file')}. If it works, reuse it instead of paying again. "
+                "If you wanted a variant, ignore this notice.")
             return
 
 
-def anotar(tool: str, slug: str, tipo: str, prompt: str, fichero: Path,
+def log_generation(tool: str, slug: str, kind: str, prompt: str, file: Path,
            refs: list[dict] | None = None) -> None:
-    """Deja constancia de cada generación en `datos/imagenes/registro.jsonl`.
+    """Record every generation in `data/images/ledger.jsonl`.
 
-    Sirve para dos cosas: detectar repeticiones, y poder cruzar algún día qué
-    miniatura generada acabó subida y qué CTR tuvo. Sin este registro, esa
-    validación es imposible de reconstruir.
+    It serves two purposes: spotting repeats, and one day being able to cross
+    which generated thumbnail actually got uploaded against the CTR it earned.
+    Without this ledger, that validation cannot be reconstructed.
     """
     import time
 
-    SALIDA.mkdir(parents=True, exist_ok=True)
-    fila = {
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    row = {
         "ts": int(time.time()),
-        "fecha": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "date": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "tool": tool,
-        "modelo": slug,
-        "tipo": tipo,
-        "huella": _huella(slug, tipo, prompt),
+        "model_slug": slug,
+        "kind": kind,
+        "fingerprint": _fingerprint(slug, kind, prompt),
         "prompt": prompt,
-        "fichero": str(fichero),
-        "referencias": [f"{r['origen']}:{r['rol']}" for r in (refs or [])],
-        "subida_a_youtube": None,   # se rellena a mano cuando se publique
+        "file": str(file),
+        "references": [f"{r['origin']}:{r['role']}" for r in (refs or [])],
+        "uploaded_to_youtube": None,   # filled in by hand once published
     }
-    with open(REGISTRO, "a", encoding="utf-8") as f:
-        f.write(json.dumps(fila, ensure_ascii=False) + "\n")
+    with open(LEDGER, "a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def ruta_salida(prefijo: str, tipo: str, ext: str = "png") -> Path:
-    SALIDA.mkdir(parents=True, exist_ok=True)
+def output_path(prefijo: str, kind: str, ext: str = "png") -> Path:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     sello = time.strftime("%Y%m%d-%H%M%S")
-    return SALIDA / f"{prefijo}_{tipo}_{sello}.{ext}"
+    return OUTPUT_DIR / f"{prefijo}_{kind}_{sello}.{ext}"
 
 
-def tamanio_payload(cfg: dict, tipo: str) -> dict:
-    """Traduce el formato de destino a las claves de tamaño que espera el modelo.
+def size_payload(cfg: dict, kind: str) -> dict:
+    """Translate the target format into the size keys the model expects.
 
-    Cada modelo de fal acepta unas claves y rechaza el resto, así que cuáles se
-    envían está en `fal.claves_tamano` de la configuración: si una da 422, se
-    quita de ahí sin tocar código.
+    Each fal model accepts some keys and rejects the rest, so which ones get
+    sent lives in `fal.size_keys` in the config: if one returns 422, remove it
+    from there without touching code.
 
-    `image_size` va como objeto `{width, height}`, que es la forma universal de
-    fal. Enviar la cadena "1280x720" no es válido y era el fallo que esto
-    corrige.
+    `image_size` goes as an object `{width, height}`, fal's universal form.
+    Sending the string "1280x720" is invalid, and that was the bug this fixes.
     """
-    fmt = cfg["formatos"][tipo]
-    ancho, alto = (int(x) for x in fmt["px"].split("x"))
-    claves = cfg["fal"].get("claves_tamano", ["image_size"])
+    fmt = cfg["formats"][kind]
+    width, height = (int(x) for x in fmt["px"].split("x"))
+    keys = cfg["fal"].get("size_keys", ["image_size"])
     payload = {}
-    if "image_size" in claves:
-        payload["image_size"] = {"width": ancho, "height": alto}
-    if "aspect_ratio" in claves:
+    if "image_size" in keys:
+        payload["image_size"] = {"width": width, "height": height}
+    if "aspect_ratio" in keys:
         payload["aspect_ratio"] = fmt["ratio"]
-    if "image_size_enum" in claves and fmt.get("enum_fal"):
+    if "image_size_enum" in keys and fmt.get("enum_fal"):
         payload["image_size"] = fmt["enum_fal"]
     return payload
 
 
-def validar_ratio(cfg: dict, tipo: str) -> None:
-    """Las miniaturas son siempre 16:9. Se comprueba, no se confía."""
-    fmt = cfg["formatos"].get(tipo)
-    if fmt is None or not fmt.get("ratio_fijo"):
+def validate_ratio(cfg: dict, kind: str) -> None:
+    """Thumbnails are always 16:9. Verified, not trusted."""
+    fmt = cfg["formats"].get(kind)
+    if fmt is None or not fmt.get("fixed_ratio"):
         return
-    ancho, alto = (int(x) for x in fmt["px"].split("x"))
+    width, height = (int(x) for x in fmt["px"].split("x"))
     esperado = tuple(int(x) for x in fmt["ratio"].split(":"))
-    if abs(ancho / alto - esperado[0] / esperado[1]) > 0.01:
+    if abs(width / height - esperado[0] / esperado[1]) > 0.01:
         raise ToolError(
-            f"El formato '{tipo}' esta configurado a {fmt['px']}, que no es "
+            f"Format '{kind}' is configured as {fmt['px']}, which is not "
             f"{fmt['ratio']}.", EXIT_NO_DATA,
-            "Las miniaturas son siempre 16:9. Corrige `px` en "
+            "Thumbnails are always 16:9. Fix `px` in "
             "config/image_providers.json.")
 
 
-def componer_prompt(tipo: str, prompt: str, refs: list[dict]) -> str:
-    """Antepone el spec del formato y, si hay likeness, su cláusula."""
-    partes = [SPEC.get(tipo, SPEC["general"])]
+def compose_prompt(kind: str, prompt: str, refs: list[dict]) -> str:
+    """Prepend the format spec and, when there is a likeness ref, its clause."""
+    parts = [SPEC.get(kind, SPEC["general"])]
     for i, r in enumerate(refs, 1):
-        if r["rol"] == "likeness":
-            partes.append(LIKENESS.format(etiqueta=f"Reference Image {i}"))
+        if r["role"] == "likeness":
+            parts.append(LIKENESS.format(label=f"Reference Image {i}"))
             break
-    partes.append(prompt)
+    parts.append(prompt)
     if refs:
-        etiquetas = ", ".join(
-            f"Reference Image {i} ({r['rol']} reference)" for i, r in enumerate(refs, 1))
-        partes.append(f"Reference images provided, in order: {etiquetas}.")
-        partes.append("Remove any watermark or third-party logo present in the "
+        labels = ", ".join(
+            f"Reference Image {i} ({r['role']} reference)" for i, r in enumerate(refs, 1))
+        parts.append(f"Reference images provided, in order: {labels}.")
+        parts.append("Remove any watermark or third-party logo present in the "
                       "reference images.")
-    partes.append("Do not add text that was not requested.")
-    return " ".join(partes)
+    parts.append("Do not add text that was not requested.")
+    return " ".join(parts)
 
 
-def ordenar_refs(refs: list[dict], cfg: dict) -> list[dict]:
-    """Personas primero, objetos después, composición al final. Máximo 3."""
-    orden = {"likeness": 0, "style": 1, "packaging": 2, "composition": 3}
-    ordenadas = sorted(refs, key=lambda r: orden.get(r["rol"], 9))
-    tope = cfg.get("max_referencias", 3)
-    if len(ordenadas) > tope:
+def sort_refs(refs: list[dict], cfg: dict) -> list[dict]:
+    """People first, objects next, composition last. Three at most."""
+    order = {"likeness": 0, "style": 1, "packaging": 2, "composition": 3}
+    ordered = sorted(refs, key=lambda r: order.get(r["role"], 9))
+    cap = cfg.get("max_references", 3)
+    if len(ordered) > cap:
         raise ToolError(
-            f"{len(ordenadas)} referencias, el maximo es {tope}.", EXIT_NO_DATA,
-            "Mas referencias diluyen el resultado. Quita las menos importantes.")
-    return ordenadas
+            f"{len(ordered)} references, the maximum is {cap}.", EXIT_NO_DATA,
+            "More references dilute the result. Drop the least important ones.")
+    return ordered
 
 
-def parsear_ref(valor: str, cfg: dict) -> dict:
-    """`origen:rol`. Sin rol explícito no se adivina: se exige.
+def parse_ref(value: str, cfg: dict) -> dict:
+    """`source:role`. An explicit role is required, never guessed.
 
-    El origen puede llevar dos puntos (una URL los lleva), así que el rol es
-    siempre lo que va detrás del ÚLTIMO `:`.
+    The source can contain colons (a URL does), so the role is always whatever
+    follows the LAST `:`.
     """
-    ruta, _, rol = valor.rpartition(":")
-    if not ruta or rol not in cfg["roles_de_referencia"]:
+    path, _, role = value.rpartition(":")
+    if not path or role not in cfg["reference_roles"]:
         raise ToolError(
-            f"Referencia sin rol valido: {valor}", EXIT_NO_DATA,
-            "Formato: --ref ORIGEN:ROL, con ROL en "
-            f"{cfg['roles_de_referencia']}. El rol decide el orden de las "
-            "referencias y si se aplica la clausula de likeness; adivinarlo "
-            "estropea la cara.")
-    return {"origen": ruta, "rol": rol}
+            f"Reference without a valid role: {value}", EXIT_NO_DATA,
+            "Format: --ref SOURCE:ROLE, with ROLE in "
+            f"{cfg['reference_roles']}. The role decides reference ordering "
+            "and whether the likeness clause applies; guessing it "
+            "ruins the face.")
+    return {"origin": path, "role": role}
 
 
-def directiva_mcp(cfg: dict, accion: str, prompt: str, refs: list[dict],
-                  tipo: str) -> dict:
-    """En modo MCP esta tool no genera: devuelve qué debe llamar el agente.
+def mcp_directive(cfg: dict, action: str, prompt: str, refs: list[dict],
+                  kind: str) -> dict:
+    """In MCP mode this tool does not generate: it returns what the agent must call.
 
-    Un script no puede invocar una tool MCP de la sesión. En vez de fingir que
-    puede, emite la llamada exacta y para.
+    A script cannot invoke an MCP tool from the session. Rather than pretend it
+    can, it emits the exact call and stops.
     """
     m = cfg["mcp"]
     return {
-        "modo": "mcp",
-        "accion_requerida": (
-            f"Esta tool NO ha generado nada. Llama tu mismo a la tool MCP "
-            f"`{m['tools'].get(accion, 'generate_image')}` del servidor "
-            f"`{m['servidor']}` con los parametros de `llamada`."
+        "mode": "mcp",
+        "action_required": (
+            f"This tool has NOT generated anything. Call the MCP tool "
+            f"`{m['tools'].get(action, 'generate_image')}` on server "
+            f"`{m['server']}` yourself, with the parameters in `call`."
         ),
-        "servidor": m["servidor"],
-        "tool": m["tools"].get(accion, "generate_image"),
-        "llamada": {
+        "server": m["server"],
+        "tool": m["tools"].get(action, "generate_image"),
+        "call": {
             "prompt": prompt,
-            "model": m.get("modelo_por_defecto"),
-            "aspect_ratio": cfg["formatos"][tipo]["ratio"],
-            "referencias": [{"origen": r["origen"], "rol": r["rol"]} for r in refs],
+            "model": m.get("default_model"),
+            "aspect_ratio": cfg["formats"][kind]["ratio"],
+            "references": [{"origin": r["origin"], "role": r["role"]} for r in refs],
         },
-        "avisos": [
-            f"Maximo {m.get('max_concurrentes')} generaciones simultaneas.",
-            "Las tools MCP no leen ficheros locales: sube la imagen o pasa URL.",
-            f"Si `{m['servidor']}` no aparece en la sesion, no esta conectado: "
-            "conectalo en los ajustes de conectores, o cambia `provider` a 'fal' "
+        "warnings": [
+            f"Maximo {m.get('max_concurrent')} generaciones simultaneas.",
+            "MCP tools cannot read local files: upload the image or pass a URL.",
+            f"If `{m['server']}` is not in the session it is not connected: "
+            "connect it in your connector settings, or switch `provider` to 'fal' "
             "en config/image_providers.json.",
         ],
     }

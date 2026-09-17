@@ -1,53 +1,58 @@
 ---
 name: image-refinement
-description: Edita una imagen que ya existe sin regenerarla desde cero. Se invoca ante "cámbiale el fondo", "quítale el logo", "hazlo más oscuro", "igual pero sin el texto".
+description: Edit an image that already exists instead of regenerating it from scratch. Triggered by "change the background", "remove the logo", "make it darker", "same but without the text".
 ---
 
-# Refinado de imagen
+# Image refinement
 
-## CUÁNDO
+## WHEN
 
-Hay una imagen que ya está mayormente bien y hay que cambiar una parte.
+There is an image that is already mostly right and one part needs changing.
 
-**El error que esta skill existe para evitar**: pasar la imagen casi buena como
-*referencia* a `generate_image`. El modelo entonces dibuja otra imagen parecida
-y se pierde justo lo que funcionaba. La imagen a editar va como **origen**,
-nunca como referencia.
+**The mistake this skill exists to prevent**: passing the nearly-good image as
+a *reference* to `generate_image`. The model then draws another similar image
+and whatever was working is lost. The image to edit goes in as the **source**,
+never as a reference.
 
-## ANTES DE GASTAR UN CRÉDITO
+## BEFORE SPENDING A CREDIT
 
-Si el cambio es de **tamaño, recorte, formato o peso**, esto no es una edición:
-`python3 tools/export_image.py --image RUTA --type thumbnail`
-Es local, determinista y gratis. No redibuja nada.
+If the change is about **size, crop, format or weight**, this is not an edit:
+`python3 tools/export_image.py --image PATH --type thumbnail`
+It is local, deterministic and free. It redraws nothing.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Abrir la imagen actual** con la herramienta de lectura de imágenes y
-   nombrar exactamente qué falla. Sin eso, la instrucción sale vaga y el
-   resultado también.
+1. **Open the current image** with the image reading tool and name exactly what
+   is wrong. Without that, the instruction comes out vague and so does the
+   result.
 
-2. **Una instrucción, en imperativo, solo el cambio**
+2. **One instruction, imperative, only the change**
    ```
-   python3 tools/refine_image.py --image RUTA \
-     --instruction "cambia el fondo a azul cobalto liso" --type thumbnail
+   python3 tools/refine_image.py --image PATH \
+     --instruction "change the background to flat cobalt blue"
    ```
-   La tool ya añade *"keep everything else exactly as it is"*. Describir la
-   imagen entera en la instrucción es lo que provoca que la redibuje.
+   The tool already adds *"keep everything else exactly as it is"*. Describing
+   the whole image in the instruction is what makes it redraw.
 
-3. **Si hay una cara**, pasarla como referencia aparte:
-   `--ref foto_cara.jpg:likeness`. La cara **no** va en `--instruction`.
+   `--type` defaults to `preserve`, which keeps the original's shape. Only
+   change it when a different shape was actually asked for.
 
-4. **Comparar origen y resultado abriendo los dos.** Un modelo de edición
-   cambia cosas que no se le pidieron con más frecuencia de la que parece.
+3. **If there is a face**, pass it as a separate reference:
+   `--ref face_photo.jpg:likeness`. The face does **not** go in
+   `--instruction`.
 
-5. Iterar de una en una. Dos cambios en la misma instrucción se pisan.
+4. **Compare source and result by opening both.** An editing model changes
+   things it was not asked to more often than you would expect.
 
-## FUENTES
+5. Iterate one change at a time. Two changes in the same instruction collide.
 
-`source: generated`. Artefacto, no medición. Nombrar el modelo al entregar.
+## SOURCES
 
-## SALIDA
+`source: generated`. An artefact, not a measurement. Name the model when
+delivering.
 
-La ruta del fichero, el modelo que lo hizo, y **qué ha cambiado respecto al
-origen tras haber mirado ambos** — no la suposición de lo que debería haber
-cambiado.
+## OUTPUT
+
+The file path, the model that made it, and **what changed compared to the
+source, after looking at both** — not an assumption about what should have
+changed.

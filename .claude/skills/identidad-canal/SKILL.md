@@ -1,43 +1,43 @@
 ---
 name: identidad-canal
-description: Posicionamiento del canal, diferenciación frente al vecindario competitivo y reencuadre de nicho. Se invoca ante "cómo me posiciono", "en qué me diferencio", "hacia dónde llevo el canal", "quién es mi competencia real".
+description: Channel positioning, differentiation against the competitive neighbourhood, and niche reframing. Triggered by "how do I position myself", "what makes me different", "where do I take the channel", "who is my real competition".
 ---
 
-# Identidad y posicionamiento
+# Identity and positioning
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Dónde está el canal hoy**
+1. **Where the channel is today**
    `python3 tools/yt_channel_stats.py`
 
-2. **Cuál es el vecindario real**
+2. **What the real neighbourhood is**
    `python3 tools/yt_outliers_channels.py --min-ratio 1.5`
-   Con umbral bajo, porque aquí interesa el patrón editorial de cada canal, no
-   solo sus picos.
+   With a low threshold, because here you want each channel's editorial
+   pattern, not only its peaks.
 
-3. **Para quién se está produciendo de hecho**
+3. **Who you are actually producing for**
    ```
    python3 tools/yt_demographics.py --days 90
    python3 tools/yt_geography.py --days 90
    ```
-   El contraste entre la audiencia que se cree tener y la que se tiene es donde
-   suele estar el hallazgo.
+   The contrast between the audience you think you have and the one you have
+   is usually where the finding is.
 
-4. **Con qué se llega** — señal de posicionamiento percibido
+4. **What people arrive with** — a signal of perceived positioning
    `python3 tools/yt_search_terms.py --days 180`
-   Los términos con los que la gente busca y encuentra el canal dicen cómo se
-   le percibe, que no siempre es como se quiere posicionar.
+   The terms people search and find you with say how you are perceived, which
+   is not always how you want to be positioned.
 
-5. Actualizar `memoria/channel_positioning.md` si el análisis cambia algo
-   estable. Solo si es estable: un dato de una semana no reposiciona un canal.
+5. Update `memory/channel_positioning.md` if the analysis changes something
+   stable. Only if stable: one week of data does not reposition a channel.
 
-## FUENTES
+## SOURCES
 
-Pasos 1, 3 y 4 `youtube_api`. Paso 2 `derived`.
+Steps 1, 3 and 4 `youtube_api`. Step 2 `derived`.
 
-## SALIDA
+## OUTPUT
 
-- Posición actual, con cifras y fecha.
-- Vecindario: qué canales ocupan el mismo espacio y en qué se diferencian.
-- El hueco concreto, con la evidencia que lo respalda.
-- Qué cambiaría en la línea editorial, y qué NO hay que tocar.
+- Current position, with figures and a date.
+- Neighbourhood: which channels occupy the same space and how they differ.
+- The concrete gap, with the evidence backing it.
+- What would change in the editorial line, and what must NOT be touched.

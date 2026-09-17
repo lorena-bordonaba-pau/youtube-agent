@@ -1,52 +1,53 @@
 ---
 name: youtube-profile-spec
-description: Especificación de la imagen de perfil de YouTube — 1:1 recortada en círculo. Se invoca al generar o revisar la foto de perfil del canal.
+description: Specification for a YouTube profile picture — 1:1, cropped to a circle. Triggered when generating or reviewing a channel profile picture.
 ---
 
-# Especificación de la imagen de perfil
+# Profile picture specification
 
-## CUÁNDO
+## WHEN
 
-Cualquier generación o revisión de foto de perfil.
+Any profile picture generation or review.
 
-## LA REGLA QUE LO DECIDE TODO
+## THE RULE THAT DECIDES EVERYTHING
 
-Se sube **cuadrada 1:1**, pero YouTube la **recorta en círculo**. Todo lo que
-quede cerca de las esquinas se pierde.
+It is uploaded **square, 1:1**, but YouTube **crops it to a circle**. Anything
+near the corners is lost.
 
-Y se ve pequeña: **32x32 píxeles en los comentarios**. Ese es el tamaño real en
-el que hay que reconocerla, no el del escritorio del estudio.
+And it is seen small: **32x32 pixels in the comments**. That is the real size
+it has to be recognisable at, not the one in your editor.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Ver la actual**
-   `python3 tools/view_channel_packaging.py --only avatar --md` y abrirla.
+1. **See the current one**
+   `python3 tools/view_channel_packaging.py --only avatar --md` and open it.
 
-2. **Generar**
+2. **Generate**
    ```
    python3 tools/generate_image.py --type profile_image --prompt "..." \
-     --ref foto_cara.jpg:likeness --dry-run
+     --ref face_photo.jpg:likeness --dry-run
    ```
-   `--type profile_image` ya pide sujeto centrado, fondo simple, sin texto y
-   legibilidad a 32x32.
+   `--type profile_image` already asks for a centred subject, a simple
+   background, no text and legibility at 32x32.
 
-   Si aparece la cara de la creadora, cargar `likeness-preservation`: en un
-   avatar la identidad es todo lo que hay.
+   If the creator's face appears, load `likeness-preservation`: in an avatar
+   the identity is all there is.
 
-3. **Verificar a tamaño real**, que es lo que casi nunca se hace:
-   `python3 tools/export_image.py --image RUTA --size 32x32 --out /tmp/avatar32.png`
-   y abrir ese fichero de 32x32. Si a ese tamaño no se distingue quién es, no
-   sirve, por bien que se vea a 800x800.
+3. **Verify at real size**, which is what almost nobody does:
+   `python3 tools/export_image.py --image PATH --size 32x32 --out /tmp/avatar32.png`
+   and open that 32x32 file. If you cannot tell who it is at that size, it does
+   not work, however good it looks at 800x800.
 
-4. Exportar el definitivo: `python3 tools/export_image.py --image RUTA --type profile_image`
+4. Export the final one:
+   `python3 tools/export_image.py --image PATH --type profile_image`
 
-## COMPOSICIÓN
+## COMPOSITION
 
-- Sujeto centrado y grande: el círculo se come las esquinas.
-- Fondo simple, de un color, con contraste alto contra el sujeto.
-- **Sin texto y sin detalle fino.** A 32x32 es una mancha.
-- Coherente en color con el banner.
+- Subject centred and large: the circle eats the corners.
+- Simple, single-colour background, high contrast against the subject.
+- **No text and no fine detail.** At 32x32 it is a smudge.
+- Colour-consistent with the banner.
 
-## FUENTES
+## SOURCES
 
-`source: generated` la imagen; `derived` el redimensionado.
+`source: generated` for the image; `derived` for the resizing.

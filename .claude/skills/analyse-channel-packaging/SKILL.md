@@ -1,61 +1,61 @@
 ---
 name: analyse-channel-packaging
-description: Extrae el branding de perfil y banner de un canal antes de generar packaging nuevo. Se invoca ante "analiza mi banner", "cómo es la marca visual de este canal", "revisa mi packaging de canal".
+description: Extract a channel's profile and banner branding before generating new packaging. Triggered by "analyse my banner", "what is this channel's visual brand", "review my channel packaging".
 ---
 
-# Análisis de packaging de canal
+# Channel packaging analysis
 
-## CUÁNDO
+## WHEN
 
-Antes de generar un banner o una foto de perfil, propios o inspirados en otro
-canal. Sin ver la marca actual, lo que se genere será genérico o romperá una
-identidad que ya funciona.
+Before generating a banner or a profile picture, your own or inspired by
+another channel. Without seeing the current brand, whatever gets generated will
+be generic or will break an identity that already works.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Descargar y medir las dos piezas**
+1. **Download and measure both pieces**
    ```
    python3 tools/view_channel_packaging.py [--channel ID] --md
    ```
-   Devuelve avatar y banner descargados, con resolución, contraste y
-   saturación de cada uno.
+   Returns the avatar and banner downloaded, with the resolution, contrast and
+   saturation of each.
 
-2. **Abrir los dos ficheros** con la herramienta de lectura de imágenes. El
-   pixel dice si hay contraste; no dice qué transmite.
+2. **Open both files** with the image reading tool. The pixels tell you whether
+   there is contrast; they do not tell you what it conveys.
 
-3. **Leer el banner por su banda central.** Es el error de lectura más común:
-   en móvil se recorta el tercio superior y el inferior por completo. Un banner
-   se juzga por lo que sobrevive en esa franja, no por lo que se ve en el
-   escritorio. Ver `youtube-banner-spec`.
+3. **Read the banner by its centre band.** This is the most common reading
+   error: on mobile the top and bottom thirds are cropped away entirely. A
+   banner is judged by what survives in that strip, not by what you see on a
+   desktop. See `youtube-banner-spec`.
 
-4. **Analizar los elementos**
-   - Esquema de color, y si avatar y banner son coherentes entre sí.
-   - Tipografía del banner: tagline, jerarquía, legibilidad reducida.
-   - Avatar: ¿se reconoce a 32x32, que es su tamaño en los comentarios?
-   - Zonas del banner: qué hay en la banda segura y qué se pierde al recortar.
-   - Elementos de identidad: logos, colores firma, motivos repetidos.
+4. **Analyse the elements**
+   - Colour scheme, and whether avatar and banner agree with each other.
+   - Banner typography: tagline, hierarchy, legibility when small.
+   - Avatar: is it recognisable at 32x32, its size in the comments?
+   - Banner zones: what sits in the safe band and what is lost to the crop.
+   - Identity elements: logos, signature colours, repeated motifs.
 
-5. **Cruzar con el posicionamiento.** Leer `memoria/channel_positioning.md`:
-   el packaging o respalda la promesa del canal o la contradice. Ese cruce es
-   el análisis; describir colores no lo es.
+5. **Cross against the positioning.** Read `memory/channel_positioning.md`:
+   the packaging either backs the channel's promise or contradicts it. That
+   crossing is the analysis; describing colours is not.
 
-6. **Si se va a generar**, cargar `youtube-banner-spec` o
-   `youtube-profile-spec` según la pieza, y pasar el packaging actual como
-   referencia:
+6. **If you are going to generate**, load `youtube-banner-spec` or
+   `youtube-profile-spec` depending on the piece, and pass the current
+   packaging as a reference:
    ```
    python3 tools/generate_image.py --type banner --prompt "..." \
-     --ref datos/packaging/<channel_id>_banner.jpg:packaging --dry-run
+     --ref data/packaging/<channel_id>_banner.jpg:packaging --dry-run
    ```
-   Se preservan los elementos de identidad salvo que se haya pedido un
-   rebranding completo y explícito.
+   Identity elements are preserved unless a full, explicit rebrand was asked
+   for.
 
-## SALIDA
+## OUTPUT
 
-Brief en 5-8 viñetas: qué funciona, qué se pierde en móvil, qué contradice el
-posicionamiento, y qué se mantendría intacto en un rediseño.
+A brief in 5-8 bullets: what works, what is lost on mobile, what contradicts
+the positioning, and what would stay untouched in a redesign.
 
-## FUENTES
+## SOURCES
 
-`view_channel_packaging` es `derived`: métricas de pixel sobre imágenes de la
-API. La lectura de marca es juicio del agente sobre ficheros que ha abierto, y
-se declara así. `channel_positioning.md` es `config`, con su fecha.
+`view_channel_packaging` is `derived`: pixel metrics over images from the API.
+The brand reading is the agent's judgement over files it has opened, and is
+declared as such. `channel_positioning.md` is `config`, with its date.

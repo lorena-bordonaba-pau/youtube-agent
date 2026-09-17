@@ -1,117 +1,117 @@
 #!/usr/bin/env python3
-"""Genera una imagen con el proveedor configurado (fal.ai o un MCP).
+"""Generate an image with the configured provider (fal.ai or an MCP).
 
-Agnóstica al proveedor: la skill pide una imagen, no un modelo. El formato
-(`--type`) antepone al prompt los requisitos técnicos del sitio donde va la
-imagen — la zona segura móvil del banner, el recorte circular del perfil, el
-"no hagas un tríptico" del 9:16 — porque sin eso el modelo los ignora.
+Provider-agnostic: the skill asks for an image, not for a model. The format
+(`--type`) prepends the technical requirements of wherever the image is going
+— the banner's mobile safe zone, the circular crop of a profile picture —
+because without them in the prompt the model ignores them.
 
-Lo que sale de aquí es `source: generated`: un artefacto, no una medición.
-No dice nada sobre cómo va a rendir.
+What comes out carries `source: generated`: an artefact, not a measurement.
+It says nothing about how it will perform.
 """
 import json
 from pathlib import Path
 
 from lib import base  # noqa: F401
 from lib import imagegen as ig
-from lib.contrato import SOURCE_CONFIG, SOURCE_GENERATED, emitir, main, parser, sobre
+from lib.contract import SOURCE_CONFIG, SOURCE_GENERATED, emit, main, parser, envelope
 
 TOOL = "generate_image"
 
 
 def run():
     p = parser(__doc__)
-    p.add_argument("--prompt", required=True, help="qué se quiere ver en la imagen")
-    p.add_argument("--type", default="thumbnail", dest="tipo",
-                   choices=list(ig.SPEC), help="destino de la imagen")
+    p.add_argument("--prompt", required=True, help="what should be in the image")
+    p.add_argument("--type", default="thumbnail", dest="kind",
+                   choices=list(ig.SPEC), help="where the image is going")
     p.add_argument("--ref", action="append", default=[], metavar="ORIGEN:ROL",
-                   help="referencia: ruta, URL o video_id, más su rol "
-                        "(likeness|style|composition|packaging). Repetible, máx 3")
-    p.add_argument("--model", help="slug del modelo; por defecto el de la config")
-    p.add_argument("--provider", choices=["fal", "mcp"], help="fuerza proveedor")
-    p.add_argument("--out", help="ruta de salida; por defecto datos/imagenes/")
+                   help="reference: path, URL or video_id, plus its role "
+                        "(likeness|style|composition|packaging). Repeatable, max 3")
+    p.add_argument("--model", help="model slug; defaults to the one in the config")
+    p.add_argument("--provider", choices=["fal", "mcp"], help="fuerza provider_name")
+    p.add_argument("--out", help="output path; defaults to data/images/")
     p.add_argument("--dry-run", action="store_true",
-                   help="muestra el prompt final sin gastar créditos")
+                   help="show the final prompt without spending credits")
     args = p.parse_args()
 
-    cfg = ig.cargar()
-    ig.validar_ratio(cfg, args.tipo)
-    refs = ig.ordenar_refs([ig.parsear_ref(r, cfg) for r in args.ref], cfg)
-    prompt = ig.componer_prompt(args.tipo, args.prompt, refs)
-    formato = cfg["formatos"][args.tipo]
-    prov = ig.proveedor(cfg, args.provider)
-    params = {"tipo": args.tipo, "provider": prov,
-              "refs": [f"{r['origen']}:{r['rol']}" for r in refs]}
+    cfg = ig.load()
+    ig.validate_ratio(cfg, args.kind)
+    refs = ig.sort_refs([ig.parse_ref(r, cfg) for r in args.ref], cfg)
+    prompt = ig.compose_prompt(args.kind, args.prompt, refs)
+    format = cfg["formats"][args.kind]
+    provider = ig.provider_name(cfg, args.provider)
+    params = {"kind": args.kind, "provider": provider,
+              "refs": [f"{r['origin']}:{r['role']}" for r in refs]}
 
-    if prov == "mcp":
-        env = sobre(TOOL, SOURCE_CONFIG,
-                    ig.directiva_mcp(cfg, "generate", prompt, refs, args.tipo),
-                    params, notas=["Esta ejecucion NO ha generado ninguna imagen."])
-        emitir(env, args, lambda e: base.cabecera_md(e) + "\n\n" +
-               e["data"]["accion_requerida"] + "\n\n```json\n" +
-               json.dumps(e["data"]["llamada"], ensure_ascii=False, indent=2) +
+    if provider == "mcp":
+        env = envelope(TOOL, SOURCE_CONFIG,
+                    ig.mcp_directive(cfg, "generate", prompt, refs, args.kind),
+                    params, notes=["This run has NOT generated any image."])
+        emit(env, args, lambda e: base.md_header(e) + "\n\n" +
+               e["data"]["action_required"] + "\n\n```json\n" +
+               json.dumps(e["data"]["call"], ensure_ascii=False, indent=2) +
                "\n```")
 
-    slug = ig.modelo(cfg, "generate", args.model)
+    slug = ig.model_slug(cfg, "generate", args.model)
 
-    ig.avisar_si_repetida(slug, args.tipo, prompt)
+    ig.warn_if_repeated(slug, args.kind, prompt)
 
     if args.dry_run:
-        env = sobre(TOOL, SOURCE_CONFIG, {
-            "modo": "dry-run", "modelo": slug, "formato": formato,
-            "prompt_final": prompt,
-            "referencias": [r["origen"] for r in refs],
-        }, params, notas=ig.AVISOS + [
-            "Dry-run: no se ha llamado a fal.ai, no hay coste."])
-        emitir(env, args, lambda e: base.cabecera_md(e) +
-               f"\n\n**Modelo**: `{e['data']['modelo']}`\n\n**Prompt final**\n\n> " +
-               e["data"]["prompt_final"])
+        env = envelope(TOOL, SOURCE_CONFIG, {
+            "mode": "dry-run", "model_slug": slug, "format": format,
+            "final_prompt": prompt,
+            "references": [r["origin"] for r in refs],
+        }, params, notes=ig.WARNINGS + [
+            "Dry run: fal.ai was not called, there is no cost."])
+        emit(env, args, lambda e: base.md_header(e) +
+               f"\n\n**Modelo**: `{e['data']['model_slug']}`\n\n**Prompt final**\n\n> " +
+               e["data"]["final_prompt"])
 
-    key = ig.clave_fal(cfg)
-    urls = [ig.referencia_url(r["origen"], cfg, key) for r in refs]
+    key = ig.fal_key(cfg)
+    urls = [ig.reference_url(r["origin"], cfg, key) for r in refs]
 
-    payload = {"prompt": prompt, **ig.tamanio_payload(cfg, args.tipo)}
+    payload = {"prompt": prompt, **ig.size_payload(cfg, args.kind)}
     if urls:
         payload["image_urls"] = urls
 
-    respuesta = ig.encolar(slug, payload, cfg, key)
-    salidas = ig.urls_de(respuesta)
+    response = ig.enqueue(slug, payload, cfg, key)
+    salidas = ig.urls_from(response)
     if not salidas:
-        from lib.contrato import EXIT_NO_DATA, ToolError
-        raise ToolError(f"El modelo no devolvio ninguna imagen: {respuesta}",
+        from lib.contract import EXIT_NO_DATA, ToolError
+        raise ToolError(f"The model returned no image: {response}",
                         EXIT_NO_DATA)
 
-    destino = Path(args.out) if args.out else ig.ruta_salida(TOOL, args.tipo)
-    ig.descargar(salidas[0], destino)
+    dest = Path(args.out) if args.out else ig.output_path(TOOL, args.kind)
+    ig.download(salidas[0], dest)
 
-    # El modelo no siempre respeta la proporción pedida: nano-banana devuelve
-    # 1024x1024 aunque se le pida 16:9. Se comprueba en el fichero y, si el
-    # formato la tiene fija, se recorta. "Siempre 16:9" tiene que ser cierto en
-    # el pixel, no solo en el prompt.
-    devuelto, corregido = ig.verificar_proporcion(destino, cfg, args.tipo)
+    # The model does not always honour the requested ratio: nano-banana
+    # returns 1024x1024 even when asked for 16:9. So the file is measured and,
+    # when the format pins a ratio, cropped. "Always 16:9" has to be true in
+    # the pixels, not only in the prompt.
+    devuelto, corregido = ig.verify_ratio(dest, cfg, args.kind)
     if corregido:
-        destino = corregido
+        dest = corregido
 
-    ig.anotar(TOOL, slug, args.tipo, prompt, destino, refs)
+    ig.log_generation(TOOL, slug, args.kind, prompt, dest, refs)
 
-    env = sobre(TOOL, SOURCE_GENERATED, {
-        "fichero": str(destino),
-        "modelo": slug,
-        "proveedor": "fal.ai",
-        "tipo": args.tipo,
-        "formato_objetivo": formato,
-        "prompt_final": prompt,
-        "resolucion_devuelta": devuelto,
-        "referencias": [f"{r['origen']} ({r['rol']})" for r in refs],
+    env = envelope(TOOL, SOURCE_GENERATED, {
+        "file": str(dest),
+        "model_slug": slug,
+        "provider_name": "fal.ai",
+        "kind": args.kind,
+        "target_format": format,
+        "final_prompt": prompt,
+        "returned_resolution": devuelto,
+        "references": [f"{r['origin']} ({r['role']})" for r in refs],
         "extra": salidas[1:],
-    }, params, notas=ig.AVISOS + [
-        f"Imagen generada por {slug} via fal.ai. Al entregarla, nombrar el modelo.",
-        "NO es una prediccion de nada. Para juzgarla hay que abrirla con vision.",
-        f"Para ajustar dimensiones exactas sin gastar creditos: "
-        f"python3 tools/export_image.py --image {destino} --type {args.tipo}",
+    }, params, notes=ig.WARNINGS + [
+        f"Image generated by {slug} via fal.ai. Name the model when delivering it.",
+        "NOT a prediction of anything. To judge it you must open it with vision.",
+        f"To set exact dimensions without spending credits: "
+        f"python3 tools/export_image.py --image {dest} --type {args.kind}",
     ])
-    emitir(env, args, lambda e: base.cabecera_md(e) +
-           f"\n\n`{e['data']['fichero']}`\n\nModelo: `{e['data']['modelo']}`")
+    emit(env, args, lambda e: base.md_header(e) +
+           f"\n\n`{e['data']['file']}`\n\nModelo: `{e['data']['model_slug']}`")
 
 
 if __name__ == "__main__":

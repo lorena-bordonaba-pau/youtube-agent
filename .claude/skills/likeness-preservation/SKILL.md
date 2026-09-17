@@ -1,65 +1,67 @@
 ---
 name: likeness-preservation
-description: Preserva la identidad facial exacta al generar o editar imágenes con la cara de la creadora. Se invoca siempre que una imagen vaya a incluir a una persona real.
+description: Preserve the creator's exact facial identity when generating or editing images. Triggered whenever an image is meant to include a real person.
 ---
 
-# Preservación de identidad facial
+# Facial identity preservation
 
-## CUÁNDO
+## WHEN
 
-Cualquier imagen en la que deba aparecer la creadora, o cualquier persona real.
-Se carga **antes** de generar, no después de ver que la cara salió mal: una
-identidad perdida no se recupera iterando el prompt.
+Any image that should include the creator, or any real person. Load it
+**before** generating, not after seeing the face come out wrong: a lost
+identity is not recovered by iterating the prompt.
 
-**Si no se ha pedido explícitamente que salga una cara, no se pone una.** Ante
-la duda: objetos, texto, gráficos o abstracto. Una persona inventada en la
-miniatura de un canal con rostro reconocible rompe la marca.
+**If a face was not explicitly asked for, do not put one in.** When in doubt:
+objects, text, graphics or abstract. An invented person in the thumbnail of a
+channel with a recognisable face breaks the brand.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Conseguir una referencia facial nítida.** Por orden de calidad:
-   - Una foto que aporte la creadora en esta conversación.
-   - Una imagen generada antes en esta conversación donde la cara salió bien.
-   - Una miniatura propia con la cara clara y grande:
+1. **Get a sharp facial reference.** In order of quality:
+   - A photo the creator provides in this conversation.
+   - An image generated earlier in this conversation where the face came out
+     well.
+   - One of their own thumbnails with the face clear and large:
      ```
      python3 tools/yt_recent_videos.py --limit 15 --stats
      python3 tools/yt_thumbnails.py --video ID
      ```
-     Y **abrirla** para confirmar que la cara se ve. Una cara borrosa, de
-     perfil o tapada da un resultado malo garantizado.
+     And **open it** to confirm the face is visible. A blurred, profile or
+     obscured face guarantees a bad result.
 
-2. **No proceder sin referencia confirmada.** Si no la hay, se dice y se pide
-   una foto. Generar "algo parecido" es peor que no generar.
+2. **Do not proceed without a confirmed reference.** If there is none, say so
+   and ask for a photo. Generating "something similar" is worse than not
+   generating.
 
-3. **Etiquetarla con el rol `likeness`**
+3. **Label it with the `likeness` role**
    ```
    python3 tools/generate_image.py --prompt "..." --type thumbnail \
-     --ref ruta_de_la_cara.jpg:likeness
+     --ref path_to_the_face.jpg:likeness
    ```
-   El rol hace dos cosas: coloca la referencia **la primera** y activa la
-   cláusula de identidad exacta en el prompt. Sin el rol, ninguna de las dos.
+   The role does two things: it places the reference **first** and it activates
+   the exact-identity clause in the prompt. Without the role, neither happens.
 
-4. **Al refinar**, la imagen a editar va en `--image` y la cara en
-   `--ref cara.jpg:likeness`. Nunca al revés.
+4. **When refining**, the image to edit goes in `--image` and the face in
+   `--ref face.jpg:likeness`. Never the other way round.
 
-5. **Verificar abriendo el resultado.** Criterio:
+5. **Verify by opening the result.** The criterion:
 
-   | Aceptable | No aceptable |
+   | Acceptable | Not acceptable |
    |---|---|
-   | Otra pose, otro ángulo | Otros rasgos faciales |
-   | Otra expresión | Alguien que "se le parece" |
-   | Otra luz, otra ropa | Una cara claramente generada |
+   | Different pose, different angle | Different facial features |
+   | Different expression | Someone who "looks like them" |
+   | Different light, different clothes | A clearly generated face |
 
-   Si no es reconociblemente la misma persona, se repite con una referencia
-   mejor. No se entrega diciendo "ha quedado parecido".
+   If it is not recognisably the same person, redo it with a better reference.
+   Do not deliver it saying "it came out close".
 
-## LO QUE LA TOOL YA HACE
+## WHAT THE TOOL ALREADY DOES
 
-`generate_image.py` antepone al prompt, cuando detecta una referencia con rol
-`likeness`, la cláusula de identidad exacta y la prohibición de recortar por el
-cuello. No hay que repetirlo en `--prompt`; comprobarlo con `--dry-run`.
+When `generate_image.py` detects a reference with the `likeness` role, it
+prepends the exact-identity clause and the prohibition on cropping at the neck.
+There is no need to repeat it in `--prompt`; verify it with `--dry-run`.
 
-## FUENTES
+## SOURCES
 
-`source: generated`. Una cara bien preservada sigue siendo un artefacto, no una
-foto real: si se usa en algo público, decirlo.
+`source: generated`. A well-preserved face is still an artefact, not a
+photograph: if it is used publicly, say so.

@@ -1,0 +1,32 @@
+# youtube-coach-harness
+
+> A Claude Code agent that analyses a YouTube channel with real API data and
+> labels every figure with its provenance, so an estimate can never be
+> presented as a measurement.
+
+The defining idea: every tool returns a `source` field — `youtube_api`
+(measured), `derived` (computed), `heuristic` (own rubric), `config` (local
+file) or `generated` (model artefact). The operating contract in CLAUDE.md
+forces the agent to respect it when citing. Tools that cannot measure something
+return the open question instead of a plausible number.
+
+Needs Python 3.10+. A `YOUTUBE_API_KEY` unlocks all public-data tools; OAuth is
+only required for the channel owner's private analytics.
+
+## Docs
+
+- [README](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/README.md): what it is, what you can ask it, how it works
+- [Install guide](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/docs/install.md): step by step, written for an agent to follow
+- [Operating contract](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/CLAUDE.md): identity, honesty rules, transparency protocol
+- [Tool catalogue](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/TOOLS.md): all 28 tools, their commands and quota cost
+- [Limits](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/LIMITS.md): what it cannot do and why
+- [Troubleshooting](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/docs/troubleshooting.md): exit codes and known failure modes
+- [Contributing](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/CONTRIBUTING.md): the one non-negotiable rule
+- [Spanish README](https://github.com/lorena-bordonaba-pau/youtube-coach-harness/blob/main/docs/README_es.md)
+
+## Optional
+
+- 20 data tools: analytics, retention curve, traffic, outliers, keywords, transcripts
+- 4 image tools: provider-agnostic generation, editing, deterministic export, channel packaging
+- 17 skills with fixed tool execution orders, including one that forbids answering about itself from memory
+- Scoring rubrics that ship uncalibrated on purpose, to be built from your own channel

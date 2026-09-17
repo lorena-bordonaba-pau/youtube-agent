@@ -1,59 +1,59 @@
 ---
 name: youtube-banner-spec
-description: Especificación técnica del banner de YouTube — 2560x1440 y la zona segura móvil. Se invoca al generar, revisar o diagnosticar un banner de canal.
+description: Technical specification for a YouTube banner — 2560x1440 and the mobile safe zone. Triggered when generating, reviewing or diagnosing a channel banner.
 ---
 
-# Especificación del banner
+# Banner specification
 
-## CUÁNDO
+## WHEN
 
-Cualquier generación o revisión de banner. Se carga **antes** de escribir el
-prompt: la zona segura no se arregla después.
+Any banner generation or review. Load it **before** writing the prompt: the
+safe zone cannot be fixed afterwards.
 
-## LA REGLA QUE LO DECIDE TODO
+## THE RULE THAT DECIDES EVERYTHING
 
-El banner se sube a **2560x1440**, pero **en móvil solo se ve una franja
-horizontal estrecha del centro vertical**. El tercio superior y el inferior se
-recortan por completo.
+The banner is uploaded at **2560x1440**, but **on mobile only a narrow
+horizontal strip across the vertical centre is visible**. The top and bottom
+thirds are cropped away entirely.
 
-Todo lo que importe —texto, logo, nombre del canal, caras, marca— va **dentro
-de esa banda central**. Arriba y abajo solo pueden ir fondos simples:
-degradados, desenfoques, patrones, color plano.
+Everything that matters — text, logo, channel name, faces, branding — goes
+**inside that centre band**. Above and below, only simple backgrounds:
+gradients, blurs, patterns, flat colour.
 
-Un banner que pone el nombre del canal arriba desaparece en móvil. Es el fallo
-más frecuente y el más invisible desde el escritorio.
+A banner that puts the channel name at the top disappears on mobile. It is the
+most frequent failure and the most invisible one from a desktop.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Ver el banner actual antes de sustituirlo**
+1. **See the current banner before replacing it**
    `python3 tools/view_channel_packaging.py --only banner --md`
-   y abrir el fichero.
+   and open the file.
 
-2. **Generar con el tipo correcto**
+2. **Generate with the right type**
    ```
    python3 tools/generate_image.py --type banner --prompt "..." --dry-run --md
    ```
-   `--type banner` antepone al prompt la regla de composición crítica con la
-   banda segura. Comprobarlo en el dry-run: si esa cláusula no aparece en el
-   prompt final, algo va mal en la configuración.
+   `--type banner` prepends the critical composition rule with the safe band.
+   Check it in the dry run: if that clause is not in the final prompt,
+   something is wrong with the configuration.
 
-3. **Verificar el resultado abriéndolo** y comprobando, en concreto, que
-   tapando el tercio de arriba y el de abajo sigue entendiéndose de qué va el
-   canal.
+3. **Verify the result by opening it** and checking, specifically, that with
+   the top and bottom thirds covered you can still tell what the channel is
+   about.
 
-4. **Ajustar dimensiones sin regenerar**
-   `python3 tools/export_image.py --image RUTA --type banner`
-   Deja exactamente 2560x1440. El recorte es centrado, así que si el sujeto no
-   está centrado hay que revisarlo.
+4. **Adjust dimensions without regenerating**
+   `python3 tools/export_image.py --image PATH --type banner`
+   Leaves it at exactly 2560x1440. The crop is centred, so if the subject is
+   off-centre you need to check it.
 
-## ESTILO
+## STYLE
 
-- Texto grande y legible; el banner se ve pequeño en móvil.
-- Branding centrado, dentro de la banda.
-- Paleta del canal, para coherencia con el avatar. Cargar
-  `analyse-channel-packaging` si no se conoce.
+- Large, legible text; the banner is seen small on mobile.
+- Branding centred, inside the band.
+- The channel's palette, for consistency with the avatar. Load
+  `analyse-channel-packaging` if you do not know it.
 
-## FUENTES
+## SOURCES
 
-La imagen es `source: generated`. Las dimensiones tras `export_image` son
-`derived` y verificables en el fichero.
+The image is `source: generated`. The dimensions after `export_image` are
+`derived` and verifiable in the file.

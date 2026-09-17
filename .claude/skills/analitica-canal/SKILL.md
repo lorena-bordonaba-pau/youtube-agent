@@ -1,65 +1,64 @@
 ---
 name: analitica-canal
-description: Auditoría y diagnóstico del canal propio con datos reales — rendimiento, retención, tráfico, audiencia y comparación con snapshots anteriores. Se invoca ante "¿cómo va el canal?", "audita mis vídeos", "por qué ha bajado", "qué está funcionando".
+description: Audit and diagnose your own channel with real data — performance, retention, traffic, audience, and comparison against earlier snapshots. Triggered by "how's the channel doing?", "audit my videos", "why did it drop", "what's working".
 ---
 
-# Auditoría del canal
+# Channel audit
 
-## CUÁNDO
+## WHEN
 
-Diagnóstico de rendimiento, informe periódico, "¿por qué cayó este vídeo?",
-"¿qué funciona y qué no?", comparación entre periodos.
+Performance diagnosis, periodic report, "why did this video flop?", "what is
+working and what is not?", comparing periods.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Línea base e histórico**
+1. **Baseline and history**
    `python3 tools/yt_report.py --days 28`
-   Da el estado general, el top de vídeos, tráfico, audiencia y geografía, y
-   anexa un snapshot. Si ya hay snapshots previos devuelve
-   `cambio_desde_ultimo_snapshot`: **ese delta es el diagnóstico real**, no la
-   foto fija.
+   Gives the overall state, top videos, traffic, audience and geography, and
+   appends a snapshot. If earlier snapshots exist it returns
+   `change_since_last_snapshot`: **that delta is the real diagnosis**, not the
+   still photo.
 
-2. **Ordenar por retención, no solo por vistas**
+2. **Rank by retention, not only by views**
    `python3 tools/yt_top_videos.py --days 90 --by-retention`
-   Un vídeo con pocas vistas y retención alta es una señal de formato; uno con
-   muchas vistas y retención baja es un problema de promesa.
+   A video with few views and high retention is a format signal; one with many
+   views and low retention is a promise problem.
 
-3. **De dónde viene la gente**
+3. **Where people come from**
    `python3 tools/yt_traffic.py --days 28`
    `python3 tools/yt_search_terms.py --days 90`
-   El segundo es el que aporta: son los términos **reales** con los que llegan.
-   Dependencia de suscriptores por encima del 50% significa que el canal no está
-   captando fuera de su base.
+   The second is the one that pays: those are the **real** terms people arrive
+   through. Subscriber dependence above 50% means the channel is not reaching
+   beyond its own base.
 
-4. **Dónde abandonan** — sobre los 3 vídeos más relevantes del paso 2
+4. **Where they leave** — on the 3 most relevant videos from step 2
    `python3 tools/yt_retention.py --video ID`
-   Mirar `hitos`: `intro_30s`, `re_hook_min3`, `re_hook_min6`. Si la caída está
-   en la intro, el problema es la promesa; si está en un re-hook, el problema es
-   la estructura. Si existe `memoria/sop/scripting_sop.md`, se contrasta contra él.
+   Look at `milestones`: `intro_30s`, `re_hook_min3`, `re_hook_min6`. A drop in
+   the intro is a promise problem; a drop at a re-hook is a structure problem.
+   If `memory/sop/scripting_sop.md` exists, contrast against it.
 
-5. **Cruce obligatorio antes de concluir**
+5. **Mandatory cross-check before concluding**
    `python3 tools/yt_outliers_channels.py --min-ratio 2.0`
-   Sin esto, no se puede distinguir un problema del canal de un movimiento del
-   nicho entero.
+   Without this you cannot tell a channel problem from the whole niche moving.
 
-6. Comparar contra lo que ya se sabía: `memoria/MEMORY.md`, en especial los
-   ficheros `outcome_*`, que llevan la predicción hecha antes del vídeo frente
-   al resultado real.
+6. Compare against what was already known: `memory/MEMORY.md`, especially any
+   `outcome_*` files, which hold the prediction made before the video against
+   the real result.
 
-**El orden se adapta a los datos.** Si el paso 1 revela una caída brusca, se va
-directo al 4 sobre el vídeo afectado. Los datos mandan sobre el manual.
+**The order adapts to the data.** If step 1 reveals a sharp drop, go straight
+to step 4 on the affected video. The data outranks the manual.
 
-## FUENTES
+## SOURCES
 
-Pasos 1-4 `youtube_api` (agregados y porcentajes `derived`). Paso 5 `derived`.
-Ninguna heurística: esta skill no estima nada.
+Steps 1-4 `youtube_api` (aggregates and percentages `derived`). Step 5
+`derived`. No heuristics: this skill estimates nothing.
 
-## SALIDA
+## OUTPUT
 
-1. Titular: qué ha cambiado y desde cuándo, con la fecha del dato.
-2. Tabla de estado con el delta contra el snapshot anterior.
-3. Diagnóstico: 2-3 causas, cada una respaldada por una cifra concreta.
-4. Acción prioritaria: una sola, la de mayor impacto.
+1. Headline: what changed and since when, with the data's date.
+2. Status table with the delta against the previous snapshot.
+3. Diagnosis: 2-3 causes, each backed by a concrete figure.
+4. Priority action: one only, the highest impact.
 
-Si falta CTR para cerrar el diagnóstico, se dice y se apunta a
-`tools/ingest_studio_csv.py`. Ver `LIMITES.md`.
+If CTR is missing to close the diagnosis, say so and point at
+`tools/ingest_studio_csv.py`. See `LIMITS.md`.

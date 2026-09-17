@@ -1,0 +1,124 @@
+# Title rubric — UNCALIBRATED TEMPLATE.
+#
+# In the harness this came from, every axis traced back to a lesson learned on
+# a real video, and the `memory` field pointed at the file that justified it.
+# Here those fields are null: this rubric is a reasonable starting point, NOT
+# the distillation of your channel's lessons.
+#
+# HOW TO CALIBRATE IT (this is what makes it worth anything):
+#   1. Use the harness for a few weeks. When you discover something that works
+#      or fails in YOUR titles, write it into `memory/` as a feedback file.
+#   2. Add or adjust an axis here, and point `memory:` at that file.
+#   3. Update `calibrated_with` to record what it was calibrated against.
+#
+# Axes marked GENERIC apply to almost any channel. Axes marked ADAPT encode a
+# specific editorial decision: review or delete them, or you will be scoring by
+# somebody else's judgement.
+#
+# The regex patterns are written for English and Spanish. Add your own
+# language's spellings — matching is case-insensitive.
+#
+# THIS DOES NOT PREDICT CTR. It is a weighted checklist. Until you ingest the
+# Studio CSV with real CTR (ingest_studio_csv.py) it stays UNVALIDATED, and you
+# have to say so when giving a score.
+
+version: 1
+calibrated_with: null
+validated_against_ctr: false
+
+axes:
+  # GENERIC
+  - id: hook_up_front
+    weight: 22
+    memory: null
+    description: >
+      The curiosity gap belongs in the first 3-4 words. A long parenthesis at
+      the start buries the hook, and a tutorial opening creates no tension.
+    penalties:
+      - patron: '\([^)]{15,}\)'
+        points: -12
+        reason: "Long parenthesis: may be burying the hook"
+      - patron: '^(how to|how i|guide|tutorial|everything about|como|cómo|guia|guía|todo sobre)\b'
+        points: -8
+        reason: "Generic tutorial opening, no tension"
+
+  # GENERIC
+  - id: hard_number
+    weight: 20
+    memory: null
+    description: >
+      A concrete number with a unit (time, %, money, quantity) gives verifiable
+      specificity. It is one of the most repeated patterns across outliers in
+      very different niches.
+    bonus:
+      - patron: '\d+\s*(?:[kK%€$£]|min\b|h\b|hrs?\b|hours?\b|minutes?\b|days?\b|x\b|horas?\b|minutos?\b|d[ií]as?\b)'
+        points: 20
+        reason: "Hard number with a unit"
+      - patron: '\b\d+\b'
+        points: 12
+        reason: "Number present, no explicit unit"
+
+  # ADAPT — encodes who you want to attract and who you do not.
+  - id: system_not_tool
+    weight: 18
+    memory: null
+    description: >
+      AN EXAMPLE TO ADAPT. In the original channel the outcome came first and
+      the tool name was subordinate, and "free" was penalised because it drew
+      an audience that bounced. Your channel may want the opposite: review
+      these patterns or delete the axis.
+    bonus:
+      - patron: '\b(system|pipeline|process|workflow|stack|sistema|proceso|flujo)\b'
+        points: 14
+        reason: "Framed as a system"
+    penalties:
+      - patron: '^\s*\w*\s*(free|gratis|0€|0 €|\$0)\b'
+        points: -10
+        reason: "'Free' up front: check whether that attracts YOUR audience"
+
+  # ADAPT — only applies if your topic has a declarable barrier to entry.
+  - id: negative_promise
+    weight: 12
+    memory: null
+    description: >
+      AN EXAMPLE TO ADAPT. Stating what is NOT required ("no code", "no oven",
+      "no experience") removes the main objection. Swap the patterns for the
+      ones in your niche.
+    bonus:
+      - patron: '\b(no|without|sin)\s+(code|coding|jargon|terminal|experience|codigo|código|jerga|programar)\b'
+        points: 12
+        reason: "Explicit negative promise"
+
+  # GENERIC
+  - id: mobile_length
+    weight: 14
+    memory: null
+    description: >
+      The title must be readable in full in the mobile feed. Above 60
+      characters YouTube starts truncating in many contexts.
+    ranges:
+      - max: 45
+        points: 10
+        reason: "Short: legible, but may waste space"
+      - max: 60
+        points: 14
+        reason: "Optimal range for mobile"
+      - max: 70
+        points: 8
+        reason: "Risk of truncation in some contexts"
+      - max: 999
+        points: 2
+        reason: "Will be truncated in the mobile feed"
+
+  # ADAPT — depends on whether your format is first person.
+  - id: first_person
+    weight: 14
+    memory: null
+    description: >
+      AN EXAMPLE TO ADAPT. In the original channel the biggest own outlier was
+      long-form first person, so the mould scored. If your channel is
+      explanatory or product-led, this axis is probably unnecessary.
+    bonus:
+      - patron: '\b(i|my|me|i built|i made|i tried|i used|mi|mis|yo|monto|monté|construyo|hice|probé)\b'
+        points: 14
+        reason: "First person"

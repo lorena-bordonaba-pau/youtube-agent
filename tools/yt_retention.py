@@ -1,106 +1,106 @@
 #!/usr/bin/env python3
-"""Curva de retención real de un vídeo propio: dónde abandona la gente.
+"""Real retention curve for one of your videos: where people leave.
 
-Hasta ahora solo existía `averageViewPercentage`, que dice CUANTO retienes pero
-no DONDE se van. Esto convierte los re-hooks de min 3 y min 6 del SOP de guion
-en algo verificable.
+`averageViewPercentage` tells you HOW MUCH you retain but not WHERE viewers
+go. This is what turns a script SOP's re-hook timings into something you can
+verify.
 """
 from lib import base  # noqa: F401
 from lib import cache, yt_data
 from lib import yt_analytics as ya
-from lib.contrato import (EXIT_NO_DATA, SOURCE_API, ToolError, emitir, main,
-                          parser, sobre)
+from lib.contract import (EXIT_NO_DATA, SOURCE_API, ToolError, emit, main,
+                          parser, envelope)
 
 TOOL = "yt_retention"
 
-# Una caída de más de este % de audiencia entre dos puntos consecutivos de la
-# curva (cada punto = 1% del vídeo) se marca como abandono concentrado.
-UMBRAL_CAIDA = 1.5
+# A drop larger than this % of the audience between two consecutive curve
+# points (each point = 1% of the video) is flagged as a concentrated exit.
+DROP_THRESHOLD = 1.5
 
 
 def run():
     p = parser(__doc__)
     p.add_argument("--video", required=True)
     p.add_argument("--days", type=int, default=365)
-    p.add_argument("--umbral", type=float, default=UMBRAL_CAIDA)
+    p.add_argument("--threshold", type=float, default=DROP_THRESHOLD)
     args = p.parse_args()
 
     def fetch():
-        curva = ya.retencion(args.video, args.days)
-        meta = yt_data.stats_videos([args.video])
-        return {"curva": curva, "meta": meta[0] if meta else None}
+        curve = ya.retention(args.video, args.days)
+        meta = yt_data.video_stats([args.video])
+        return {"curve": curve, "meta": meta[0] if meta else None}
 
-    datos, hit = cache.memo("analitica_propia", f"{TOOL}:{args.video}:{args.days}",
+    payload_data, hit = cache.memo("own_analytics", f"{TOOL}:{args.video}:{args.days}",
                             fetch, not args.no_cache)
-    curva = datos["curva"]
-    if not curva:
+    curve = payload_data["curve"]
+    if not curve:
         raise ToolError(
-            f"Sin datos de retencion para {args.video}.", EXIT_NO_DATA,
-            "Puede ser un video demasiado nuevo, con pocas vistas, o que no "
-            "pertenezca al canal autorizado.")
+            f"No retention data for {args.video}.", EXIT_NO_DATA,
+            "It may be too new, have too few views, or not belong to the "
+            "authorised channel.")
 
-    dur_s = (datos["meta"] or {}).get("duration_s", 0)
+    dur_s = (payload_data["meta"] or {}).get("duration_s", 0)
 
-    # Anotar cada punto con su momento real del vídeo y la caída respecto al anterior
-    puntos, previo = [], None
-    for fila in curva:
-        ratio = fila["elapsedVideoTimeRatio"]
-        watch = round(fila["audienceWatchRatio"] * 100, 2)
+    # Annotate each point with its real timestamp and the drop from the last
+    points, previo = [], None
+    for row in curve:
+        ratio = row["elapsedVideoTimeRatio"]
+        watch = round(row["audienceWatchRatio"] * 100, 2)
         seg = int(ratio * dur_s) if dur_s else None
         punto = {
             "pct_video": round(ratio * 100, 1),
-            "momento": f"{seg // 60}:{seg % 60:02d}" if seg is not None else None,
-            "audiencia_pct": watch,
-            "vs_similares": round(fila.get("relativeRetentionPerformance", 0), 3),
-            "caida": round(previo - watch, 2) if previo is not None else 0,
+            "moment": f"{seg // 60}:{seg % 60:02d}" if seg is not None else None,
+            "audience_pct": watch,
+            "vs_similar": round(row.get("relativeRetentionPerformance", 0), 3),
+            "drop": round(previo - watch, 2) if previo is not None else 0,
         }
-        puntos.append(punto)
+        points.append(punto)
         previo = watch
 
-    caidas = sorted((p for p in puntos if p["caida"] >= args.umbral),
-                    key=lambda p: p["caida"], reverse=True)
+    caidas = sorted((p for p in points if p["drop"] >= args.threshold),
+                    key=lambda p: p["drop"], reverse=True)
 
-    # Hitos que interesan al SOP de guion
+    # Milestones a script SOP cares about
     def en(pct):
-        return min(puntos, key=lambda p: abs(p["pct_video"] - pct))
+        return min(points, key=lambda p: abs(p["pct_video"] - pct))
 
-    hitos = {}
+    milestones = {}
     if dur_s:
-        for etiqueta, segundo in (("intro_30s", 30), ("re_hook_min3", 180),
+        for label, segundo in (("intro_30s", 30), ("re_hook_min3", 180),
                                   ("re_hook_min6", 360)):
             if segundo < dur_s:
-                hitos[etiqueta] = en(segundo / dur_s * 100)
-    hitos["mitad"] = en(50)
-    hitos["final"] = puntos[-1]
+                milestones[label] = en(segundo / dur_s * 100)
+    milestones["half"] = en(50)
+    milestones["final"] = points[-1]
 
-    env = sobre(TOOL, SOURCE_API,
+    env = envelope(TOOL, SOURCE_API,
                 {"video": args.video,
-                 "titulo": (datos["meta"] or {}).get("title"),
-                 "duracion": (datos["meta"] or {}).get("duration"),
-                 "puntos": puntos,
-                 "caidas_detectadas": caidas[:10],
-                 "hitos": hitos},
-                {"video": args.video, "days": args.days, "umbral": args.umbral}, hit,
-                notas=[
-                    "`audiencia_pct` es dato de la API (audienceWatchRatio).",
-                    "`vs_similares` compara con videos de duracion parecida en "
-                    "YouTube: 0.5 es la mediana.",
-                    "`caida` y `momento` son calculados (source: derived).",
+                 "title": (payload_data["meta"] or {}).get("title"),
+                 "duration": (payload_data["meta"] or {}).get("duration"),
+                 "points": points,
+                 "drops_detected": caidas[:10],
+                 "milestones": milestones},
+                {"video": args.video, "days": args.days, "threshold": args.threshold}, hit,
+                notes=[
+                    "`audience_pct` comes from the API (audienceWatchRatio).",
+                    "`vs_similar` compares against videos of similar length across "
+                    "YouTube: 0.5 is the median.",
+                    "`drop` and `moment` are computed (source: derived).",
                 ])
 
     def md(e):
         d = e["data"]
-        out = [base.cabecera_md(e), f"\n**{d['titulo']}** ({d['duracion']})\n",
+        out = [base.md_header(e), f"\n**{d['title']}** ({d['duration']})\n",
                "\n## Hitos\n",
-               base.tabla_md([{"hito": k, **v} for k, v in d["hitos"].items()],
-                             ["hito", "momento", "pct_video", "audiencia_pct",
-                              "vs_similares"]),
-               f"\n## Caidas concentradas (>= {args.umbral} puntos)\n",
-               base.tabla_md(d["caidas_detectadas"],
-                             ["momento", "pct_video", "audiencia_pct", "caida"])]
+               base.md_table([{"milestone": k, **v} for k, v in d["milestones"].items()],
+                             ["milestone", "moment", "pct_video", "audience_pct",
+                              "vs_similar"]),
+               f"\n## Caidas concentradas (>= {args.threshold} points)\n",
+               base.md_table(d["drops_detected"],
+                             ["moment", "pct_video", "audience_pct", "drop"])]
         return "\n".join(out)
 
-    emitir(env, args, md)
+    emit(env, args, md)
 
 
 if __name__ == "__main__":

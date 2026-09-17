@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Transcripción de un vídeo de YouTube (cualquier canal).
+"""Transcript of a YouTube video (any channel).
 
-Primero intenta los subtítulos de YouTube (rápido, gratis, sin cuota de API).
-Si no hay, descarga el audio y lo transcribe con whisper-cli.
-Cachea 30 días: el contenido de un vídeo no cambia.
+It tries YouTube captions first (fast, free, no API quota). If there are
+none, it downloads the audio and transcribes it with whisper-cli.
+Cached for 30 days: a video's content does not change.
 """
 import json
 import re
@@ -12,37 +12,50 @@ import tempfile
 from pathlib import Path
 
 from lib import base  # noqa: F401
-from lib.contrato import (DATOS_DIR, EXIT_NO_DATA, SOURCE_API, SOURCE_DERIVED,
-                          ToolError, emitir, main, parser, sobre)
+from lib.contract import (CONFIG_DIR, DATA_DIR, EXIT_NO_DATA, SOURCE_API, SOURCE_DERIVED,
+                          ToolError, emit, main, parser, envelope)
+
+# Language/region for autocomplete and transcription. Set `language` and
+# `region` in config/config.json; they default to English.
+def _locale():
+    try:
+        import json as _j
+        c = _j.loads((CONFIG_DIR / "config.json").read_text(encoding="utf-8"))
+        return c.get("language", "en"), c.get("region", "us")
+    except Exception:  # noqa: BLE001 — a missing config must not break the tool
+        return "en", "us"
+
+
+LANG, REGION = _locale()
 
 TOOL = "yt_transcript"
-DIR = DATOS_DIR / "transcripciones"
+DIR = DATA_DIR / "transcripts"
 
 _TS = re.compile(r"(\d{2}):(\d{2}):(\d{2})\.\d{3}\s+-->")
 _TAG = re.compile(r"<[^>]+>")
 
 
-def parsear_vtt(texto: str) -> list[dict]:
-    """VTT -> lista de {t, texto}, deduplicando el efecto rollup de los
-    subtítulos automáticos (que repiten cada línea varias veces)."""
-    segmentos, actual, vistos = [], None, set()
-    for linea in texto.splitlines():
-        m = _TS.search(linea)
+def parsear_vtt(text: str) -> list[dict]:
+    """VTT -> list of {t, text}, de-duplicating the rollup effect of auto
+    captions, which repeat each line several times."""
+    segments, current, vistos = [], None, set()
+    for line in text.splitlines():
+        m = _TS.search(line)
         if m:
             h, mi, s = (int(x) for x in m.groups())
-            actual = h * 3600 + mi * 60 + s
+            current = h * 3600 + mi * 60 + s
             continue
-        linea = _TAG.sub("", linea).strip()
-        if not linea or linea.startswith(("WEBVTT", "Kind:", "Language:")) or actual is None:
+        line = _TAG.sub("", line).strip()
+        if not line or line.startswith(("WEBVTT", "Kind:", "Language:")) or current is None:
             continue
-        if linea in vistos:
+        if line in vistos:
             continue
-        vistos.add(linea)
-        if segmentos and segmentos[-1]["t"] == actual:
-            segmentos[-1]["texto"] += " " + linea
+        vistos.add(line)
+        if segments and segments[-1]["t"] == current:
+            segments[-1]["text"] += " " + line
         else:
-            segmentos.append({"t": actual, "texto": linea})
-    return segmentos
+            segments.append({"t": current, "text": line})
+    return segments
 
 
 def via_subtitulos(video_id: str, idioma: str) -> list[dict] | None:
@@ -71,11 +84,11 @@ def via_whisper(video_id: str) -> list[dict] | None:
             if not cands:
                 return None
             audio = cands[0]
-        salida = Path(tmp) / "out"
-        subprocess.run(["whisper-cli", "-f", str(audio), "-l", "es", "-ovtt",
-                        "-of", str(salida)],
+        out = Path(tmp) / "out"
+        subprocess.run(["whisper-cli", "-f", str(audio), "-l", args.lang, "-ovtt",
+                        "-of", str(out)],
                        capture_output=True, text=True, timeout=1800)
-        vtt = salida.with_suffix(".vtt")
+        vtt = out.with_suffix(".vtt")
         if not vtt.exists():
             return None
         return parsear_vtt(vtt.read_text(encoding="utf-8", errors="ignore"))
@@ -84,48 +97,50 @@ def via_whisper(video_id: str) -> list[dict] | None:
 def run():
     p = parser(__doc__)
     p.add_argument("--video", required=True)
-    p.add_argument("--lang", default="es")
+    p.add_argument("--lang", default=LANG,
+                   help="caption/transcription language code (default from "
+                        "config.json `language`, else `en`)")
     p.add_argument("--whisper", action="store_true",
-                   help="fuerza whisper aunque haya subtítulos")
-    p.add_argument("--plano", action="store_true", help="solo el texto, sin timestamps")
+                   help="force whisper even when captions exist")
+    p.add_argument("--plain", action="store_true", help="text only, no timestamps")
     args = p.parse_args()
 
     DIR.mkdir(parents=True, exist_ok=True)
-    destino = DIR / f"{args.video}.{args.lang}.json"
+    dest = DIR / f"{args.video}.{args.lang}.json"
 
-    if destino.exists() and not args.no_cache:
-        guardado = json.loads(destino.read_text(encoding="utf-8"))
-        segmentos, metodo, hit = guardado["segmentos"], guardado["metodo"], True
+    if dest.exists() and not args.no_cache:
+        saved = json.loads(dest.read_text(encoding="utf-8"))
+        segments, method, hit = saved["segments"], saved["method"], True
     else:
-        segmentos = None if args.whisper else via_subtitulos(args.video, args.lang)
-        metodo = "subtitulos_youtube"
-        if not segmentos:
-            segmentos, metodo = via_whisper(args.video), "whisper_local"
-        if not segmentos:
+        segments = None if args.whisper else via_subtitulos(args.video, args.lang)
+        method = "subtitulos_youtube"
+        if not segments:
+            segments, method = via_whisper(args.video), "whisper_local"
+        if not segments:
             raise ToolError(
-                f"No se pudo transcribir {args.video}.", EXIT_NO_DATA,
-                "Ni subtitulos disponibles ni audio descargable. Comprueba que "
-                "el video es publico y que yt-dlp esta actualizado.")
-        destino.write_text(json.dumps(
-            {"video": args.video, "metodo": metodo, "segmentos": segmentos},
+                f"Could not transcribe {args.video}.", EXIT_NO_DATA,
+                "No captions available and no downloadable audio. Check the "
+                "video is public and that yt-dlp is up to date.")
+        dest.write_text(json.dumps(
+            {"video": args.video, "method": method, "segments": segments},
             ensure_ascii=False), encoding="utf-8")
         hit = False
 
-    texto = " ".join(s["texto"] for s in segmentos)
-    data = {"video": args.video, "metodo": metodo, "palabras": len(texto.split()),
-            "duracion_s": segmentos[-1]["t"] if segmentos else 0,
-            "texto": texto}
-    if not args.plano:
-        data["segmentos"] = segmentos
+    text = " ".join(s["text"] for s in segments)
+    data = {"video": args.video, "method": method, "words": len(text.split()),
+            "duration_s": segments[-1]["t"] if segments else 0,
+            "text": text}
+    if not args.plain:
+        data["segments"] = segments
 
-    # Los subtitulos vienen de YouTube; una transcripcion de Whisper la genera
-    # esta maquina, y eso no es lo mismo.
-    source = SOURCE_API if metodo == "subtitulos_youtube" else SOURCE_DERIVED
-    env = sobre(TOOL, source, data, {"video": args.video, "lang": args.lang}, hit,
-                notas=[f"Transcrito via {metodo}. Toda transcripcion automatica "
-                       "tiene errores de reconocimiento: no citar literalmente "
-                       "como palabras del autor sin verificar en el video."])
-    emitir(env, args, lambda e: base.cabecera_md(e) + "\n" + e["data"]["texto"])
+    # Captions come from YouTube; a Whisper transcript is generated on this
+    # machine, and those are not the same thing.
+    source = SOURCE_API if method == "subtitulos_youtube" else SOURCE_DERIVED
+    env = envelope(TOOL, source, data, {"video": args.video, "lang": args.lang}, hit,
+                notes=[f"Transcrito via {method}. Toda transcript_cache automatica "
+                       "has recognition errors: do not quote it verbatim as the "
+                       "author's words without checking the video."])
+    emit(env, args, lambda e: base.md_header(e) + "\n" + e["data"]["text"])
 
 
 if __name__ == "__main__":

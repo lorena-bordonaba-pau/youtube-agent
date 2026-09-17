@@ -1,62 +1,64 @@
 ---
 name: thumbnail-inspiration
-description: Analiza una miniatura de referencia y genera una inspirada en ella, adaptando sus principios de diseño al contenido propio. Se invoca ante "hazme una miniatura como esta", "me gusta esta miniatura", "inspírate en este vídeo".
+description: Analyse a reference thumbnail and generate one inspired by it, adapting its design principles to your own content. Triggered by "make me a thumbnail like this one", "I like this thumbnail", "take inspiration from this video".
 ---
 
-# Miniatura inspirada en una referencia
+# Thumbnail inspired by a reference
 
-## CUÁNDO
+## WHEN
 
-Hay **una referencia concreta**: una imagen aportada, la miniatura de un vídeo
-ajeno, o una generada antes. Si no hay referencia y lo que se quiere es leer el
-estilo de un canal entero, es `analyse-thumbnails`.
+There is **one specific reference**: an image provided, someone else's video
+thumbnail, or one generated earlier. If there is no reference and the goal is
+to read a whole channel's style, that is `analyse-thumbnails`.
 
-**Adaptar principios, no copiar.** Copiar la miniatura de un competidor la
-pone al lado de la suya en el feed, compitiendo con el original y perdiendo.
+**Adapt principles, do not copy.** Copying a competitor's thumbnail puts yours
+next to theirs in the feed, competing with the original and losing.
 
-## ORDEN DE EJECUCIÓN
+## EXECUTION ORDER
 
-1. **Ver la referencia**
-   - Es un vídeo de YouTube: `python3 tools/yt_thumbnails.py --video ID` y
-     abrir el fichero.
-   - Es un fichero local o una imagen aportada: abrirla directamente.
+1. **See the reference**
+   - It is a YouTube video: `python3 tools/yt_thumbnails.py --video ID` and
+     open the file.
+   - It is a local file or a provided image: open it directly.
 
-2. **Medirla, si es de YouTube**
+2. **Measure it, if it is from YouTube**
    `python3 tools/score_thumbnail.py --video ID`
-   Da el contraste y la saturación reales de la referencia, que es lo que la
-   hace destacar en el feed y lo que suele perderse al imitarla "a ojo".
+   Gives the reference's real contrast and saturation, which is what makes it
+   stand out in the feed and what usually gets lost when imitating by eye.
 
-3. **Extraer la fórmula de diseño en 5-8 viñetas**: layout, paleta,
-   tipografía (tamaño relativo, contorno, nº de palabras), mood, elementos
-   humanos (expresión, pose, dirección de la mirada, encuadre), y **qué la hace
-   clicable**. Cargar `thumbnail-best-practices` para nombrar los ejes.
+3. **Extract the design formula in 5-8 bullets**: layout, palette, typography
+   (relative size, outline, word count), mood, human elements (expression,
+   pose, gaze direction, framing), and **what makes it clickable**. Load
+   `thumbnail-best-practices` to name the axes.
 
-4. **Decidir qué se adapta y qué se cambia — el paso que evita el plagio.**
-   Se mantiene: composición, jerarquía, contraste, tipo de emoción.
-   Se cambia: el tema, el sujeto, la paleta si es marca ajena, el texto.
+4. **Decide what to adapt and what to change — the step that avoids
+   plagiarism.**
+   Keep: composition, hierarchy, contrast, type of emotion.
+   Change: the topic, the subject, the palette if it is someone's brand, the
+   text.
 
-5. **Comprobar contra la rúbrica propia antes de generar.** Si la referencia
-   funciona por un logo grande o por repetir el título, aquí eso resta:
-   `no_redundante_con_titulo` pesa 25 puntos y `logos` penaliza más de uno.
-   La referencia no sobrescribe la rúbrica del canal.
+5. **Check against your own rubric before generating.** If the reference works
+   because of a big logo or because it repeats the title, here that subtracts:
+   `not_redundant_with_title` carries 25 points and `logos` penalises more than
+   one. The reference does not override the channel's rubric.
 
-6. **Generar**, describiendo el tema **nuevo**, no el de la referencia:
+6. **Generate**, describing the **new** topic, not the reference's:
    ```
    python3 tools/generate_image.py --type thumbnail \
-     --prompt "<tema nuevo>. Usa la composición de Reference Image 1: <fórmula>" \
-     --ref REFERENCIA:composition --ref cara.jpg:likeness --dry-run
+     --prompt "<new topic>. Use the composition of Reference Image 1: <formula>" \
+     --ref REFERENCE:composition --ref face.jpg:likeness --dry-run
    ```
-   Regla dura sobre la referencia: **si en ella sale otra persona, no se pasa
-   como `--ref`**. Su composición se describe en el prompt y punto. Pasar la
-   cara de otro es cómo acaba en la imagen.
+   A hard rule about the reference: **if another person appears in it, do not
+   pass it as `--ref`**. Describe its composition in the prompt and leave it at
+   that. Passing someone else's face is how it ends up in the image.
 
-   Si sale la creadora, o no sale nadie, sí puede ir como referencia.
+   If the creator appears, or nobody does, it can go in as a reference.
 
-7. Quitar `--dry-run`, generar, **abrir el resultado** y ofrecer un ajuste
-   concreto, no un menú de opciones.
+7. Drop `--dry-run`, generate, **open the result**, and offer one concrete
+   adjustment — not a numbered menu.
 
-## FUENTES
+## SOURCES
 
-La imagen generada es `source: generated`: artefacto, no predicción. El score
-de la referencia es `heuristic` sin validar contra CTR. Al entregar se nombra
-el modelo y se dice en qué se ha inspirado.
+The generated image is `source: generated`: an artefact, not a prediction. The
+reference's score is `heuristic`, unvalidated against CTR. When delivering,
+name the model and say what it was inspired by.

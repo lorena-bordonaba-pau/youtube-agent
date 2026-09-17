@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Ingiere un export CSV de YouTube Studio para tener CTR e impresiones.
+"""Ingest a YouTube Studio CSV export to get CTR and impressions.
 
-CTR e impresiones NO existen en la API publica de YouTube: solo en Studio.
-Este es el unico camino para validar la rubrica de titulos contra resultado real.
+CTR and impressions are NOT in YouTube's public API: only in Studio. This is
+the only way to validate the title rubric against real outcomes.
 
-Como exportarlo:
-  YouTube Studio > Estadisticas > Modo avanzado > pestana Videos >
-  seleccionar metricas (Impresiones, CTR de impresiones) > Exportar > CSV.
+How to export it:
+  YouTube Studio > Analytics > Advanced mode > Videos tab >
+  select metrics (Impressions, Impressions click-through rate) > Export > CSV.
 """
 import csv
 import json
@@ -14,32 +14,34 @@ import re
 from pathlib import Path
 
 from lib import base  # noqa: F401
-from lib.contrato import (DATOS_DIR, EXIT_NO_DATA, SOURCE_API, ToolError, emitir,
-                          main, parser, sobre)
+from lib.contract import (DATA_DIR, EXIT_NO_DATA, SOURCE_API, ToolError, emit,
+                          main, parser, envelope)
 
 TOOL = "ingest_studio_csv"
-DESTINO = DATOS_DIR / "historico" / "studio_ctr.json"
+DESTINO = DATA_DIR / "history" / "studio_ctr.json"
 
-# Studio exporta con los encabezados en el idioma de la cuenta.
+# Studio exports its headers in the account language, so each field lists the
+# spellings we have seen. Add yours if your export is in another language:
+# matching is case-insensitive and partial.
 ALIAS = {
-    "video": ["contenido", "content", "video", "vídeo"],
-    "titulo": ["título del vídeo", "titulo del video", "video title"],
-    "impresiones": ["impresiones", "impressions"],
-    "ctr": ["porcentaje de clics de las impresiones",
-            "ctr de las impresiones (%)", "impressions click-through rate (%)",
-            "impressions ctr (%)"],
-    "vistas": ["visualizaciones", "views"],
-    "duracion_media": ["duración media de las visualizaciones",
-                       "average view duration"],
+    "video": ["content", "video", "contenido", "vídeo"],
+    "title": ["video title", "título del vídeo", "titulo del video"],
+    "impressions": ["impressions", "impresiones"],
+    "ctr": ["impressions click-through rate (%)", "impressions ctr (%)",
+            "porcentaje de clics de las impresiones",
+            "ctr de las impresiones (%)"],
+    "views": ["views", "visualizaciones"],
+    "mean_duration": ["average view duration",
+                      "duración media de las visualizaciones"],
 }
 
 
-def localizar(campos: list[str], clave: str) -> str | None:
-    norm = {c.strip().lower(): c for c in campos}
-    for alias in ALIAS[clave]:
+def find_column(fields: list[str], key: str) -> str | None:
+    norm = {c.strip().lower(): c for c in fields}
+    for alias in ALIAS[key]:
         if alias in norm:
             return norm[alias]
-    for alias in ALIAS[clave]:  # coincidencia parcial como respaldo
+    for alias in ALIAS[key]:  # partial match as a fallback
         for k, original in norm.items():
             if alias in k:
                 return original
@@ -58,47 +60,47 @@ def num(v: str) -> float:
 
 def run():
     p = parser(__doc__)
-    p.add_argument("--csv", required=True, help="ruta al CSV exportado de Studio")
+    p.add_argument("--csv", required=True, help="path to the CSV exported from Studio")
     args = p.parse_args()
 
-    ruta = Path(args.csv).expanduser()
-    if not ruta.exists():
-        raise ToolError(f"No existe {ruta}", EXIT_NO_DATA, __doc__.strip())
+    path = Path(args.csv).expanduser()
+    if not path.exists():
+        raise ToolError(f"No exists {path}", EXIT_NO_DATA, __doc__.strip())
 
-    with open(ruta, encoding="utf-8-sig", newline="") as f:
-        filas = list(csv.DictReader(f))
-    if not filas:
-        raise ToolError(f"{ruta} esta vacio.", EXIT_NO_DATA)
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.DictReader(f))
+    if not rows:
+        raise ToolError(f"{path} is empty.", EXIT_NO_DATA)
 
-    campos = list(filas[0].keys())
-    col_video = localizar(campos, "video")
-    col_ctr = localizar(campos, "ctr")
+    fields = list(rows[0].keys())
+    col_video = find_column(fields, "video")
+    col_ctr = find_column(fields, "ctr")
     if not col_video or not col_ctr:
         raise ToolError(
-            "El CSV no tiene columna de video o de CTR reconocible. "
-            f"Columnas encontradas: {campos}", EXIT_NO_DATA,
-            "Exporta incluyendo las metricas Impresiones y CTR de impresiones.")
+            "The CSV has no recognisable video or CTR column. "
+            f"Columnas encontradas: {fields}", EXIT_NO_DATA,
+            "Export including the Impressions and CTR metrics.")
 
-    col_imp = localizar(campos, "impresiones")
-    col_tit = localizar(campos, "titulo")
-    col_vis = localizar(campos, "vistas")
+    col_imp = find_column(fields, "impressions")
+    col_tit = find_column(fields, "title")
+    col_vis = find_column(fields, "views")
 
     registros = []
-    for fila in filas:
-        vid = (fila.get(col_video) or "").strip()
-        # Studio incluye una fila "Total" que no es un vídeo.
-        if not vid or vid.lower() in ("total", "totales"):
+    for row in rows:
+        vid = (row.get(col_video) or "").strip()
+        # Studio includes a "Total" row that is not a video.
+        if not vid or vid.lower() in ("total", "totals"):
             continue
         registros.append({
             "video_id": vid,
-            "titulo": fila.get(col_tit, "").strip() if col_tit else None,
-            "ctr_pct": num(fila.get(col_ctr)),
-            "impresiones": int(num(fila.get(col_imp))) if col_imp else None,
-            "vistas": int(num(fila.get(col_vis))) if col_vis else None,
+            "title": row.get(col_tit, "").strip() if col_tit else None,
+            "ctr_pct": num(row.get(col_ctr)),
+            "impressions": int(num(row.get(col_imp))) if col_imp else None,
+            "views": int(num(row.get(col_vis))) if col_vis else None,
         })
 
     if not registros:
-        raise ToolError("No se encontro ninguna fila de video en el CSV.", EXIT_NO_DATA)
+        raise ToolError("No video row found in the CSV.", EXIT_NO_DATA)
 
     DESTINO.parent.mkdir(parents=True, exist_ok=True)
     previo = {}
@@ -108,24 +110,24 @@ def run():
     previo.update({r["video_id"]: r for r in registros})
     ordenados = sorted(previo.values(), key=lambda r: r["ctr_pct"], reverse=True)
     DESTINO.write_text(json.dumps(
-        {"origen": str(ruta), "videos": ordenados}, ensure_ascii=False, indent=2),
+        {"origin": str(path), "videos": ordenados}, ensure_ascii=False, indent=2),
         encoding="utf-8")
 
     ctrs = [r["ctr_pct"] for r in ordenados if r["ctr_pct"]]
-    env = sobre(TOOL, SOURCE_API, {
-        "ingeridos": len(registros),
-        "total_acumulado": len(ordenados),
-        "ctr_medio": round(sum(ctrs) / len(ctrs), 2) if ctrs else None,
-        "mejor": ordenados[0] if ordenados else None,
-        "peor": ordenados[-1] if ordenados else None,
-        "guardado_en": str(DESTINO),
-    }, {"csv": str(ruta)}, False, notas=[
-        "CTR e impresiones son dato real de Studio, no estimacion.",
-        "Con esto ya se puede contrastar el score de score_titles.py contra el "
-        "CTR real y marcar `validado_contra_ctr: true` en la rubrica.",
+    env = envelope(TOOL, SOURCE_API, {
+        "ingested": len(registros),
+        "running_total": len(ordenados),
+        "mean_ctr": round(sum(ctrs) / len(ctrs), 2) if ctrs else None,
+        "best": ordenados[0] if ordenados else None,
+        "worst": ordenados[-1] if ordenados else None,
+        "saved_to": str(DESTINO),
+    }, {"csv": str(path)}, False, notes=[
+        "CTR and impressions are real Studio data, not estimates.",
+        "With this you can now check score_titles.py against real CTR and "
+        "set `validated_against_ctr: true` in the rubric.",
     ])
-    emitir(env, args, lambda e: base.cabecera_md(e) + "\n" + base.tabla_md(
-        [{"campo": k, "valor": v} for k, v in e["data"].items()
+    emit(env, args, lambda e: base.md_header(e) + "\n" + base.md_table(
+        [{"field": k, "value": v} for k, v in e["data"].items()
          if not isinstance(v, dict)]))
 
 

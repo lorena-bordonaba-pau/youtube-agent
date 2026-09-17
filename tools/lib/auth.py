@@ -1,19 +1,31 @@
-"""Autenticación con Google — nunca bloqueante.
+"""Google authentication — never blocking.
 
-A diferencia del toolkit original, esta capa JAMAS lanza `run_local_server`
-durante una ejecución normal: si el token falta o no refresca, sale con código
-EXIT_AUTH y le dice al agente qué comando ejecutar. Un navegador abriéndose a
-mitad de una sesión de agente la cuelga indefinidamente.
+Two ways in, and the cheap one comes first:
+
+**API key** (`YOUTUBE_API_KEY`). Enough for everything public: any channel's
+stats, a video's data, search, thumbnails, transcripts. No OAuth, no consent
+screen, no browser. This is what lets someone try the harness sixty seconds
+after cloning it.
+
+**OAuth** (`data/auth/client_secrets.json` + a token). Only needed for *your
+own* channel's analytics: retention, traffic sources, demographics, search
+terms. Those endpoints are private and a key cannot reach them.
+
+This layer NEVER calls `run_local_server` during a normal run: if the token is
+missing or will not refresh, it exits with EXIT_AUTH and tells the agent which
+command to run. A browser opening mid-session hangs the agent indefinitely.
 """
 from __future__ import annotations
 
+import os
 import pickle
 from pathlib import Path
 
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
-from .contrato import DATOS_DIR, EXIT_AUTH, ToolError
+from . import base  # noqa: F401 — importing it loads .env
+from .contract import DATA_DIR, EXIT_AUTH, ToolError
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.readonly",
@@ -21,17 +33,29 @@ SCOPES = [
     "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
 ]
 
-AUTH_DIR = DATOS_DIR / "auth"
+AUTH_DIR = DATA_DIR / "auth"
 SECRETS_FILE = AUTH_DIR / "client_secrets.json"
 TOKEN_FILE = AUTH_DIR / "token.pickle"
+API_KEY_ENV = "YOUTUBE_API_KEY"
 
-_PISTA = (
-    "Ejecuta `python3 tools/auth_setup.py` una vez para re-autorizar. "
-    "Ese comando SI abre el navegador, a proposito."
+_HINT = (
+    "Run `python3 tools/auth_setup.py` once to authorise. That command DOES "
+    "open a browser, on purpose."
+)
+_HINT_PUBLIC = (
+    "This tool only reads public data, so an API key is enough: put "
+    f"{API_KEY_ENV}=... in your .env (create the key at "
+    "console.cloud.google.com, APIs & Services > Credentials). OAuth is only "
+    "needed for your own channel's private analytics."
 )
 
 
-def get_credentials(interactivo: bool = False):
+def api_key() -> str | None:
+    """The API key, if there is one. Public data needs nothing else."""
+    return os.environ.get(API_KEY_ENV, "").strip() or None
+
+
+def get_credentials(interactive: bool = False):
     creds = None
     if TOKEN_FILE.exists():
         with open(TOKEN_FILE, "rb") as f:
@@ -44,81 +68,108 @@ def get_credentials(interactivo: bool = False):
         try:
             creds.refresh(Request())
         except Exception as e:  # noqa: BLE001
-            # Un refresh muerto es justo el caso que auth_setup viene a arreglar:
-            # en modo interactivo se cae al flujo de navegador en vez de abortar.
-            if not interactivo:
+            # A dead refresh is exactly what auth_setup exists to fix: in
+            # interactive mode fall through to the browser flow instead of
+            # aborting.
+            if not interactive:
                 raise ToolError(
-                    f"El token caduco y no se pudo refrescar: {e}", EXIT_AUTH, _PISTA
+                    f"The token expired and could not be refreshed: {e}",
+                    EXIT_AUTH, _HINT,
                 ) from e
             creds = None
         else:
-            _guardar(creds)
+            _save(creds)
             return creds
 
-    if not interactivo:
-        falta = "token.pickle" if not TOKEN_FILE.exists() else "un token valido"
+    if not interactive:
+        missing = "token.pickle" if not TOKEN_FILE.exists() else "a valid token"
         raise ToolError(
-            f"No hay credenciales utilizables: falta {falta} en {AUTH_DIR}.",
+            f"No usable credentials: {missing} is missing from {AUTH_DIR}.",
             EXIT_AUTH,
-            _PISTA,
+            _HINT,
         )
 
-    # Solo se llega aquí desde auth_setup.py, que pide interactivo=True.
+    # Only reached from auth_setup.py, which passes interactive=True.
     from google_auth_oauthlib.flow import InstalledAppFlow
 
     if not SECRETS_FILE.exists():
         raise ToolError(
-            f"No se encontro client_secrets.json en {SECRETS_FILE}.",
+            f"client_secrets.json not found at {SECRETS_FILE}.",
             EXIT_AUTH,
-            "Sigue el paso 2 del README: crea un proyecto en Google Cloud "
-            "Console, activa YouTube Data API v3 y YouTube Analytics API, "
-            "crea un ID de cliente OAuth de tipo Aplicacion de escritorio y "
-            "guarda el JSON descargado con ese nombre exacto.",
+            "Follow step 3 of the README: create a Google Cloud project, "
+            "enable YouTube Data API v3 and YouTube Analytics API, create an "
+            "OAuth client ID of type Desktop app, and save the downloaded "
+            "JSON under that exact name.",
         )
     flow = InstalledAppFlow.from_client_secrets_file(str(SECRETS_FILE), SCOPES)
     creds = flow.run_local_server(port=8080)
-    _guardar(creds)
+    _save(creds)
     return creds
 
 
-def _guardar(creds) -> None:
+def _save(creds) -> None:
     AUTH_DIR.mkdir(parents=True, exist_ok=True)
     with open(TOKEN_FILE, "wb") as f:
         pickle.dump(creds, f)
     TOKEN_FILE.chmod(0o600)
 
 
-def youtube():
-    """Cliente de YouTube Data API v3."""
-    return build("youtube", "v3", credentials=get_credentials(), cache_discovery=False)
+def youtube(public_only: bool = False):
+    """YouTube Data API v3 client.
+
+    With `public_only=True` an API key is preferred, so the tool works with no
+    OAuth at all. It still falls back to OAuth credentials when there is no
+    key, because a token also reads public data.
+    """
+    if public_only:
+        key = api_key()
+        if key:
+            return build("youtube", "v3", developerKey=key, cache_discovery=False)
+        if not TOKEN_FILE.exists():
+            raise ToolError(
+                f"No {API_KEY_ENV} and no OAuth token.", EXIT_AUTH, _HINT_PUBLIC)
+    return build("youtube", "v3", credentials=get_credentials(),
+                 cache_discovery=False)
 
 
 def analytics():
-    """Cliente de YouTube Analytics API v2."""
+    """YouTube Analytics API v2 client. OAuth only: this data is private."""
     return build("youtubeAnalytics", "v2", credentials=get_credentials(),
                  cache_discovery=False)
 
 
-def estado() -> dict:
-    """Diagnóstico de credenciales para `tools/init.py`. No lanza excepciones."""
+def status() -> dict:
+    """Credential status for `tools/init.py`. Never raises.
+
+    Reports both routes, because they unlock different things: an API key is
+    enough for public data, OAuth is required for your own analytics.
+    """
+    has_key = bool(api_key())
     if not TOKEN_FILE.exists():
-        return {"ok": False, "motivo": "falta token.pickle", "pista": _PISTA}
+        return {
+            "ok": has_key,
+            "reason": ("API key only: public data works, your own analytics "
+                       "does not" if has_key else "no token.pickle and no "
+                       f"{API_KEY_ENV}"),
+            "hint": "" if has_key else (
+                f"Quickest path: put {API_KEY_ENV} in your .env and public-data "
+                "tools work straight away. For your own channel's analytics, "
+                "run `python3 tools/auth_setup.py`."),
+        }
     try:
         with open(TOKEN_FILE, "rb") as f:
             creds = pickle.load(f)
     except Exception as e:  # noqa: BLE001
-        return {"ok": False, "motivo": f"token ilegible: {e}", "pista": _PISTA}
-    if creds.valid:
-        return {"ok": True, "motivo": "token valido"}
-    if not (creds.expired and creds.refresh_token):
-        return {"ok": False, "motivo": "token invalido y sin refresh_token",
-                "pista": _PISTA}
-    # "Tiene refresh_token" no significa que el refresh funcione: los tokens de
-    # una app en modo Testing caducan a los 7 dias. Hay que intentarlo de verdad
-    # antes de decir que las credenciales estan bien.
-    try:
-        creds.refresh(Request())
-    except Exception as e:  # noqa: BLE001
-        return {"ok": False, "motivo": f"el refresh fallo: {e}", "pista": _PISTA}
-    _guardar(creds)
-    return {"ok": True, "motivo": "token refrescado"}
+        return {"ok": has_key, "reason": f"unreadable token ({e})", "hint": _HINT}
+
+    if creds and creds.valid:
+        return {"ok": True, "reason": "valid token", "hint": ""}
+    if creds and creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+        except Exception:  # noqa: BLE001
+            return {"ok": has_key, "reason": "expired token, refresh failed",
+                    "hint": _HINT}
+        _save(creds)
+        return {"ok": True, "reason": "token refreshed", "hint": ""}
+    return {"ok": has_key, "reason": "token not usable", "hint": _HINT}

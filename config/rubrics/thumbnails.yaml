@@ -1,0 +1,87 @@
+# Thumbnail rubric — UNCALIBRATED TEMPLATE.
+#
+# Combines objective metrics from yt_thumbnails.py (contrast, luminance,
+# saturation) with qualitative axes the agent evaluates by LOOKING at the image.
+#
+# 40% scores itself. The other 60% comes back as unanswered questions, on
+# purpose: the agent must open the file and answer them. Inventing that 60% is
+# exactly what this tool is designed to prevent.
+#
+# The `judgement_axes` below are EXAMPLES from the original channel. Replace
+# them with yours: they should be the lessons you learn looking at your own
+# thumbnails, and each `memory` field should point at the file recording it.
+#
+# THIS DOES NOT PREDICT CTR.
+
+version: 1
+calibrated_with: null
+validated_against_ctr: false
+
+# Automatic axes: computed over the pixels. GENERIC, no need to touch them.
+automatic_axes:
+  - id: center_contrast
+    weight: 22
+    description: "Legibility of the central subject/text at mobile feed size."
+    ranges:
+      - min: 55
+        points: 25
+        reason: "High central contrast: legible as a small thumbnail"
+      - min: 40
+        points: 18
+        reason: "Sufficient contrast"
+      - min: 25
+        points: 9
+        reason: "Low contrast: risk of grey noise in the feed"
+      - min: 0
+        points: 2
+        reason: "Very flat: lost at real size"
+
+  - id: resolution
+    weight: 8
+    description: "maxres (1280x720), or the image looks soft on large screens."
+
+  - id: saturation
+    weight: 10
+    description: "Mean saturation; too low competes badly in a busy feed."
+    ranges:
+      - min: 0.35
+        points: 10
+        reason: "Competitive saturation"
+      - min: 0.20
+        points: 6
+        reason: "Moderate saturation"
+      - min: 0
+        points: 2
+        reason: "Muted against the feed"
+
+# Judgement axes: the agent evaluates these by OPENING the image.
+# EXAMPLES TO ADAPT: replace them with YOUR channel's lessons.
+judgement_axes:
+  - id: not_redundant_with_title
+    weight: 25
+    memory: null
+    question: >
+      Does the thumbnail repeat the same concept as the title? If the hard
+      figure is in the title, the thumbnail should show the visual RESULT
+      instead of repeating it. Title and thumbnail should cover different
+      angles.
+
+  - id: result_not_ui
+    weight: 18
+    memory: null
+    question: >
+      Does it show the result (a before/after, a specific shot) or a dense
+      interface screenshot? A busy UI is illegible grey noise at feed size.
+
+  - id: logos
+    weight: 9
+    memory: null
+    question: >
+      How many logos are there? As a rule, one at most, and only if it is an
+      anchor YOUR audience recognises. A logo your viewers do not identify
+      scatters the focus without adding authority.
+
+  - id: short_text
+    weight: 8
+    memory: null
+    question: "Is the text four words or fewer, legible at real size?"

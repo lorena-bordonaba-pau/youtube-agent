@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Estado del harness al abrir sesión. Se ejecuta desde el hook SessionStart.
+"""Harness status at session start. Run from the SessionStart hook.
 
-Imprime lo que el agente necesita saber ANTES de su primera respuesta: si hay
-credenciales, si el perfil de voz está poblado, cuándo se midió el canal por
-última vez. Sin esto, lo descubre a mitad de una respuesta.
+Prints what the agent needs to know BEFORE its first reply: whether there are
+credentials, whether the voice profile is populated, when the channel was last
+measured. Without this, it finds out halfway through an answer.
 
-Nunca falla: si algo va mal, lo reporta como aviso. Un hook que revienta
-bloquea el arranque de la sesión.
+It never fails: if something goes wrong it reports it as a notice. A hook that
+crashes blocks the session from starting.
 """
 import json
 import os
@@ -17,156 +17,157 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib import auth, cache  # noqa: E402
-from lib.contrato import (BASE_DIR, CONFIG_DIR, DATOS_DIR,  # noqa: E402
-                          MEMORIA_DIR)
+from lib.contract import (BASE_DIR, CONFIG_DIR, DATA_DIR,  # noqa: E402
+                          MEMORY_DIR)
 
-SNAPSHOTS = DATOS_DIR / "historico" / "snapshots.jsonl"
+SNAPSHOTS = DATA_DIR / "history" / "snapshots.jsonl"
 
 
-def dias_desde(fecha: str) -> int | None:
+def dias_desde(date: str) -> int | None:
     try:
-        return (datetime.now() - datetime.strptime(fecha, "%Y-%m-%d")).days
+        return (datetime.now() - datetime.strptime(date, "%Y-%m-%d")).days
     except Exception:  # noqa: BLE001
         return None
 
 
 def main() -> None:
-    lineas = ["=== Harness de coach de YouTube ==="]
-    avisos = []
+    lines = ["=== YouTube coach harness ==="]
+    warnings = []
 
-    # Credenciales
+    # Credentials
     try:
-        est = auth.estado()
-        lineas.append(f"Credenciales: {'OK' if est['ok'] else 'NO'} — {est['motivo']}")
+        est = auth.status()
+        lines.append(f"Credentials: {'OK' if est['ok'] else 'NO'} — {est['reason']}")
         if not est["ok"]:
-            avisos.append(est.get("pista", ""))
+            warnings.append(est.get("hint", ""))
     except Exception as e:  # noqa: BLE001
-        lineas.append(f"Credenciales: no verificables ({e})")
+        lines.append(f"Credentials: could not verify ({e})")
 
-    # Último snapshot del canal
+    # Last channel snapshot
     if SNAPSHOTS.exists():
         try:
-            filas = [l for l in SNAPSHOTS.read_text(encoding="utf-8").splitlines()
+            rows = [l for l in SNAPSHOTS.read_text(encoding="utf-8").splitlines()
                      if l.strip()]
-            ultimo = json.loads(filas[-1])
-            d = dias_desde(ultimo["fecha"])
-            frescura = "hoy" if d == 0 else f"hace {d} dias"
-            lineas.append(
-                f"Ultimo snapshot: {ultimo['fecha']} ({frescura}) — "
-                f"{ultimo['subs']} subs, {ultimo['vistas']} vistas/"
-                f"{ultimo['ventana_dias']}d · {len(filas)} snapshots en total")
+            last = json.loads(rows[-1])
+            d = dias_desde(last["date"])
+            freshness = "hoy" if d == 0 else f"hace {d} days"
+            lines.append(
+                f"Last snapshot: {last['date']} ({freshness}) — "
+                f"{last['subs']} subs, {last['views']} views/"
+                f"{last['window_days']}d · {len(rows)} snapshots en total")
             if d is not None and d > 14:
-                avisos.append("Los datos del canal tienen mas de 2 semanas: "
-                              "ejecuta `python3 tools/yt_report.py` antes de "
+                warnings.append("Channel data is more than 2 weeks old: "
+                              "run `python3 tools/yt_report.py` before "
                               "afirmar cifras.")
         except Exception as e:  # noqa: BLE001
-            lineas.append(f"Ultimo snapshot: ilegible ({e})")
+            lines.append(f"Last snapshot: unreadable ({e})")
     else:
-        lineas.append("Ultimo snapshot: ninguno todavia")
-        avisos.append("Sin linea base. Ejecuta `python3 tools/yt_report.py` "
-                      "para tener datos propios.")
+        lines.append("Last snapshot: none yet")
+        warnings.append("No baseline yet. Run `python3 tools/yt_report.py` "
+                      "to get your own data.")
 
-    # Perfil de voz — la skill de guion depende de él
-    voz = MEMORIA_DIR / "voice_profile.md"
+    # Voice profile — the scripting skill depends on it
+    voz = MEMORY_DIR / "voice_profile.md"
     if voz.exists():
-        cuerpo = voz.read_text(encoding="utf-8").split("---", 2)[-1].strip()
-        palabras = len(cuerpo.split())
-        # El placeholder explica como poblarlo y son ~160 palabras: contar solo
-        # longitud daria un falso "poblado". El marcador explicito manda.
-        poblado = "SIN POBLAR" not in cuerpo.upper() and palabras > 150
-        lineas.append(f"Perfil de voz: {'poblado' if poblado else 'VACIO'} "
-                      f"({palabras} palabras)")
-        if not poblado:
-            avisos.append("El perfil de voz esta sin poblar. La skill `guion` "
-                          "debe construirlo con transcripciones reales antes de "
-                          "escribir, no inventarlo.")
+        body = voz.read_text(encoding="utf-8").split("---", 2)[-1].strip()
+        words = len(body.split())
+        # The placeholder explains how to fill it and runs ~160 words, so
+        # counting length alone would give a false "populated". The explicit
+        # marker wins.
+        populated = "NOT POPULATED" not in body.upper() and "SIN POBLAR" not in body.upper() and words > 150
+        lines.append(f"Voice profile: {'populated' if populated else 'EMPTY'} "
+                      f"({words} words)")
+        if not populated:
+            warnings.append("The voice profile is empty. The scripting skill must build "
+                          "it from real transcripts before writing, not invent "
+                          "it.")
     else:
-        lineas.append("Perfil de voz: no existe")
+        lines.append("Voice profile: does not exist")
 
-    # CTR real de Studio — sin esto las rúbricas quedan sin validar
-    ctr = DATOS_DIR / "historico" / "studio_ctr.json"
+    # Real CTR from Studio — without it the rubrics stay unvalidated
+    ctr = DATA_DIR / "history" / "studio_ctr.json"
     if ctr.exists():
         try:
             n = len(json.loads(ctr.read_text(encoding="utf-8"))["videos"])
-            lineas.append(f"CTR de Studio: {n} videos ingeridos")
+            lines.append(f"Studio CTR: {n} videos ingested")
         except Exception:  # noqa: BLE001
-            lineas.append("CTR de Studio: fichero ilegible")
+            lines.append("Studio CTR: file unreadable")
     else:
-        lineas.append("CTR de Studio: sin ingerir — las rubricas de scoring "
-                      "siguen SIN VALIDAR contra CTR real")
+        lines.append("Studio CTR: not ingested — the scoring rubrics remain "
+                      "UNVALIDATED against real CTR")
 
-    # Configuración inicial — el paso que más se salta y el que más duele.
-    # Un harness sin identidad rellenada da consejos de manual, que es
-    # exactamente lo que este proyecto existe para no hacer.
-    sin_configurar = []
-    contrato = BASE_DIR / "CLAUDE.md"
-    if contrato.exists() and "[TEMA DEL CANAL]" in contrato.read_text(encoding="utf-8"):
-        sin_configurar.append("la seccion 1 de CLAUDE.md (identidad del canal)")
-    cfg_canal = CONFIG_DIR / "config.json"
-    if cfg_canal.exists():
+    # Initial configuration — the step people skip and the one that hurts
+    # most. A harness with no identity filled in gives textbook advice, which
+    # is exactly what this project exists not to do.
+    unconfigured = []
+    contract = BASE_DIR / "CLAUDE.md"
+    if contract.exists() and "[CHANNEL TOPIC]" in contract.read_text(encoding="utf-8"):
+        unconfigured.append("section 1 of CLAUDE.md (channel identity)")
+    channel_cfg = CONFIG_DIR / "config.json"
+    if channel_cfg.exists():
         try:
-            if not json.loads(cfg_canal.read_text(encoding="utf-8")).get("channel_context"):
-                sin_configurar.append("`channel_context` en config/config.json")
+            if not json.loads(channel_cfg.read_text(encoding="utf-8")).get("channel_context"):
+                unconfigured.append("`channel_context` in config/config.json")
         except Exception:  # noqa: BLE001
-            sin_configurar.append("config/config.json (ilegible)")
-    if sin_configurar:
-        lineas.append("Configuracion: SIN PERSONALIZAR")
-        avisos.append(
-            "INSTALACION SIN PERSONALIZAR. Falta rellenar: "
-            + "; ".join(sin_configurar)
-            + ". Hasta que este hecho, el agente no sabe de que va tu canal y "
-              "dara consejos genericos. Ver el paso 3 del README.")
+            unconfigured.append("config/config.json (unreadable)")
+    if unconfigured:
+        lines.append("Configuration: NOT PERSONALISED")
+        warnings.append(
+            "INSTALLATION NOT PERSONALISED. Still to fill in: "
+            + "; ".join(unconfigured)
+            + ". Until that is done the agent does not know what your channel "
+              "is about and will give generic advice. See step 4 of the README.")
     else:
-        lineas.append("Configuracion: personalizada")
+        lines.append("Configuration: personalised")
 
-    # Proveedor de imagen — la rama visual no arranca sin uno vivo
+    # Image provider — the visual branch needs a live one
     prov_cfg = CONFIG_DIR / "image_providers.json"
     if prov_cfg.exists():
         try:
             pc = json.loads(prov_cfg.read_text(encoding="utf-8"))
-            prov = pc.get("provider")
-            if prov == "fal":
-                tiene = bool(os.environ.get(
+            provider = pc.get("provider")
+            if provider == "fal":
+                has_key = bool(os.environ.get(
                     pc["fal"].get("key_env", "FAL_KEY"), "").strip())
-                lineas.append(f"Imagen: proveedor fal.ai — "
-                              f"{'clave OK' if tiene else 'SIN CLAVE'}")
-                if not tiene:
-                    avisos.append(
-                        "No hay FAL_KEY: la rama visual solo funciona en "
-                        "--dry-run. Ejecuta ~/.claude/scripts/set-fal-key.sh y "
-                        "abre una sesion nueva.")
-                sin_slug = [k for k in ("generate", "edit")
-                            if not pc["fal"]["modelos"].get(k)]
-                if sin_slug:
-                    avisos.append(
-                        f"Slugs de modelo sin resolver: {', '.join(sin_slug)}. "
-                        "Se usara el respaldo gpt-image-2; para Nano Banana 2 hay "
-                        "que apuntar el slug en config/image_providers.json.")
+                lines.append(f"Image: fal.ai provider — "
+                              f"{'key OK' if has_key else 'NO KEY'}")
+                if not has_key:
+                    warnings.append(
+                        "No FAL_KEY: the visual branch only works in "
+                        "--dry-run. Put FAL_KEY in your .env (see .env.example) "
+                        "and start a new session.")
+                no_slug = [k for k in ("generate", "edit")
+                            if not pc["fal"]["models"].get(k)]
+                if no_slug:
+                    warnings.append(
+                        f"Unresolved model slugs: {', '.join(no_slug)}. "
+                        "The gpt-image-2 fallback will be used; to use another model, "
+                        "write its slug in config/image_providers.json.")
             else:
-                lineas.append(f"Imagen: proveedor {prov} (via MCP) — "
-                              "la tool devuelve la llamada, no genera")
+                lines.append(f"Image: provider {provider} (via MCP) — "
+                              "the tool returns the call, it does not generate")
         except Exception:  # noqa: BLE001
-            lineas.append("Imagen: configuracion ilegible")
+            lines.append("Image: configuration unreadable")
 
-    # Caché
+    # Cache
     try:
-        c = cache.estado()
-        lineas.append(f"Cache: {c['entradas']} entradas {c['familias'] or ''}")
+        c = cache.status()
+        lines.append(f"Cache: {c['entries']} entries {c['families'] or ''}")
     except Exception:  # noqa: BLE001
         pass
 
-    if avisos:
-        lineas.append("\nAvisos:")
-        lineas += [f"  - {a}" for a in avisos if a]
+    if warnings:
+        lines.append("\nWarnings:")
+        lines += [f"  - {a}" for a in warnings if a]
 
-    lineas.append(f"\nContrato: {BASE_DIR / 'CLAUDE.md'} · "
-                  f"Herramientas: {BASE_DIR / 'TOOLS.md'} · "
-                  f"Limites: {BASE_DIR / 'LIMITES.md'}")
-    print("\n".join(lineas))
+    lines.append(f"\nContract: {BASE_DIR / 'CLAUDE.md'} · "
+                  f"Tools: {BASE_DIR / 'TOOLS.md'} · "
+                  f"Limits: {BASE_DIR / 'LIMITS.md'}")
+    print("\n".join(lines))
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:  # noqa: BLE001 — un hook nunca debe romper la sesion
-        print(f"[init] No se pudo componer el estado: {e}")
+    except Exception as e:  # noqa: BLE001 — a hook must never break the session
+        print(f"[init] Could not build the status line: {e}")

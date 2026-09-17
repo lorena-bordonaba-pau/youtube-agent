@@ -1,77 +1,80 @@
 ---
 name: thumbnail-best-practices
-description: Reglas de diseño de miniaturas — composición, texto, legibilidad móvil. Se invoca al generar o al juzgar una miniatura, sea propia o ajena.
+description: Thumbnail design rules — composition, text, mobile legibility. Triggered when generating or judging a thumbnail, whether your own or someone else's.
 ---
 
-# Reglas de diseño de miniaturas
+# Thumbnail design rules
 
-## CUÁNDO
+## WHEN
 
-Al generar una miniatura, al diagnosticar una, o al extraer el estilo de un
-canal. Son reglas de diseño: aplican al margen del proveedor que genere.
+Generating a thumbnail, diagnosing one, or extracting a channel's style. These
+are design rules: they apply regardless of which provider generates.
 
-## RELACIÓN CON LA RÚBRICA DEL CANAL
+## RELATIONSHIP WITH THE CHANNEL'S RUBRIC
 
-Estas reglas son **generales**. `config/rubricas/miniaturas.yaml` es la rúbrica
-**calibrada con las memorias de este canal** y es la que manda cuando hay
-conflicto. Sus ejes de juicio pesan 60 de 100 puntos:
+These rules are **general**. `config/rubrics/thumbnails.yaml` is the rubric
+**calibrated with this channel's memories**, and it wins where they conflict.
+Its judgement axes carry 60 of the 100 points:
 
-- `no_redundante_con_titulo` (25) — si el número duro va en el título, la
-  miniatura muestra el **resultado visual**, no repite el precio.
-- `resultado_no_ui` (18) — un timeline o una interfaz densa es ruido gris a
-  tamaño feed.
-- `logos` (9) — **máximo uno**, y solo si es ancla reconocible para marketers.
-- `texto_breve` (8) — cuatro palabras o menos.
+- `not_redundant_with_title` (25) — if the hard number is in the title, the
+  thumbnail shows the **visual result**, it does not repeat the number.
+- `result_not_ui` (18) — a timeline or a dense interface is grey noise at feed
+  size.
+- `logos` (9) — **one at most**, and only if it is an anchor your audience
+  recognises.
+- `short_text` (8) — four words or fewer.
 
-En una instalación nueva esos cuatro ejes son **ejemplos sin calibrar**: el
-campo `memoria` de cada uno está a `null`. Adáptalos a tu canal y, cuando
-aprendas algo de tus propias miniaturas, escríbelo en `memoria/` y apunta el
-eje a ese fichero. Al generar, los ejes vigentes van al prompt.
+On a fresh install those four axes are **uncalibrated examples**: each one's
+`memory` field is `null`. Adapt them to your channel and, when you learn
+something from your own thumbnails, write it into `memory/` and point the axis
+at that file. When generating, the live axes go into the prompt.
 
-## REGLAS GENERALES
+## GENERAL RULES
 
-**Legibilidad móvil** — el listón real. La miniatura se ve a unos 160 px de
-ancho.
-- El texto debe ocupar **un tercio del ancho o más**. Si no, es ilegible.
-- Sans-serif bold pesado, contorno grueso o sombra dura.
-- Zona de fondo simple detrás del texto, para contraste máximo.
-- Máximo 3-5 palabras. En este canal, 4.
+**Mobile legibility** — the real bar. The thumbnail is seen at roughly 160 px
+wide.
+- The text should occupy **a third of the width or more**. Below that it is
+  illegible.
+- Heavy bold sans-serif, thick outline or hard shadow.
+- A simple background area behind the text, for maximum contrast.
+- Three to five words maximum.
 
-**Composición**
-- Regla de tercios: el foco en una intersección.
-- Espacio negativo reservado para el texto, preferiblemente arriba.
-- Líneas guía (brazos, flechas, arquitectura) apuntando al sujeto.
-- Esquina inferior derecha libre: ahí va el sello de duración.
-- Una sola idea focal. Paleta limitada. Alto contraste sujeto/fondo.
+**Composition**
+- Rule of thirds: the focal point on an intersection.
+- Negative space reserved for the text, preferably at the top.
+- Leading lines (arms, arrows, architecture) pointing at the subject.
+- Bottom right corner left clear: the duration stamp goes there.
+- One single focal idea. Limited palette. High subject/background contrast.
 
-**Autenticidad**
-- Solo lo que sale de verdad en el vídeo. Un escenario que no existe es
-  clickbait y penaliza el crecimiento aunque suba el clic.
-- Estética realista antes que el plástico sobreprocesado.
-- La expresión debe coincidir con la emoción real del vídeo.
-- Mostrar la **acción**, no una pose estática.
+**Authenticity**
+- Only what actually appears in the video. A scene that does not exist is
+  clickbait, and it penalises growth even when it lifts clicks.
+- Realistic aesthetics over over-processed plastic.
+- The expression should match the video's real emotion.
+- Show the **action**, not a static pose.
 
-**Elementos humanos**
-- Una cara ayuda pero no es obligatoria: manos, POV o un objeto funcionan.
-- Ropa y pose distintas en cada vídeo, para señalar contenido fresco.
+**Human elements**
+- A face helps but is not mandatory: hands, POV or an object work too.
+- Different clothes and pose in each video, to signal fresh content.
 
-**Qué evitar**
-- Composición atestada, texto pequeño, estética de banco de imágenes,
-  bordes gruesos, mezcla de temperaturas de color (naranja cálido con luz día).
+**What to avoid**
+- Crowded composition, small text, stock-photo aesthetics, thick borders,
+  mixed colour temperatures (warm orange with daylight).
 
-## VERIFICACIÓN
+## VERIFICATION
 
-Lo objetivo se mide, no se opina:
+Measure what is objective, do not opine about it:
 ```
-python3 tools/yt_thumbnails.py --video ID          # contraste, saturación, resolución
-python3 tools/score_thumbnail.py --video ID --titulo "..."
+python3 tools/yt_thumbnails.py --video ID          # contrast, saturation, resolution
+python3 tools/score_thumbnail.py --video ID --title "..."
+python3 tools/score_thumbnail.py --image path.jpg  # for one just generated
 ```
-`score_thumbnail` puntúa el 40% automático y **devuelve el 60% como preguntas
-sin responder**. Hay que responderlas abriendo el JPG. Inventar ese 60% es el
-fallo que la herramienta está diseñada para impedir.
+`score_thumbnail` scores the automatic 40% and **returns the 60% as unanswered
+questions**. You answer them by opening the file. Inventing that 60% is the
+failure the tool is designed to prevent.
 
-## FUENTES
+## SOURCES
 
-La rúbrica es `heuristic` y **no está validada contra CTR** mientras
-`datos/historico/studio_ctr.json` no exista. Un score nunca se presenta como
-predicción de clics. Las métricas de pixel de `yt_thumbnails` son `derived`.
+The rubric is `heuristic` and **not validated against CTR** while
+`data/history/studio_ctr.json` does not exist. A score is never presented as
+a click prediction. `yt_thumbnails`' pixel metrics are `derived`.
