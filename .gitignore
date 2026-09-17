@@ -1,23 +1,33 @@
-# --- Credenciales. Nunca, bajo ningún concepto. ---
+# --- Credentials. Never, under any circumstances. ---
 .env
-data/auth/
 client_secrets.json
 *.pickle
 *.enc
 *.bak.*
 
-# --- Datos de TU canal. Si haces fork de este repo, esto es lo que no debe
-#     salir de tu máquina: métricas, informes, imágenes y transcripciones. ---
-data/cache/
-data/history/
-data/reports/
-data/transcripts/
-data/thumbnails/
-data/packaging/
-data/images/
+# --- Your channel's data. If you fork this repo, this is what must not leave
+#     your machine: metrics, reports, images and transcripts.
+#     Contents are ignored, the directories are kept, so the paths the install
+#     guide tells you to use already exist on a fresh clone. ---
+data/auth/*
+!data/auth/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+data/history/*
+!data/history/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
+data/transcripts/*
+!data/transcripts/.gitkeep
+data/thumbnails/*
+!data/thumbnails/.gitkeep
+data/packaging/*
+!data/packaging/.gitkeep
+data/images/*
+!data/images/.gitkeep
 
-# La memoria es tuya. Descomenta la línea siguiente si prefieres no versionarla
-# ni siquiera en un repo privado.
+# The memory is yours. Uncomment the next line if you would rather not version
+# it even in a private repo.
 # memory/
 
 # --- Python ---

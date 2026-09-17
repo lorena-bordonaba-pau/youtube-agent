@@ -148,6 +148,16 @@ def test_export_image_is_deterministic_and_exact():
         out.unlink(missing_ok=True)
 
 
+def test_data_directories_exist_on_a_fresh_clone():
+    """The install guide tells you to save client_secrets.json into
+    data/auth/. If .gitignore excludes the directory itself, git cannot ship
+    the .gitkeep inside it and that path does not exist after cloning."""
+    missing = [d for d in ("auth", "cache", "history", "reports", "transcripts",
+                           "thumbnails", "packaging", "images")
+               if not (ROOT / "data" / d / ".gitkeep").exists()]
+    assert not missing, f"data/ subdirectories not shipped: {missing}"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0
