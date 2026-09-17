@@ -1,0 +1,12 @@
+{
+  "_instrucciones": [
+    "RELLENA ESTO ANTES DE EMPEZAR. `channel_context` es lo que evita que el",
+    "agente dé consejos de manual: describe tu canal como se lo describirías a",
+    "un consultor que cobra por hora — quién te mira, qué formato retiene, en",
+    "qué te diferencias y qué NO quieres ser.",
+    "`outlier_playlist_id` es opcional: una playlist de YouTube donde guardas",
+    "vídeos ajenos que te llaman la atencion. yt_outliers_playlist.py la lee."
+  ],
+  "outlier_playlist_id": null,
+  "channel_context": ""
+}

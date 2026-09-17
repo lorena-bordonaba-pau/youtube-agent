@@ -1,0 +1,86 @@
+# Rúbrica de miniaturas — PLANTILLA SIN CALIBRAR.
+#
+# Combina métricas objetivas de yt_thumbnails.py (contraste, luminancia,
+# saturación) con ejes cualitativos que el agente evalúa MIRANDO la imagen.
+#
+# El 40% se puntúa solo. El 60% se devuelve como preguntas sin responder, a
+# propósito: el agente debe abrir el fichero y contestarlas. Inventar ese 60%
+# es justo lo que esta herramienta está diseñada para impedir.
+#
+# Los `ejes_de_juicio` de abajo son EJEMPLOS del canal original. Cámbialos por
+# los tuyos: son las lecciones que hayas aprendido mirando tus propias
+# miniaturas, y el campo `memoria` debe apuntar al fichero que las recoge.
+#
+# ESTO NO PREDICE CTR.
+
+version: 1
+calibrado_con: null
+validado_contra_ctr: false
+
+# Ejes automáticos: se calculan sobre el pixel. GENÉRICOS, no hace falta tocarlos.
+ejes_automaticos:
+  - id: contraste_centro
+    peso: 22
+    descripcion: "Legibilidad del sujeto/texto central a tamaño feed móvil."
+    rangos:
+      - min: 55
+        puntos: 25
+        motivo: "Alto contraste central: legible en miniatura pequena"
+      - min: 40
+        puntos: 18
+        motivo: "Contraste suficiente"
+      - min: 25
+        puntos: 9
+        motivo: "Contraste bajo: riesgo de ruido gris en el feed"
+      - min: 0
+        puntos: 2
+        motivo: "Muy plana: se pierde a tamano real"
+
+  - id: resolucion
+    peso: 8
+    descripcion: "maxres (1280x720) o la imagen se ve blanda en pantallas grandes."
+
+  - id: saturacion
+    peso: 10
+    descripcion: "Saturación media; muy baja compite mal en un feed saturado."
+    rangos:
+      - min: 0.35
+        puntos: 10
+        motivo: "Saturacion competitiva"
+      - min: 0.20
+        puntos: 6
+        motivo: "Saturacion moderada"
+      - min: 0
+        puntos: 2
+        motivo: "Apagada frente al feed"
+
+# Ejes de juicio: el agente los evalúa ABRIENDO la imagen.
+# EJEMPLOS A ADAPTAR: cámbialos por las lecciones de TU canal.
+ejes_de_juicio:
+  - id: no_redundante_con_titulo
+    peso: 25
+    memoria: null
+    pregunta: >
+      ¿La miniatura repite el mismo concepto que el título? Si el dato duro va
+      en el título, la miniatura debería mostrar el RESULTADO visual en vez de
+      repetirlo. Título y miniatura deberían cubrir ángulos distintos.
+
+  - id: resultado_no_ui
+    peso: 18
+    memoria: null
+    pregunta: >
+      ¿Muestra el resultado (un antes/después, un plano concreto) o una captura
+      de interfaz densa? Una UI cargada es ruido gris ilegible a tamaño feed.
+
+  - id: logos
+    peso: 9
+    memoria: null
+    pregunta: >
+      ¿Cuántos logos hay? Como norma, máximo uno, y solo si es un ancla
+      reconocible para TU audiencia. Un logo que tu público no identifica
+      dispersa el foco sin aportar autoridad.
+
+  - id: texto_breve
+    peso: 8
+    memoria: null
+    pregunta: "¿El texto son 4 palabras o menos, legibles a tamaño real?"

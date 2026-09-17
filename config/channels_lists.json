@@ -1,0 +1,14 @@
+{
+  "_instrucciones": [
+    "Tres listas de canales, cada una con un papel distinto:",
+    "  competencia  — compiten por tu mismo espectador. El baremo de si vas bien.",
+    "  inspiracion  — formatos que quieres portar, aunque sean de otro nicho o idioma.",
+    "  vecindario   — canales que YouTube asocia al tuyo (salen en 'related').",
+    "Rellénalas a mano, o deja que el agente las proponga tras analizar tu canal.",
+    "`origen` documenta de dónde salió cada uno: 'curado' o 'related_video'.",
+    "Listar con: python3 tools/yt_channels_list.py --list competencia"
+  ],
+  "competencia": [],
+  "inspiracion": [],
+  "vecindario": []
+}

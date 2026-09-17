@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "_comentario": [
+    "Configuración de la rama de imagen. El adaptador es agnóstico: las skills",
+    "nunca nombran un proveedor, solo piden una imagen. Cambiar de fal.ai a un",
+    "MCP se hace aquí, sin tocar ninguna skill.",
+    "NINGÚN slug de modelo se inventa. Los que están a null hay que resolverlos",
+    "en fal.ai/explore/models y escribirlos aquí; la tool falla en vez de adivinar."
+  ],
+  "provider": "fal",
+  "fallback": "mcp",
+  "fal": {
+    "key_env": "FAL_KEY",
+    "queue_base": "https://queue.fal.run",
+    "timeout_s": 300,
+    "poll_s": 3,
+    "modelos": {
+      "generate": "fal-ai/nano-banana",
+      "edit": "fal-ai/nano-banana/edit",
+      "generate_gpt": "openai/gpt-image-2",
+      "edit_gpt": "openai/gpt-image-2/edit"
+    },
+    "_modelos_nota": [
+      "Verificado el 2026-09-17 con llamadas REALES, no por sondeo:",
+      "el sondeo con payload invalido NO sirve — la cola devuelve 200 y el error",
+      "de ruta solo aparece con un payload valido. fal-ai/nano-banana/v2 dio 200",
+      "al sondear y 404 'Path /v2 not found' al llamar de verdad.",
+      "Cada slug de aqui se marca como verificado solo tras una llamada real."
+    ],
+    "modelos_resueltos_el": "2026-09-17",
+    "claves_tamano": [
+      "image_size",
+      "aspect_ratio"
+    ],
+    "_claves_tamano_nota": [
+      "Verificado el 2026-09-17: fal-ai/nano-banana IGNORA image_size y devuelve",
+      "1024x1024 cuadrado. Usa aspect_ratio ('16:9'). Se envian las dos claves:",
+      "el modelo que no entiende una la ignora. Si alguna da 422, quitarla de aqui."
+    ],
+    "upload_initiate_url": "https://rest.alpha.fal.ai/storage/upload/initiate"
+  },
+  "mcp": {
+    "servidor": "higgsfield",
+    "tools": {
+      "generate": "generate_image",
+      "edit": "generate_image",
+      "upscale": "upscale_image",
+      "import_url": "media_import_url",
+      "explore": "models_explore"
+    },
+    "modelo_por_defecto": "marketing_studio_image",
+    "max_concurrentes": 4,
+    "_nota": [
+      "Ejemplo con Higgsfield. Sirve cualquier MCP que genere imagenes: cambia",
+      "`servidor` y el mapa de `tools` por los de tu conector.",
+      "Declara el servidor en .mcp.json del proyecto.",
+      "Las tools MCP no leen ficheros locales: hay que subirlos o pasar URL."
+    ]
+  },
+  "formatos": {
+    "thumbnail": {
+      "ratio": "16:9",
+      "px": "1280x720",
+      "max_bytes": 2097152,
+      "ratio_fijo": true,
+      "enum_fal": "landscape_16_9"
+    },
+    "profile_image": {
+      "ratio": "1:1",
+      "px": "800x800",
+      "max_bytes": 4194304,
+      "enum_fal": "square_hd"
+    },
+    "banner": {
+      "ratio": "16:9",
+      "px": "2560x1440",
+      "max_bytes": 6291456,
+      "enum_fal": "landscape_16_9"
+    },
+    "general": {
+      "ratio": "16:9",
+      "px": "1920x1080",
+      "max_bytes": null,
+      "enum_fal": "landscape_16_9"
+    }
+  },
+  "roles_de_referencia": [
+    "likeness",
+    "style",
+    "composition",
+    "packaging"
+  ],
+  "max_referencias": 3,
+  "_formatos_retirados": {
+    "vertical_thumbnail": {
+      "ratio": "9:16",
+      "px": "1080x1920",
+      "max_bytes": 2097152,
+      "motivo": "Las miniaturas son siempre 16:9 (decision de la creadora, 2026-09-17). Ademas memoria/rules.md prohibe proponer contenido vertical propio. Para restaurarlo, mover esta entrada de vuelta a `formatos`."
+    }
+  }
+}
