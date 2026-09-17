@@ -2,7 +2,8 @@
 """Outliers across the configured competitor and inspiration channels."""
 from lib import base  # noqa: F401
 from lib import cache, yt_data
-from lib.contract import SOURCE_DERIVED, emit, main, parser, envelope
+from lib.contract import (EXIT_NO_DATA, SOURCE_DERIVED, ToolError, emit, main,
+                          parser, envelope)
 
 TOOL = "yt_outliers_channels"
 
@@ -13,9 +14,9 @@ def _dias(iso: str) -> int:
             - datetime.fromisoformat(iso.replace("Z", "+00:00"))).days
 
 
-def analizar(entry: dict, min_ratio: float, muestra: int) -> dict:
+def analizar(entry: dict, min_ratio: float, sample_size: int) -> dict:
     info = yt_data.channel_info(entry["channel_id"])
-    vids = yt_data.channel_videos(entry["channel_id"], muestra)
+    vids = yt_data.channel_videos(entry["channel_id"], sample_size)
     stats = yt_data.video_stats([v["video_id"] for v in vids])
     if not stats:
         return {**entry, "subs": info["subscribers"], "mean": 0, "outliers": []}
@@ -54,6 +55,14 @@ def run():
     args = p.parse_args()
 
     channels = yt_data.load_channels(args.items)
+    if not channels:
+        which = f"`{args.items}`" if args.items else "any list"
+        raise ToolError(
+            f"No channels configured in {which}.", EXIT_NO_DATA,
+            "Add competitors, inspirations and neighbours to "
+            "config/channels_lists.json, or ask the agent to propose them "
+            "after analysing your channel. Zero outliers here means zero "
+            "channels to look at, not a quiet niche.")
 
     def fetch():
         return [analizar(c, args.min_ratio, args.sample) for c in channels]
@@ -81,7 +90,7 @@ def run():
 
     def md(e):
         out = [base.md_header(e), f"\n**{e['data']['total_outliers']} outliers** "
-               f"(threshold {args.min_ratio}x, muestra {args.sample} videos/channel)\n"]
+               f"(threshold {args.min_ratio}x, sampling {args.sample} videos/channel)\n"]
         for c in e["data"]["channels"]:
             if not c["outliers"]:
                 continue

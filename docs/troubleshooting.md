@@ -76,7 +76,7 @@ Check `python3 tools/init.py`. If it says `NOT PERSONALISED`, section 1 of
 
 ### The agent answers about itself from memory
 
-That is a bug in the behaviour, not the code. The `transparencia` skill exists
+That is a bug in the behaviour, not the code. The `transparency` skill exists
 precisely to stop it. Ask again naming the file: *"read `TOOLS.md` and quote
 it"*. If it keeps happening, open an issue.
 

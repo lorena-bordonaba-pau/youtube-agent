@@ -15,6 +15,11 @@ from .contract import DATA_DIR
 
 CACHE_DIR = DATA_DIR / "cache"
 
+# Bump this whenever a tool's output SHAPE changes. Without it, an upgrade
+# keeps serving entries in the old shape until each TTL expires, and the
+# mismatch is invisible: the tool looks fine and returns stale field names.
+SCHEMA = 2
+
 # TTL in seconds, per family of data.
 TTL = {
     "own_analytics": 6 * 3600,           # changes daily, but not hourly
@@ -28,7 +33,7 @@ TTL_DEFAULT = 6 * 3600
 
 
 def _path(family: str, key: str) -> Path:
-    h = hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+    h = hashlib.sha256(f"v{SCHEMA}|{key}".encode("utf-8")).hexdigest()[:16]
     return CACHE_DIR / family / f"{h}.json"
 
 

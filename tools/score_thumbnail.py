@@ -87,7 +87,7 @@ def run():
               for e in rubric["judgement_axes"]]
 
     env = envelope(TOOL, SOURCE_HEURISTIC, {
-        "video": args.video,
+        "video_id": args.video,
         "image": args.image,
         "title": args.title or meta.get("title"),
         "file": m["file"],

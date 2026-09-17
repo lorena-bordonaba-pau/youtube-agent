@@ -74,7 +74,7 @@ def run():
     milestones["final"] = points[-1]
 
     env = envelope(TOOL, SOURCE_API,
-                {"video": args.video,
+                {"video_id": args.video,
                  "title": (payload_data["meta"] or {}).get("title"),
                  "duration": (payload_data["meta"] or {}).get("duration"),
                  "points": points,

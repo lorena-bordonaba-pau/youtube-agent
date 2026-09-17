@@ -1,5 +1,5 @@
 ---
-name: identidad-canal
+name: channel-identity
 description: Channel positioning, differentiation against the competitive neighbourhood, and niche reframing. Triggered by "how do I position myself", "what makes me different", "where do I take the channel", "who is my real competition".
 ---
 

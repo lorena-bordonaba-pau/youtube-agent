@@ -20,6 +20,13 @@ from lib import auth, cache  # noqa: E402
 from lib.contract import (BASE_DIR, CONFIG_DIR, DATA_DIR,  # noqa: E402
                           MEMORY_DIR)
 
+# Lower runs first. NEEDS_CREDENTIALS items are hidden while credentials are
+# the blocker, because they cannot be actioned yet.
+PRIORITY_CREDENTIALS = 1
+PRIORITY_CONFIG = 2
+PRIORITY_NEEDS_CREDENTIALS = 3
+PRIORITY_OPTIONAL = 4
+
 SNAPSHOTS = DATA_DIR / "history" / "snapshots.jsonl"
 
 
@@ -39,7 +46,7 @@ def main() -> None:
         est = auth.status()
         lines.append(f"Credentials: {'OK' if est['ok'] else 'NO'} — {est['reason']}")
         if not est["ok"]:
-            warnings.append(est.get("hint", ""))
+            warnings.append((PRIORITY_CREDENTIALS, est.get("hint", "")))
     except Exception as e:  # noqa: BLE001
         lines.append(f"Credentials: could not verify ({e})")
 
@@ -54,17 +61,19 @@ def main() -> None:
             lines.append(
                 f"Last snapshot: {last['date']} ({freshness}) — "
                 f"{last['subs']} subs, {last['views']} views/"
-                f"{last['window_days']}d · {len(rows)} snapshots en total")
+                f"{last['window_days']}d · {len(rows)} snapshots in total")
             if d is not None and d > 14:
-                warnings.append("Channel data is more than 2 weeks old: "
-                              "run `python3 tools/yt_report.py` before "
-                              "afirmar cifras.")
+                warnings.append((PRIORITY_NEEDS_CREDENTIALS,
+                                 "Channel data is more than 2 weeks old: run "
+                                 "`python3 tools/yt_report.py` before quoting "
+                                 "figures."))
         except Exception as e:  # noqa: BLE001
             lines.append(f"Last snapshot: unreadable ({e})")
     else:
         lines.append("Last snapshot: none yet")
-        warnings.append("No baseline yet. Run `python3 tools/yt_report.py` "
-                      "to get your own data.")
+        warnings.append((PRIORITY_NEEDS_CREDENTIALS,
+                         "No baseline yet. Run `python3 tools/yt_report.py` "
+                         "to get your own data."))
 
     # Voice profile — the scripting skill depends on it
     voz = MEMORY_DIR / "voice_profile.md"
@@ -74,13 +83,14 @@ def main() -> None:
         # The placeholder explains how to fill it and runs ~160 words, so
         # counting length alone would give a false "populated". The explicit
         # marker wins.
-        populated = "NOT POPULATED" not in body.upper() and "SIN POBLAR" not in body.upper() and words > 150
+        populated = "NOT POPULATED" not in body.upper() and words > 150
         lines.append(f"Voice profile: {'populated' if populated else 'EMPTY'} "
                       f"({words} words)")
         if not populated:
-            warnings.append("The voice profile is empty. The scripting skill must build "
-                          "it from real transcripts before writing, not invent "
-                          "it.")
+            warnings.append((PRIORITY_NEEDS_CREDENTIALS,
+                             "The voice profile is empty. The scripting skill "
+                             "must build it from real transcripts before "
+                             "writing, not invent it."))
     else:
         lines.append("Voice profile: does not exist")
 
@@ -112,11 +122,12 @@ def main() -> None:
             unconfigured.append("config/config.json (unreadable)")
     if unconfigured:
         lines.append("Configuration: NOT PERSONALISED")
-        warnings.append(
+        warnings.append((PRIORITY_CONFIG,
             "INSTALLATION NOT PERSONALISED. Still to fill in: "
             + "; ".join(unconfigured)
-            + ". Until that is done the agent does not know what your channel "
-              "is about and will give generic advice. See step 4 of the README.")
+            + ". Until that is done the agent does not know what your "
+              "channel is about and will give generic advice. See step 4 of "
+              "docs/install.md."))
     else:
         lines.append("Configuration: personalised")
 
@@ -133,16 +144,19 @@ def main() -> None:
                               f"{'key OK' if has_key else 'NO KEY'}")
                 if not has_key:
                     warnings.append(
-                        "No FAL_KEY: the visual branch only works in "
-                        "--dry-run. Put FAL_KEY in your .env (see .env.example) "
-                        "and start a new session.")
+                        (PRIORITY_OPTIONAL,
+                         "No FAL_KEY: the visual branch only works in "
+                         "--dry-run. Put FAL_KEY in your .env (see "
+                         ".env.example) and start a new session."))
                 no_slug = [k for k in ("generate", "edit")
                             if not pc["fal"]["models"].get(k)]
                 if no_slug:
                     warnings.append(
-                        f"Unresolved model slugs: {', '.join(no_slug)}. "
-                        "The gpt-image-2 fallback will be used; to use another model, "
-                        "write its slug in config/image_providers.json.")
+                        (PRIORITY_OPTIONAL,
+                         f"Unresolved model slugs: {', '.join(no_slug)}. The "
+                         "gpt-image-2 fallback will be used; to use another "
+                         "model, write its slug in "
+                         "config/image_providers.json."))
             else:
                 lines.append(f"Image: provider {provider} (via MCP) — "
                               "the tool returns the call, it does not generate")
@@ -156,9 +170,17 @@ def main() -> None:
     except Exception:  # noqa: BLE001
         pass
 
+    # Ordered by dependency, and anything blocked by an earlier step is
+    # hidden: telling someone to run yt_report.py before they have
+    # credentials sends them straight into exit code 2.
     if warnings:
-        lines.append("\nWarnings:")
-        lines += [f"  - {a}" for a in warnings if a]
+        ordered = sorted((w for w in warnings if w), key=lambda w: w[0])
+        blocked = any(p == PRIORITY_CREDENTIALS for p, _ in ordered)
+        shown = [t for p, t in ordered
+                 if not (blocked and p == PRIORITY_NEEDS_CREDENTIALS)]
+        if shown:
+            lines.append("\nNext steps:")
+            lines += [f"  {i}. {t}" for i, t in enumerate(shown, 1)]
 
     lines.append(f"\nContract: {BASE_DIR / 'CLAUDE.md'} · "
                   f"Tools: {BASE_DIR / 'TOOLS.md'} · "

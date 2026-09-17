@@ -21,7 +21,7 @@ def channel_id() -> str:
         items = resp.get("items", [])
         if not items:
             raise ToolError(
-                "La count autorizada no tiene ningun channel asociado.", EXIT_NO_DATA
+                "The authorised account has no channel associated with it.", EXIT_NO_DATA
             )
         _channel_id_cache = items[0]["id"]
     return _channel_id_cache
@@ -53,8 +53,14 @@ def channel(days: int = 28) -> list[dict]:
 
 
 def top_videos(days: int = 90, max_results: int = 25) -> list[dict]:
-    return _query(days, dimensions="video", sort="-views",
+    # The Analytics API calls the dimension `video`; every other tool in this
+    # harness calls it `video_id`. Normalised in top_videos() below so the
+    # output of one tool can be fed straight into the next.
+    rows = _query(days, dimensions="video", sort="-views",
                   maxResults=max_results, metrics=METRICAS_VIDEO)
+    for r in rows:
+        r["video_id"] = r.pop("video", None)
+    return rows
 
 
 def video(video_id: str, days: int = 90) -> list[dict]:

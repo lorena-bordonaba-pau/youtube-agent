@@ -23,7 +23,7 @@ TOOL = "refine_image"
 def run():
     p = parser(__doc__)
     p.add_argument("--image", required=True,
-                   help="imagen a editar: path local, URL o video_id")
+                   help="the image to edit: local path, URL or video_id")
     p.add_argument("--instruction", required=True,
                    help="what to change, imperative, and only that")
     p.add_argument("--type", default="preserve", dest="kind", choices=list(ig.SPEC),
@@ -57,7 +57,7 @@ def run():
             "The source image goes in as the image to edit, NEVER as a style "
             "reference: as a reference, the model redraws it.")
         env = envelope(TOOL, SOURCE_CONFIG, directiva, params,
-                    notes=["Esta ejecucion NO ha editado nada."])
+                    notes=["This run has NOT edited anything."])
         emit(env, args, lambda e: base.md_header(e) + "\n\n" +
                e["data"]["action_required"] + "\n\n```json\n" +
                json.dumps(e["data"]["call"], ensure_ascii=False, indent=2) + "\n```")
@@ -89,13 +89,13 @@ def run():
         payload["image_urls"] = extra
 
     response = ig.enqueue(slug, payload, cfg, key)
-    salidas = ig.urls_from(response)
-    if not salidas:
-        raise ToolError(f"El model_slug no devolvio ninguna imagen: {response}",
+    outputs = ig.urls_from(response)
+    if not outputs:
+        raise ToolError(f"The model returned no image: {response}",
                         EXIT_NO_DATA)
 
     dest = Path(args.out) if args.out else ig.output_path(TOOL, args.kind)
-    ig.download(salidas[0], dest)
+    ig.download(outputs[0], dest)
 
     ig.log_generation(TOOL, slug, args.kind, prompt, dest, refs)
 

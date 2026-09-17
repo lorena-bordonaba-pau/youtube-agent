@@ -19,9 +19,9 @@ def run():
     def fetch():
         rows = ya.top_videos(args.days, args.limit)
         titulos = {s["video_id"]: s["title"]
-                   for s in yt_data.video_stats([f["video"] for f in rows])}
+                   for s in yt_data.video_stats([f["video_id"] for f in rows])}
         for f in rows:
-            f["title"] = titulos.get(f["video"], "?")
+            f["title"] = titulos.get(f["video_id"], "?")
         return rows
 
     payload_data, hit = cache.memo("own_analytics", f"{TOOL}:{args.days}:{args.limit}",
@@ -33,7 +33,7 @@ def run():
                 {"days": args.days, "limit": args.limit,
                  "order": "retention" if args.by_retention else "views"}, hit)
     emit(env, args, lambda e: base.md_header(e) + "\n" + base.md_table(
-        e["data"], ["video", "title", "views", "averageViewPercentage",
+        e["data"], ["video_id", "title", "views", "averageViewPercentage",
                     "averageViewDuration", "subscribersGained"]))
 
 

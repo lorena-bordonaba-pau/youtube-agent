@@ -148,6 +148,72 @@ def test_export_image_is_deterministic_and_exact():
         out.unlink(missing_ok=True)
 
 
+def test_tools_agree_on_the_video_id_field():
+    """Chaining only works if every tool calls the identifier the same thing.
+
+    The channel-analytics skill feeds yt_top_videos into yt_retention; when one
+    returned `video` and the other expected `video_id`, that flow broke and
+    nothing failed loudly."""
+    import re
+    offenders = []
+    for f in sorted(TOOLS.glob("*.py")):
+        src = f.read_text(encoding="utf-8")
+        # `"video":` as an output field. A value that is a list is a column
+        # alias table, not output, so it is skipped.
+        for m in re.finditer(r'^\s*"video":(?!\s*\[)', src, re.M):
+            line = src[:m.start()].count("\n") + 1
+            offenders.append(f"{f.name}:{line}")
+    assert not offenders, (
+        "these emit `video` instead of `video_id`: " + ", ".join(offenders))
+
+
+def test_cache_is_versioned():
+    """A change in output shape must invalidate cached entries, or an upgrade
+    keeps serving the old field names until each TTL expires."""
+    from lib import cache
+    assert isinstance(cache.SCHEMA, int) and cache.SCHEMA >= 1
+    a = cache._path("own_analytics", "k")
+    cache.SCHEMA += 1
+    try:
+        assert cache._path("own_analytics", "k") != a, \
+            "bumping SCHEMA does not change the cache path"
+    finally:
+        cache.SCHEMA -= 1
+
+
+def test_no_mangled_english_in_user_facing_strings():
+    """A bulk rename once turned "error" into "err" inside a message the user
+    reads. Cheap to guard, embarrassing to ship."""
+    import re
+    bad = [r"\berr\b(?!or)", r"\benvelope (el|the|los|las)\b", r"payload_data/",
+           r"\bmodel_slug\b(?=[ .,])", r"\bthumbnail_cache\b(?=[ .,])"]
+    pat = re.compile("|".join(bad))
+    hits = []
+    for f in list(TOOLS.rglob("*.py")) + list((ROOT / "config").rglob("*.yaml")):
+        for i, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+            m = pat.search(line)
+            if m:
+                hits.append(f"{f.name}:{i} contains {m.group(0)!r}")
+    assert not hits, "mangled strings:\n" + "\n".join(hits)
+
+
+def test_skill_names_match_their_folders():
+    """A skill whose front-matter name differs from its folder is invisible:
+    the agent looks it up by one and finds the other."""
+    bad = []
+    for d in sorted((ROOT / ".claude" / "skills").iterdir()):
+        if not d.is_dir():
+            continue
+        for line in (d / "SKILL.md").read_text(encoding="utf-8").splitlines():
+            if line.startswith("name:"):
+                if line.split(":", 1)[1].strip() != d.name:
+                    bad.append(f"{d.name} declares {line.strip()!r}")
+                break
+        else:
+            bad.append(f"{d.name} has no name in its front matter")
+    assert not bad, "\n".join(bad)
+
+
 def test_data_directories_exist_on_a_fresh_clone():
     """The install guide tells you to save client_secrets.json into
     data/auth/. If .gitignore excludes the directory itself, git cannot ship

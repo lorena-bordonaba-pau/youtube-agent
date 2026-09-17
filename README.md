@@ -49,7 +49,7 @@ Three things follow from that, and they are unusual:
   the agent has to open the image and answer them. Returning a round number
   would be easier. That is why it does not.
 - **The agent reads its own files before talking about itself.** There is a
-  `transparencia` skill whose first rule is that answering from memory is
+  `transparency` skill whose first rule is that answering from memory is
   forbidden. It exists because of a real, observed failure: an agent explained
   its own execution order from memory and had to correct itself a turn later.
 - **Aspect ratio is verified in the pixels.** When generating a thumbnail the
@@ -199,14 +199,14 @@ which then calibrates the rubrics and feeds later answers.
 
 | | |
 |---|---|
-| `analitica-canal` | Audit with real data: performance, retention, traffic |
-| `identidad-canal` | Positioning and differentiation against your neighbourhood |
-| `ideacion-competitors` | Ideas from real competitor outliers |
+| `channel-analytics` | Audit with real data: performance, retention, traffic |
+| `channel-identity` | Positioning and differentiation against your neighbourhood |
+| `competitor-ideation` | Ideas from real competitor outliers |
 | `packaging` | Titles and thumbnails scored with the rubric |
 | `keywords-seo` | Keywords, tags, and the search gap |
-| `guion` | Scripts in your real voice, with a retention structure |
-| `monetizacion` | Partner Programme thresholds and projection |
-| `transparencia` | What the agent is, what it has, in what order it runs |
+| `script-writing` | Scripts in your real voice, with a retention structure |
+| `monetisation` | Partner Programme thresholds and projection |
+| `transparency` | What the agent is, what it has, in what order it runs |
 | **Visual branch** | `image-generation-core` · `image-refinement` · `likeness-preservation` · `thumbnail-best-practices` · `thumbnail-inspiration` · `analyse-thumbnails` · `analyse-channel-packaging` · `youtube-banner-spec` · `youtube-profile-spec` |
 
 Plus the `/radar` command, for the weekly competitor scan.

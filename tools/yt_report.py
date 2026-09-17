@@ -48,9 +48,9 @@ def run():
     geo = f("geo", lambda: ya.geography(args.top_days, 10))
 
     titulos = {s["video_id"]: s["title"]
-               for s in yt_data.video_stats([t["video"] for t in top])}
+               for s in yt_data.video_stats([t["video_id"] for t in top])}
     for t in top:
-        t["title"] = titulos.get(t["video"], "?")
+        t["title"] = titulos.get(t["video_id"], "?")
 
     views = sum(d["views"] for d in days)
     minutes = sum(d["estimatedMinutesWatched"] for d in days)

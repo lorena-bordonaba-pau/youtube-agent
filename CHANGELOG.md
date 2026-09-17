@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
 
+## [0.2.1] — 2026-09-17
+
+### Fixed
+- `yt_top_videos` returned `video_id` as `video`, so feeding it into
+  `yt_retention` — the exact chain the channel-analytics skill prescribes —
+  silently broke. Normalised across every tool, with a test.
+- An empty channel list reported "0 outliers" instead of saying no channels
+  were configured. It now exits with code 4 and tells you where to add them.
+- The cache is versioned (`SCHEMA`), so a change in output shape invalidates
+  stale entries. Without it an upgrade kept serving the old field names until
+  each TTL expired, invisibly.
+- Start-up advice is ordered by dependency, and steps blocked by an earlier
+  one are hidden: it used to tell you to run `yt_report.py` before you had
+  credentials, which exits with code 2.
+- The `data/` directories are shipped on a fresh clone. `.gitignore` excluded
+  the directories themselves, and git cannot re-include a file inside an
+  excluded directory, so `data/auth/` — where the install guide tells you to
+  put `client_secrets.json` — did not exist.
+- Skill folder names and their front matter now agree, and the slugs are
+  English like the rest.
+
+### Added
+- Five more offline tests, each guarding a failure that actually happened:
+  field-name drift between tools, cache versioning, shipped directories,
+  skill name/folder agreement, and mangled strings left by bulk renames.
+
 ## [0.2.0] — 2026-09-17
 
 First public release.

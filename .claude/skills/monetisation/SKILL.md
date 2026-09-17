@@ -1,5 +1,5 @@
 ---
-name: monetizacion
+name: monetisation
 description: Partner Programme thresholds, subscriber and watch-hour projection. Triggered by "when do I monetise", "how far am I from YPP", "will I hit the requirements".
 ---
 

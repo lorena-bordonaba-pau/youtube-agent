@@ -122,12 +122,12 @@ def run():
                 "No captions available and no downloadable audio. Check the "
                 "video is public and that yt-dlp is up to date.")
         dest.write_text(json.dumps(
-            {"video": args.video, "method": method, "segments": segments},
+            {"video_id": args.video, "method": method, "segments": segments},
             ensure_ascii=False), encoding="utf-8")
         hit = False
 
     text = " ".join(s["text"] for s in segments)
-    data = {"video": args.video, "method": method, "words": len(text.split()),
+    data = {"video_id": args.video, "method": method, "words": len(text.split()),
             "duration_s": segments[-1]["t"] if segments else 0,
             "text": text}
     if not args.plain:

@@ -55,7 +55,7 @@ _NOTICE = {
 
 
 class ToolError(Exception):
-    """An err carrying its own exit code from the contract."""
+    """An error carrying its own exit code from the contract."""
 
     def __init__(self, message: str, code: int = EXIT_NO_DATA, hint: str = ""):
         super().__init__(message)
@@ -118,16 +118,16 @@ def emit(env: dict, args=None, md_fn=None) -> None:
     sys.exit(EXIT_OK)
 
 
-def fail(err: "ToolError | Exception", tool: str = "") -> None:
-    """Print a structured err to stderr and exit with its code.
+def fail(exc: "ToolError | Exception", tool: str = "") -> None:
+    """Print a structured error to stderr and exit with its code.
 
     Never lets a raw traceback escape: the agent needs a message it can read
     and pass on.
     """
-    if isinstance(err, ToolError):
-        code, message, hint = err.code, err.message, err.hint
+    if isinstance(exc, ToolError):
+        code, message, hint = exc.code, exc.message, exc.hint
     else:
-        code, message, hint = EXIT_NO_DATA, str(err), ""
+        code, message, hint = EXIT_NO_DATA, str(exc), ""
     payload = {"tool": tool, "error": message, "exit_code": code}
     if hint:
         payload["hint"] = hint
@@ -153,5 +153,5 @@ def main(tool: str, fn) -> None:
                     "The quota resets at midnight Pacific time. Use cached "
                     "data or wait.",
                 ), tool)
-            fail(ToolError(f"YouTube API err: {e}", EXIT_NO_DATA), tool)
+            fail(ToolError(f"YouTube API error: {e}", EXIT_NO_DATA), tool)
         fail(e, tool)

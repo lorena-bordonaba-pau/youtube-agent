@@ -137,9 +137,9 @@ def video_stats(video_ids: list[str]) -> list[dict]:
     return out
 
 
-def channel_mean_views(channel_id: str, muestra: int = 15) -> float:
+def channel_mean_views(channel_id: str, sample: int = 15) -> float:
     """Mean views over the last N uploads — the base of the outlier ratio."""
-    vids = channel_videos(channel_id, max_results=muestra)
+    vids = channel_videos(channel_id, max_results=sample)
     if not vids:
         return 0.0
     stats = video_stats([v["video_id"] for v in vids])
@@ -209,7 +209,7 @@ def load_channels(items: str | None = None) -> list[dict]:
         cfg = json.load(f)
     if items and items not in cfg:
         raise ToolError(
-            f"La items {items!r} no exists en {path.name}.", EXIT_NO_DATA,
+            f"List {items!r} does not exist in {path.name}.", EXIT_NO_DATA,
             f"Listas disponibles: {', '.join(cfg)}")
     out = []
     for kind, entries in cfg.items():

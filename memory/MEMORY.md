@@ -11,7 +11,7 @@ data, not by filling in templates in one sitting.
 
 - [Creator profile](creator_profile.md) — **not populated**
 - [Positioning](channel_positioning.md) — **not populated**
-- [Voice profile](voice_profile.md) — **not populated**: built by `guion` from real transcripts
+- [Voice profile](voice_profile.md) — **not populated**: built by `script-writing` from real transcripts
 - [Loose facts](facts.md) — **not populated**
 
 ## How to work

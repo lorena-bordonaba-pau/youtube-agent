@@ -5,7 +5,7 @@ metadata:
   type: user
 ---
 
-**NOT POPULATED.** The `guion` skill cannot write without this.
+**NOT POPULATED.** The `script-writing` skill cannot write without this.
 
 It is built from REAL transcripts of your best-retaining videos:
 

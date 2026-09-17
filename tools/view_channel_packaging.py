@@ -28,7 +28,7 @@ def paquete(channel_id: str | None) -> dict:
            else yt.channels().list(part=parts, id=channel_id))
     items = req.execute().get("items", [])
     if not items:
-        raise ToolError(f"Canal no encontrado: {channel_id or 'own'}", EXIT_NO_DATA)
+        raise ToolError(f"Channel not found: {channel_id or 'own'}", EXIT_NO_DATA)
     c = items[0]
     thumbs = c["snippet"].get("thumbnails", {})
     best = thumbs.get("high") or thumbs.get("medium") or thumbs.get("default") or {}

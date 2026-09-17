@@ -7,7 +7,7 @@ metadata:
 
 **NOT POPULATED.**
 
-Written by `identidad-canal` after measuring the neighbourhood with
+Written by `channel-identity` after measuring the neighbourhood with
 `yt_outliers_channels`. It should end in a sentence like:
 "I help [specific audience] to [concrete outcome] through [your own
 approach]".

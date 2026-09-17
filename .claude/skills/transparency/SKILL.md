@@ -1,5 +1,5 @@
 ---
-name: transparencia
+name: transparency
 description: Answers what this agent is, what tools it has, what skills, what memory it keeps, what its configuration is, or in what order it runs things. Triggered by any question about the agent itself, its contract, its limits or its protocols.
 ---
 
