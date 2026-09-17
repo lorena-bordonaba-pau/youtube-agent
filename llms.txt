@@ -1,4 +1,4 @@
-# youtube-coach-harness
+# youtube-agent
 
 > A Claude Code agent that analyses a YouTube channel with real API data and
 > labels every figure with its provenance, so an estimate can never be
