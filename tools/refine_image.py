@@ -78,10 +78,12 @@ def run():
 
     key = ig.fal_key(cfg)
     source_url = ig.reference_url(args.image, cfg, key)
-    # `image_url` is the image to edit. `image_urls` are the extra references,
-    # and the source is NOT repeated there: sending it twice makes some models
-    # treat it as two inputs and blend the image with itself.
-    payload = {"prompt": prompt, "image_url": source_url}
+    # The edit model expects `image_urls`, with the image to edit FIRST and the
+    # references behind it. It goes only in that list: sending it in
+    # `image_url` as well duplicated it, and some models blended the image with
+    # itself. Verified against fal-ai/nano-banana/edit on 2026-09-17, which
+    # rejects the request outright if `image_urls` is missing.
+    payload = {"prompt": prompt, "image_urls": [source_url]}
     if args.kind != "preserve":
         payload.update(ig.size_payload(cfg, args.kind))
     extra = [ig.reference_url(r["origin"], cfg, key) for r in refs]
