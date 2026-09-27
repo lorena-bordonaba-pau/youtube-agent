@@ -18,7 +18,7 @@ only required for the channel owner's private analytics.
 - [README](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/README.md): what it is, what you can ask it, how it works
 - [Install guide](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/docs/install.md): step by step, written for an agent to follow
 - [Operating contract](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/CLAUDE.md): identity, honesty rules, transparency protocol
-- [Tool catalogue](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/TOOLS.md): all 30 tools, their commands and quota cost
+- [Tool catalogue](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/TOOLS.md): all 31 tools, their commands and quota cost
 - [Limits](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/LIMITS.md): what it cannot do and why
 - [Troubleshooting](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/docs/troubleshooting.md): exit codes and known failure modes
 - [Contributing](https://github.com/lorena-bordonaba-pau/youtube-agent/blob/main/CONTRIBUTING.md): the one non-negotiable rule
@@ -26,7 +26,7 @@ only required for the channel owner's private analytics.
 
 ## Optional
 
-- 22 data tools: analytics, retention curve, traffic, outliers, keywords, transcripts
+- 23 data tools: analytics, retention curve, traffic, outliers, keywords, transcripts
 - 4 image tools: provider-agnostic generation, editing, deterministic export, channel packaging
 - A guided start: /kickoff builds the strategy, /competitors maps the market in any language with the creator validating each channel
 - 20 skills with fixed tool execution orders, including one that forbids answering about itself from memory

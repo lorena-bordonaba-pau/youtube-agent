@@ -10,7 +10,7 @@ reales de la API y que es honesto sobre qué ha medido y qué está estimando.
 [![tests](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml)
 [![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-informational.svg)](../LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![30 herramientas](https://img.shields.io/badge/herramientas-30-success.svg)](../TOOLS.md)
+[![31 herramientas](https://img.shields.io/badge/herramientas-31-success.svg)](../TOOLS.md)
 
 [Inicio rápido](#inicio-rápido) · [Qué le puedes pedir](#qué-le-puedes-pedir) · [Cómo funciona](#cómo-funciona) · [English](../README.md)
 
@@ -140,7 +140,7 @@ flowchart LR
 
     SK --> TL
 
-    subgraph TL ["🔧 30 herramientas"]
+    subgraph TL ["🔧 31 herramientas"]
         direction TB
         T1["21 de datos"]
         T2["4 de imagen"]

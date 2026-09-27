@@ -10,6 +10,7 @@ data, not by filling in templates in one sitting.
 ## Who you are and what the channel is
 
 - [Strategy](strategy.md) — **not populated**: what the channel sells, to whom, the objective, the audience and the pillars. Written by `/kickoff`, validated by `/competitors`
+- [Competitor board](competitor_board.md) — **not populated**: URL of the competitor board page, once created
 - [Creator profile](creator_profile.md) — **not populated**
 - [Positioning](channel_positioning.md) — **not populated**
 - [Voice profile](voice_profile.md) — **not populated**: built by `script-writing` from real transcripts

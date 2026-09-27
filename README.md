@@ -11,7 +11,7 @@ API data and is honest about what it measured and what it is guessing.
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-agent-8A63D2.svg)](https://claude.com/claude-code)
-[![30 tools](https://img.shields.io/badge/tools-30-success.svg)](TOOLS.md)
+[![31 tools](https://img.shields.io/badge/tools-31-success.svg)](TOOLS.md)
 [![20 skills](https://img.shields.io/badge/skills-20-success.svg)](#the-skills)
 
 [Quick start](#quick-start) · [What you can ask](#what-you-can-ask-it) · [How it works](#how-it-works) · [Español](docs/README_es.md)
@@ -144,7 +144,7 @@ flowchart LR
 
     SK --> TL
 
-    subgraph TL ["🔧 30 tools"]
+    subgraph TL ["🔧 31 tools"]
         direction TB
         T1["21 data"]
         T2["4 image"]
@@ -192,14 +192,14 @@ which then calibrates the rubrics and feeds later answers.
 | Path | What it is |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | The operating contract: identity, honesty rules, transparency protocol |
-| [`TOOLS.md`](TOOLS.md) | All 30 tools with their command and quota cost |
+| [`TOOLS.md`](TOOLS.md) | All 31 tools with their command and quota cost |
 | [`LIMITS.md`](LIMITS.md) | What the harness **cannot** do. Read it before asking the impossible |
 | `.claude/skills/` | 20 skills, each with a fixed tool execution order |
 | `.claude/agents/` | `youtube-strategist`: content pillars and editorial structure |
 | `.claude/commands/` | `/kickoff`, `/competitors`, `/pillars`, `/audit`, `/radar` |
 | `.claude/hooks/` | Ask before spending credits or quota; keep the strategist inside `memory/` |
 | `memory/` | Profile, voice, positioning, SOPs. **Starts empty** |
-| `tools/` | 22 data · 4 image · 4 utilities |
+| `tools/` | 23 data · 4 image · 4 utilities |
 | `artifacts/` | The competitor board page, published as a private Claude artifact |
 | `config/rubrics/` | Scoring rubrics. **Start uncalibrated** |
 | `tests/` | Offline suite: no credentials, no network, no quota |
