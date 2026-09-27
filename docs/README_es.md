@@ -10,7 +10,7 @@ reales de la API y que es honesto sobre qué ha medido y qué está estimando.
 [![tests](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml)
 [![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-informational.svg)](../LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![28 herramientas](https://img.shields.io/badge/herramientas-28-success.svg)](../TOOLS.md)
+[![29 herramientas](https://img.shields.io/badge/herramientas-29-success.svg)](../TOOLS.md)
 
 [Inicio rápido](#inicio-rápido) · [Qué le puedes pedir](#qué-le-puedes-pedir) · [Cómo funciona](#cómo-funciona) · [English](../README.md)
 
@@ -99,6 +99,7 @@ fuentes.
 | *"Dame títulos para este vídeo"* | Los genera, los puntúa con la rúbrica y los respalda con términos reales |
 | *"¿Esta miniatura está bien?"* | Mide contraste y saturación, y luego **la abre** y responde los ejes de juicio |
 | *"¿Qué está petando en mi nicho?"* | Escanea tu lista de competencia buscando outliers, filtrados por frescura |
+| *"Hazme el radar de competidores"* | Una página web privada con todos los vídeos largos de tus competidores de los últimos 6 meses: miniatura, fecha, x de outlier y las vistas compradas con anuncios marcadas. Añades los @ en la página y le pides que sincronice |
 | *"¿Qué grabo esta semana?"* | Ideas desde outliers reales, cruzadas con lo que ya te funciona |
 | *"Escribe el guion"* | Usa tu perfil de voz, construido con tus transcripciones. Nunca inventado |
 | *"¿Dónde abandona la gente?"* | Curva de retención de 101 puntos, marca los abandonos concentrados |
@@ -134,9 +135,9 @@ flowchart LR
 
     SK --> TL
 
-    subgraph TL ["🔧 28 herramientas"]
+    subgraph TL ["🔧 29 herramientas"]
         direction TB
-        T1["20 de datos"]
+        T1["21 de datos"]
         T2["4 de imagen"]
         T3["4 utilidades"]
     end

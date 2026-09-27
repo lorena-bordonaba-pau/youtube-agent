@@ -328,6 +328,33 @@ def test_data_directories_exist_on_a_fresh_clone():
     assert not missing, f"data/ subdirectories not shipped: {missing}"
 
 
+def test_board_flags_bought_views_and_keeps_them_out_of_the_median():
+    """An ad-promoted video posted 323x on the real board: 25M views, 0.4 likes
+    per 1k against a channel usual of ~20. Hidden likes (0) must not trip it."""
+    sys.path.insert(0, str(TOOLS))
+    import competitor_board as cb
+    organic = [{"views": v, "likes": v // 50} for v in (8000, 10000, 12000, 15000)]
+    ad = {"views": 900000, "likes": 360}            # 0.4 likes per 1k
+    hidden = {"views": 40000, "likes": 0}           # likes hidden by the creator
+    stats = organic + [ad, hidden]
+    median, median_lpk = cb.score(stats)
+    assert ad["ad_suspect"] and not hidden["ad_suspect"]
+    assert hidden["lpk"] is None
+    assert not any(s["ad_suspect"] for s in organic)
+    assert median == 12000, "the ad video leaked into the baseline"
+    assert round(median_lpk) == 20
+
+
+def test_board_page_only_fetches_what_it_publishes():
+    """The artifact sandbox blocks every network call except files published
+    next to the page. A fetch to anything else fails silently for the viewer."""
+    import re
+    page = (ROOT / "artifacts" / "competitor-board" / "index.html").read_text(encoding="utf-8")
+    fetched = re.findall(r'fetch\(\s*["\']?([^"\')]+)', page)
+    assert fetched, "the board no longer fetches its data"
+    assert all(not f.startswith("http") for f in fetched), fetched
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0

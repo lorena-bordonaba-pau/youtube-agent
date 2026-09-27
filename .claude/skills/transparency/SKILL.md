@@ -33,6 +33,7 @@ and had to correct itself the following turn after loading the real protocols.
    | ALL the skills' order | every `SKILL.md`, one by one |
    | How images are generated, with which provider | `config/image_providers.json` and `.claude/skills/image-generation-core/SKILL.md` |
    | Configuration, permissions, hooks | `.claude/settings.json` |
+   | The competitor board page and how it syncs | `artifacts/competitor-board/index.html` and `.claude/skills/competitor-board/SKILL.md` |
    | Which SOP it follows for scripts or premises | `memory/sop/*.md` |
 
 2. Quote what you read. You may dump it in full: these are project files, not
