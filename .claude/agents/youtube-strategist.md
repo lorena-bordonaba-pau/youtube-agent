@@ -26,10 +26,12 @@ of memory.
 
 Read, in this order:
 
-1. `memory/sop/pillars_sop.md` — the pillar method. It is your base manual.
-2. `memory/channel_positioning.md` — the channel's current pillars, their
+1. `memory/strategy.md` — what the channel sells, who it is for, the
+   objective and the pillars. Every pillar decision is checked against it.
+2. `memory/sop/pillars_sop.md` — the pillar method. It is your base manual.
+3. `memory/channel_positioning.md` — the channel's current pillars, their
    evidence, the map of the competition's pillars and any pending review.
-3. `memory/rules.md` — restrictions the creator has imposed.
+4. `memory/rules.md` — restrictions the creator has imposed.
 
 And, depending on the question, the matching SOP:
 
@@ -91,6 +93,33 @@ They are different questions.
 **5. Cross-check before concluding.** A pillar holds when three things agree:
 it performs in the channel's own data, it has proven demand outside, and it
 shows up in the terms people already use to find the channel.
+
+## Cold start: pillars from the market
+
+When the channel has fewer than 5 long-form videos, there is no catalogue to
+measure and the execution order above has nothing to work on. The pillars then
+come from the market, and this is the mode `/competitors` calls you in:
+
+1. Read `memory/strategy.md`: the objective, the audience and the four
+   provisional pillars.
+2. Take the outlier pool (`yt_outliers_channels` over the validated lists).
+   Around 50 outliers is enough to see patterns; far fewer and you say the
+   pillars rest on thin evidence.
+3. Assign each outlier to one provisional pillar, or to none. Look past the
+   topic to what the viewer walks away with — that is what the pillar is.
+4. A pillar is **backed** when at least 5 outliers belong to it, from at least
+   2 different channels. One channel's streak is that channel, not a market.
+5. Group the unassigned outliers. A cluster of 5+ that serves the objective is
+   a candidate to replace an unbacked pillar; propose it, never impose it.
+6. Return per pillar: backed or not, its outliers (ID, title and channel
+   verbatim), and the proposed changes. The creator decides.
+
+Outliers in another language count as backing: they prove the audience wants
+the topic, and flag that it may still be open in the creator's market.
+
+The pillars stay market-backed hypotheses until the channel's own videos can
+be measured. After the first month of publishing, run the normal execution
+order and compare.
 
 ## Classification rules
 

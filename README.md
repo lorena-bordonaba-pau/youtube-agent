@@ -11,8 +11,8 @@ API data and is honest about what it measured and what it is guessing.
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-agent-8A63D2.svg)](https://claude.com/claude-code)
-[![28 tools](https://img.shields.io/badge/tools-28-success.svg)](TOOLS.md)
-[![17 skills](https://img.shields.io/badge/skills-17-success.svg)](#the-skills)
+[![29 tools](https://img.shields.io/badge/tools-29-success.svg)](TOOLS.md)
+[![19 skills](https://img.shields.io/badge/skills-19-success.svg)](#the-skills)
 
 [Quick start](#quick-start) · [What you can ask](#what-you-can-ask-it) · [How it works](#how-it-works) · [Español](docs/README_es.md)
 
@@ -78,8 +78,12 @@ Get the key at [Google Cloud Console](https://console.cloud.google.com/) →
 *APIs & Services* → *Credentials* → *Create credentials* → *API key*, after
 enabling **YouTube Data API v3**. No consent screen, no browser.
 
-Then open Claude Code in the directory. The start-up hook tells you what is
-missing.
+Then open Claude Code in the directory and run **`/kickoff`**. It builds the
+channel's strategy with you — what you sell, who it is for, your content
+pillars — asking in plain words, no strategy knowledge needed. Then
+**`/competitors`** maps who already wins with your audience, in any language,
+and asks you about each channel. The start-up hook always tells you which step
+is next.
 
 > **Not a developer?** Paste this to your agent and it will set everything up:
 >
@@ -98,6 +102,7 @@ No commands to learn. You talk, it runs the tools and shows its sources.
 
 | You say | What it actually does |
 |---|---|
+| *"/kickoff"* — *"I'm starting, where do I begin?"* | Builds the strategy with you, one plain question at a time |
 | *"How's the channel doing?"* | Full report, snapshot to history, compares against the last one |
 | *"Why did my last video flop?"* | Retention curve, traffic sources, contrast against your own outliers |
 | *"Give me titles for this video"* | Generates them, scores each with the rubric, backs them with real search terms |
@@ -138,7 +143,7 @@ flowchart LR
 
     SK --> TL
 
-    subgraph TL ["🔧 28 tools"]
+    subgraph TL ["🔧 29 tools"]
         direction TB
         T1["20 data"]
         T2["4 image"]
@@ -186,14 +191,14 @@ which then calibrates the rubrics and feeds later answers.
 | Path | What it is |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | The operating contract: identity, honesty rules, transparency protocol |
-| [`TOOLS.md`](TOOLS.md) | All 28 tools with their command and quota cost |
+| [`TOOLS.md`](TOOLS.md) | All 29 tools with their command and quota cost |
 | [`LIMITS.md`](LIMITS.md) | What the harness **cannot** do. Read it before asking the impossible |
-| `.claude/skills/` | 17 skills, each with a fixed tool execution order |
+| `.claude/skills/` | 19 skills, each with a fixed tool execution order |
 | `.claude/agents/` | `youtube-strategist`: content pillars and editorial structure |
-| `.claude/commands/` | `/radar`, `/pillars`, `/audit` |
+| `.claude/commands/` | `/kickoff`, `/competitors`, `/pillars`, `/audit`, `/radar` |
 | `.claude/hooks/` | Ask before spending credits or quota; keep the strategist inside `memory/` |
 | `memory/` | Profile, voice, positioning, SOPs. **Starts empty** |
-| `tools/` | 20 data · 4 image · 4 utilities |
+| `tools/` | 21 data · 4 image · 4 utilities |
 | `config/rubrics/` | Scoring rubrics. **Start uncalibrated** |
 | `tests/` | Offline suite: no credentials, no network, no quota |
 | `data/` | Credentials, cache, history, reports. Git-ignored |
@@ -202,6 +207,8 @@ which then calibrates the rubrics and feeds later answers.
 
 | | |
 |---|---|
+| `channel-kickoff` | `/kickoff`: the strategy from zero, or an evaluation of an existing channel's |
+| `competitor-mapping` | `/competitors`: channels winning with your audience, validated one by one; pillars backed by outliers |
 | `channel-analytics` | Audit with real data: performance, retention, traffic |
 | `channel-identity` | Positioning and differentiation against your neighbourhood |
 | `competitor-ideation` | Ideas from real competitor outliers |
@@ -212,7 +219,7 @@ which then calibrates the rubrics and feeds later answers.
 | `transparency` | What the agent is, what it has, in what order it runs |
 | **Visual branch** | `image-generation-core` · `image-refinement` · `likeness-preservation` · `thumbnail-best-practices` · `thumbnail-inspiration` · `analyse-thumbnails` · `analyse-channel-packaging` · `youtube-banner-spec` · `youtube-profile-spec` |
 
-Plus the `/radar` command, for the weekly competitor scan.
+Plus the `youtube-strategist` subagent for content pillars, and the `/radar` command for the weekly competitor scan.
 
 ---
 

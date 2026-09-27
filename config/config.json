@@ -6,10 +6,17 @@
     "what makes you different, and what you refuse to be.",
     "`language` and `region` drive keyword autocomplete and transcription.",
     "`outlier_playlist_id` is optional: a YouTube playlist where you save other",
-    "people's videos that caught your eye. yt_outliers_playlist.py reads it."
+    "people's videos that caught your eye. yt_outliers_playlist.py reads it.",
+    "`discovery` sets what counts as a winning video when mapping the market (yt_discover_channels.py): views over the channel's own mean, absolute views, age in days and minimum length. 100k views fits big niches; lower min_views for a small or non-English niche."
   ],
   "language": "en",
   "region": "us",
   "outlier_playlist_id": null,
-  "channel_context": ""
+  "channel_context": "",
+  "discovery": {
+    "min_ratio": 3.0,
+    "min_views": 100000,
+    "max_days": 180,
+    "min_duration_s": 240
+  }
 }

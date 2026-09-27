@@ -1,6 +1,6 @@
 # Tool catalogue
 
-28 scripts: 20 data tools, 4 for the visual branch and 4 utilities. All are run
+29 scripts: 21 data tools, 4 for the visual branch and 4 utilities. All are run
 from the project root and return JSON by default; `--md` gives readable output.
 
 **How to read the `source` column** — it determines how each figure may be
@@ -45,6 +45,7 @@ Require OAuth. Private data for the authorised channel.
 | `yt_outliers_channels` | Outliers across competitors and inspirations | `python3 tools/yt_outliers_channels.py [--min-ratio 2.0] [--sample 30] [--list competitors]` | `derived` | medium |
 | `yt_outliers_playlist` | Outliers from your saved playlist | `python3 tools/yt_outliers_playlist.py [--days 7]` | `derived` | medium |
 | `yt_search` | Search YouTube and flag outliers | `python3 tools/yt_search.py --query "..." [--limit 10]` | `derived` | **100 u/query** |
+| `yt_discover_channels` | **Candidate channels from search terms**, any language: who already wins with your audience. Proposes, never writes | `python3 tools/yt_discover_channels.py --terms "a; b" [--min-views N] [--bias-language]` | `derived` | **100 u/term** |
 | `yt_thumbnails` | Download thumbnails + pixel metrics | `python3 tools/yt_thumbnails.py --video ID` | `derived` | low |
 | `yt_transcript` | Transcript (captions, or Whisper) | `python3 tools/yt_transcript.py --video ID [--plain]` | `youtube_api` / `derived` | none |
 
@@ -130,12 +131,13 @@ field is filled in by hand.
 | `init` | Harness status (run by the start-up hook) | `python3 tools/init.py` |
 | `auth_setup` | Re-authorise with Google. **Opens a browser** | `python3 tools/auth_setup.py` |
 | `ingest_studio_csv` | Ingests CTR and impressions from the Studio CSV | `python3 tools/ingest_studio_csv.py --csv path.csv` |
-| `yt_channels_list` | Lists the configured channels | `python3 tools/yt_channels_list.py [--list competitors]` |
+| `yt_channels_list` | Lists the configured channels; adds or removes one **after the creator says yes** | `python3 tools/yt_channels_list.py [--list competitors] [--add ID --to LIST --name N --notes W \| --remove ID]` |
 
 ## Quota
 
 The daily YouTube API quota is 10,000 units. Almost every call costs 1–3;
-**`search.list` costs 100**, and it is used by `yt_search.py` and
+**`search.list` costs 100**, and it is used by `yt_search.py`,
+`yt_discover_channels.py` (per term) and
 `kw_research.py` (unless you pass `--no-competition`).
 
 Everything is cached in `data/cache/` with a TTL per family: 6 h for your own

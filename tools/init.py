@@ -94,6 +94,27 @@ def main() -> None:
     else:
         lines.append("Voice profile: does not exist")
 
+    # Strategy stage — the order is kickoff, then competitors, then ideas.
+    # Each flow is started by the creator; this only says which one is next.
+    strategy = MEMORY_DIR / "strategy.md"
+    text = strategy.read_text(encoding="utf-8") if strategy.exists() else ""
+    stage = next((l.split("**Stage:**", 1)[1].strip() for l in text.splitlines()
+                  if l.startswith("**Stage:**")), "")
+    if not text or "NOT POPULATED" in text.upper() or stage in ("", "not started"):
+        lines.append("Strategy: NOT STARTED")
+        warnings.append((PRIORITY_CONFIG,
+                         "No strategy yet. Run `/kickoff`: it asks what the "
+                         "channel sells and who it is for, in plain words, and "
+                         "writes the strategy. Everything else builds on it."))
+    elif stage == "strategy":
+        lines.append("Strategy: written — pillars PROVISIONAL")
+        warnings.append((PRIORITY_NEEDS_CREDENTIALS,
+                         "Pillars not backed by the market yet. Run "
+                         "`/competitors` to map who already wins with your "
+                         "audience and validate each channel."))
+    else:
+        lines.append(f"Strategy: {stage}")
+
     # Real CTR from Studio — without it the rubrics stay unvalidated
     ctr = DATA_DIR / "history" / "studio_ctr.json"
     if ctr.exists():
@@ -126,8 +147,8 @@ def main() -> None:
             "INSTALLATION NOT PERSONALISED. Still to fill in: "
             + "; ".join(unconfigured)
             + ". Until that is done the agent does not know what your "
-              "channel is about and will give generic advice. See step 4 of "
-              "docs/install.md."))
+              "channel is about and will give generic advice. `/kickoff` "
+              "fills them in."))
     else:
         lines.append("Configuration: personalised")
 

@@ -83,7 +83,7 @@ def run():
                 {"list": args.items or "all", "min_ratio": args.min_ratio,
                  "sample": args.sample}, hit,
                 notes=["`ratio` = views / mean of THAT channel's last N uploads.",
-                       f"Filtrado a outliers de <= {args.max_days} days. Un outlier "
+                       f"Filtered to outliers <= {args.max_days} days old. "
                        "An old one is not an opportunity, it is history.",
                        "Comparing views across lists in different languages is NOT "
                        "direct: adjust for market size."])
