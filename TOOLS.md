@@ -1,6 +1,6 @@
 # Tool catalogue
 
-30 scripts: 22 data tools, 4 for the visual branch and 4 utilities. All are run
+31 scripts: 23 data tools, 4 for the visual branch and 4 utilities. All are run
 from the project root and return JSON by default; `--md` gives readable output.
 
 **How to read the `source` column** — it determines how each figure may be
@@ -45,6 +45,7 @@ Require OAuth. Private data for the authorised channel.
 | `yt_outliers_channels` | Outliers across competitors and inspirations | `python3 tools/yt_outliers_channels.py [--min-ratio 2.0] [--sample 30] [--list competitors]` | `derived` | medium |
 | `yt_outliers_playlist` | Outliers from your saved playlist | `python3 tools/yt_outliers_playlist.py [--days 7]` | `derived` | medium |
 | `competitor_board` | Data for the competitor board artifact (`artifacts/competitor-board/`): every long-form video of the last 6 months per channel, outlier = views / channel median, likely ad-bought views flagged, thumbnails embedded. Prints `publish_files` for the Artifact tool | `python3 tools/competitor_board.py --list competitors \| --handles @a @b \| --handles-file list.json [--own none]` | `derived` (+ `heuristic` ad flag) | low (~3 u/channel) |
+| `topic_tam` | TAM and expected views for a topic, from the competitor board data: videos and channels on it, views it moved, its ratio spread, and your median × its 25/50/90th percentile ratio as floor / expected / ceiling, plus your own record on it | `python3 tools/topic_tam.py --topic "Name::regex" [--topic ...] [--market-factor F]` | `heuristic` | none (reads the board) |
 | `yt_search` | Search YouTube and flag outliers | `python3 tools/yt_search.py --query "..." [--limit 10]` | `derived` | **100 u/query** |
 | `yt_discover_channels` | **Candidate channels from search terms**, any language: who already wins with your audience. Proposes, never writes | `python3 tools/yt_discover_channels.py --terms "a; b" [--min-views N] [--bias-language]` | `derived` | **100 u/term** |
 | `yt_thumbnails` | Download thumbnails + pixel metrics | `python3 tools/yt_thumbnails.py --video ID` | `derived` | low |

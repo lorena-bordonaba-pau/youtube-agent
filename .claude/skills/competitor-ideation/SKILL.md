@@ -65,6 +65,14 @@ Three ways to get from an outlier to an idea. Name which one each idea uses:
    `heuristic` score: it ranks the ideas against each other, it does not
    measure absolute demand.
 
+4.5 **Size each idea**
+   `python3 tools/topic_tam.py --topic "idea 1::regex" --topic "idea 2::regex"`
+   Match the audience's interest, not the exact case (an agent that runs your
+   YouTube channel is sized as "an AI that runs your business"). It gives the
+   TAM the topic moved on the board and floor / expected / ceiling views for
+   this channel. `heuristic`: quote it as an estimate, with the user's own
+   record on the topic next to it.
+
 5. **Prioritise against the channel, not in the abstract**
    Read `memory/strategy.md`, `memory/creator_profile.md` and
    `memory/MEMORY.md`. An idea that attracts a viewer the objective does not

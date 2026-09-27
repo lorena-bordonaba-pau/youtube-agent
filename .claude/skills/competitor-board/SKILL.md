@@ -63,6 +63,30 @@ its `url` makes a new page and orphans the list the user built.
    variant). Resolve the real one with the channel ID from
    `config/channels_lists.json` if the creator is there.
 
+### Monthly plan tab
+
+The page also holds an editable sheet of the videos planned per month, 8 per
+month by default (2 per pillar, for a 2-a-week cadence). The user edits it on
+the page; you write ideas into it with `ArtifactData`:
+
+- `settings/pillars`: `{"items": [{"id": "p1", "name": "..."}, ...]}`. Take
+  the names from `memory/`; never invent a pillar the user has not named.
+- `plan/<YYYY-MM>-<slot>`: `month`, `slot`, `pillar` (an id above; pillar
+  names are one or two words), `title`, `pattern`, `ref_id` / `ref_title` /
+  `ref_channel` / `ref_ratio` / `ref_views` (the main backing outlier,
+  **verbatim** from the board data), `format_refs` (**format references**, shown
+  as links: `[{"id", "title", "channel", "ratio", "views"}]`, verbatim from the
+  board data; the user can add and remove them on the page), `tam_views` (the
+  topic's `tam_views_6m` from `topic_tam.py`), `status` (index string: 0 idea
+  … 4 published, 5 dropped).
+- `views_floor` / `views_mid` / `views_ceiling`: expected views from
+  `python3 tools/topic_tam.py --topic "Name::regex"` (a `heuristic` estimate:
+  write the topic, its market ratio and the user's own record on it into
+  `views_basis`, shown when hovering the expected views). When the user has 2 or more videos on the topic, their own median
+  beats the market projection. `views_real` is filled after publishing.
+- Read the rows before writing and pin `if_version`: the user may have edited
+  them. Never overwrite a title or note the user wrote.
+
 ### Reading the board (before quoting any figure from it)
 
 - `ratio` is against the channel's own median, so a small channel can post

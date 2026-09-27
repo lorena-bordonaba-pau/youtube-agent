@@ -131,6 +131,59 @@
   .status.error { background: var(--red-soft); color: var(--red-ink); }
   .sync-note { background: var(--surface); border-radius: 12px; padding: 16px 18px; margin-top: 20px; color: var(--muted); line-height: 1.5; }
   .sync-note code { background: var(--bg); border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px; color: var(--ink); font-size: 14px; }
+  /* plan: a sheet, not a form */
+  .plan-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 20px; }
+  .pillars { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .pillar-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 13.5px; }
+  .pillar-chip b { font-variant-numeric: tabular-nums; }
+  .pillar-chip b.off { color: var(--red-ink); }
+  .pillar-chip input { border: 0; background: var(--bg); border-radius: 999px; padding: 4px 10px; width: 11ch; font-weight: 600; }
+  .pillar-chip input:focus { outline: 1.5px solid var(--ink); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .sheet-wrap { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+  table.sheet { table-layout: fixed; border-collapse: collapse; width: max-content; min-width: 100%; font-size: 14px; }
+  .sheet th { position: sticky; top: 0; background: var(--surface); color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); white-space: nowrap; }
+  .sheet td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 0; vertical-align: top; background: var(--bg); }
+  .sheet th:last-child, .sheet td:last-child { border-right: 0; }
+  .sheet tr:last-child td { border-bottom: 0; }
+  .sheet th { position: sticky; }
+  .sheet th .grip { position: absolute; top: 0; right: 0; width: 9px; height: 100%; cursor: col-resize; z-index: 1; touch-action: none; }
+  .sheet th .grip::after { content: ""; position: absolute; left: 4px; top: 25%; height: 50%; width: 1px; background: transparent; }
+  .sheet th:hover .grip::after, .sheet th .grip.on::after { background: var(--red); width: 2px; }
+  .sheet th, .sheet td { overflow: hidden; }
+  .refs { display: grid; gap: 8px; padding: 8px 10px; }
+  .fref { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 6px; align-items: start; }
+  .fref a { font-weight: 600; line-height: 1.3; }
+  .fref a:hover { text-decoration: underline; text-decoration-color: var(--red); }
+  .fref small { color: var(--muted); grid-column: 1; }
+  .fref .x { grid-row: 1 / span 2; grid-column: 2; border: 0; background: none; color: var(--faint); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; }
+  .fref .x:hover { color: var(--red); }
+  .refs input { padding: 4px 0; min-height: 0; color: var(--muted); font-size: 13px; }
+  .sheet td.n { width: 38px; text-align: center; color: var(--faint); font-weight: 700; padding-top: 11px; background: var(--surface); }
+  .sheet textarea, .sheet input, .sheet select { width: 100%; border: 0; background: transparent; padding: 10px; font: inherit; resize: none; display: block; min-height: 40px; }
+  .sheet textarea { field-sizing: content; min-height: 40px; line-height: 1.35; }
+  .sheet textarea:focus, .sheet input:focus, .sheet select:focus { outline: 2px solid var(--ink); outline-offset: -2px; background: #fff; }
+  .sheet select { appearance: none; cursor: pointer; }
+  .sheet .c-title textarea { font-weight: 600; }
+  .ref { display: grid; gap: 4px; padding: 8px 10px; }
+  .ref a { font-weight: 600; line-height: 1.3; }
+  .ref a:hover { text-decoration: underline; text-decoration-color: var(--red); }
+  .ref small { color: var(--muted); }
+  .ref input { padding: 4px 0; min-height: 0; color: var(--muted); font-size: 13px; }
+  .st { font-weight: 600; }
+  .est { display: grid; gap: 2px; padding: 6px 10px; }
+  .est input { padding: 2px 0; min-height: 0; font-variant-numeric: tabular-nums; }
+  .est .mid { font-weight: 700; font-size: 15px; }
+  .est .range { display: flex; gap: 4px; align-items: center; color: var(--muted); font-size: 12.5px; }
+  .est .range input { width: 7ch; color: var(--muted); }
+  .vs { display: block; padding: 0 10px 8px; font-size: 12.5px; font-weight: 700; }
+  .vs.up { color: var(--red); }
+  .vs.down { color: var(--muted); }
+  .st-publicado, .st-published { color: var(--ink); }
+  .saving { color: var(--faint); font-size: 13px; }
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 5; }
+  .plan-add { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; font-size: 12px; font-weight: 600; padding: 1px 8px; margin-left: 8px; cursor: pointer; color: var(--muted); vertical-align: 1px; }
+  .plan-add:hover { border-color: var(--red); color: var(--red); }
   @media (max-width: 560px) {
     .panel { padding: 16px; }
     .roster-row { grid-template-columns: 36px minmax(0, 1fr); }
@@ -148,6 +201,7 @@
     </div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-videos" aria-selected="true" data-view="videos" data-t="tabVideos"></button>
+      <button role="tab" id="tab-plan" aria-selected="false" data-view="plan" data-t="tabPlan"></button>
       <button role="tab" id="tab-list" aria-selected="false" data-view="list" data-t="tabList"></button>
     </div>
   </header>
@@ -207,6 +261,29 @@
     </aside>
   </div>
 
+  <section class="panel" id="view-plan" hidden>
+    <div class="panel-head"><h2 data-t="planTitle"></h2><span class="saving" id="plan-saving"></span></div>
+    <div class="plan-bar">
+      <div class="select"><select id="plan-month" data-t-aria="planMonth"></select></div>
+      <button class="btn" type="button" id="plan-new" data-t="planNew"></button>
+    </div>
+    <div class="pillars" id="pillars"></div>
+    <div class="sheet-wrap">
+      <table class="sheet">
+        <colgroup id="plan-cols">
+          <col data-col="n"><col data-col="pillar"><col data-col="title"><col data-col="pattern"><col data-col="ref">
+          <col data-col="refs"><col data-col="tam"><col data-col="expected"><col data-col="real"><col data-col="status">
+        </colgroup>
+        <thead><tr>
+          <th>#</th><th data-t="hPillar"></th><th data-t="hTitle"></th><th data-t="hPattern"></th><th data-t="hRef"></th>
+          <th data-t="hNotes"></th><th data-t="hTam"></th><th data-t="hExpected"></th><th data-t="hReal"></th><th data-t="hStatus"></th>
+        </tr></thead>
+        <tbody id="plan-rows"><tr><td colspan="10" class="empty" data-t="planEmpty"></td></tr></tbody>
+      </table>
+    </div>
+    <p class="footnote" data-t="planFoot"></p>
+  </section>
+
   <section class="panel" id="view-list" hidden>
     <div class="panel-head"><h2 data-t="listTitle"></h2><span id="roster-count" style="color:var(--muted)"></span></div>
     <form class="add" id="add-form-list" style="margin-top:20px;max-width:560px">
@@ -227,7 +304,18 @@
   // ---------- copy, in the language set in config/config.json ----------
   const T = {
     es: {
-      locale: "es-ES", title: "Competidores", tabVideos: "Vídeos", tabList: "Lista de competidores",
+      locale: "es-ES", title: "Competidores", tabVideos: "Vídeos", tabPlan: "Plan mensual", tabList: "Lista de competidores",
+      planTitle: "Plan de vídeos del mes", planMonth: "Mes", planNew: "Añadir el mes siguiente", planEmpty: "Todavía no hay ningún mes planificado.",
+      hPillar: "Pilar", hTitle: "Título provisional", hPattern: "Patrón", hRef: "Referencia principal", hTam: "TAM (vistas del tema, 6 meses)", hStatus: "Estado", hNotes: "Referencias del formato",
+      methods: ["Outlier", "Niche bending", "Idea propia + outlier", "Vertical a largo", "Otra"],
+      tams: ["Alto", "Medio", "Bajo"], statuses: ["Idea", "Guion", "Grabado", "Editado", "Publicado", "Descartado"],
+      hExpected: "Visitas esperadas", hReal: "Visitas reales", floorPh: "suelo", ceilPh: "techo",
+      vsExpected: (x) => `${x} de lo esperado`,
+      estHelp: "Estimación propia: tu mediana × lo que suele multiplicar este tema en el radar (percentiles 25, 50 y 90). No es una predicción.",
+      refPh: "Pega un enlace o ID de YouTube", addRefPh: "+ Añadir referencia (enlace)", removeRef: "Quitar referencia", resizeHint: "Arrastra el borde para cambiar el ancho. Doble clic: ancho por defecto.", pillarNone: "Sin pilar", slotsOf: (n, t) => `${n}/${t}`,
+      saving: "Guardando…", saved: "Guardado", saveErr: "No se ha podido guardar el último cambio",
+      addToPlan: "+ Plan", addedToPlan: (m, n) => `Añadido como referencia del vídeo ${n} de ${m}`, planFull: (m) => `Los 8 vídeos de ${m} ya tienen referencia`, noPlan: "Crea primero un mes en el Plan mensual",
+      planFoot: "Arrastra el borde de cualquier cabecera para cambiar el ancho de la columna (doble clic la devuelve a su ancho). TAM = vistas que movió el tema en los canales del radar en 6 meses (el inglés, dividido entre 1,45). Visitas esperadas = estimación propia (tu mediana × lo que suele multiplicar el tema en el radar), con suelo y techo; pasa el ratón por encima para ver de dónde sale. Al rellenar las visitas reales aparece cuánto se ha desviado. Cada mes son 8 vídeos, 2 por pilar. El contador de cada pilar se pone en rojo cuando se aparta de 2. Todo lo que escribes se guarda solo y lo ve cualquiera que abra este radar. El botón «+ Plan» de la pestaña Vídeos pone ese vídeo como referencia del primer hueco libre del mes elegido.",
       bestVideos: "Los mejores vídeos de tus competidores", includeOwn: "Incluye mi canal",
       sortBy: "Ordenar por", period: "Periodo", newest: "Más recientes",
       p7: "Última semana", p30: "Último mes", p90: "Últimos 3 meses", p183: "Últimos 6 meses",
@@ -260,7 +348,18 @@
         `Vistas por hora = vistas / horas desde la publicación, una media de toda su vida, no la velocidad actual. Los vídeos recientes aún no han acumulado todas sus vistas.`,
     },
     en: {
-      locale: "en-US", title: "Competitors", tabVideos: "Videos", tabList: "Competitor list",
+      locale: "en-US", title: "Competitors", tabVideos: "Videos", tabPlan: "Monthly plan", tabList: "Competitor list",
+      planTitle: "This month's video plan", planMonth: "Month", planNew: "Add next month", planEmpty: "No month planned yet.",
+      hPillar: "Pillar", hTitle: "Working title", hPattern: "Pattern", hRef: "Main reference", hTam: "TAM (topic views, 6 months)", hStatus: "Status", hNotes: "Format references",
+      methods: ["Outlier", "Niche bending", "Own idea + outlier", "Vertical to long", "Other"],
+      tams: ["High", "Medium", "Low"], statuses: ["Idea", "Script", "Filmed", "Edited", "Published", "Dropped"],
+      hExpected: "Expected views", hReal: "Actual views", floorPh: "floor", ceilPh: "ceiling",
+      vsExpected: (x) => `${x} of expected`,
+      estHelp: "Our own estimate: your median × what this topic usually multiplies on the board (25th, 50th and 90th percentiles). Not a prediction.",
+      refPh: "Paste a YouTube link or ID", addRefPh: "+ Add reference (link)", removeRef: "Remove reference", resizeHint: "Drag the edge to change the width. Double-click: default width.", pillarNone: "No pillar", slotsOf: (n, t) => `${n}/${t}`,
+      saving: "Saving…", saved: "Saved", saveErr: "The last change could not be saved",
+      addToPlan: "+ Plan", addedToPlan: (m, n) => `Added as the reference for video ${n} of ${m}`, planFull: (m) => `All 8 videos of ${m} already have a reference`, noPlan: "Create a month in the Monthly plan first",
+      planFoot: "Drag any header's edge to resize its column (double-click resets it). TAM = views the topic moved across the board's channels in 6 months (English divided by 1.45). Expected views = our own estimate (your median × what the topic usually multiplies on the board), with a floor and a ceiling; hover to see where it comes from. Fill in the actual views to see how far it landed. Each month holds 8 videos, 2 per pillar. A pillar's counter turns red when it moves away from 2. Everything you type saves on its own and anyone who opens this board sees it. The \u201c+ Plan\u201d button on the Videos tab sets that video as the reference of the first free slot in the chosen month.",
       bestVideos: "Your competitors' best videos", includeOwn: "Include my channel",
       sortBy: "Sort by", period: "Period", newest: "Newest",
       p7: "Last week", p30: "Last month", p90: "Last 3 months", p183: "Last 6 months",
@@ -405,7 +504,8 @@
           el("div", { style: "min-width:0" },
             el("a", { class: "vid-title", href: url, target: "_blank", rel: "noopener", text: v.title }),
             el("div", { class: "meta" }, `${ch?.title || v.ch} • ${subsLabel(ch?.subs)}`,
-              ch?.own ? el("span", { class: "own-tag", text: L.yourChannel }) : null),
+              ch?.own ? el("span", { class: "own-tag", text: L.yourChannel }) : null,
+              state.db ? el("button", { class: "plan-add", type: "button", text: L.addToPlan, onclick: () => addToPlan(v, ch) }) : null),
             el("div", { class: "meta" }, `${ago(v.published_at)} · ${f.date(v.published_at)}` + (v.paid ? ` · ${L.paid}` : "")),
             v.ad_suspect ? el("span", { class: "ad-tag", title: L.adTitle(f.dec(v.lpk), share), text: L.adTag(share) }) : null))),
         el("td", { class: "num", text: f.int(v.views) }),
@@ -533,11 +633,189 @@
     try { await state.db.doc("competitors/" + key).delete(); } catch (e) { console.warn(e); }
   }
 
+  // ---------- monthly plan ----------
+  const PILLAR_COLORS = ["#e11d2e", "#0c0c0d", "#7a7a82", "#c9c9cf"];
+  const SLOTS = 8, PER_PILLAR = 2;
+  const plan = { rows: [], pillars: [], month: loadLocal("board-plan-month", null) };
+  const pending = new Map();   // doc id -> {timer, patch}
+  let toastTimer;
+  function toast(msg) {
+    let t = document.querySelector(".toast");
+    if (!t) { t = el("div", { class: "toast", role: "status" }); document.body.append(t); }
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+  const monthLabel = (m) => { const [y, mo] = m.split("-").map(Number); const s = new Intl.DateTimeFormat(L.locale, { month: "long", year: "numeric" }).format(new Date(y, mo - 1, 1)); return s[0].toUpperCase() + s.slice(1); };
+  const months = () => [...new Set(plan.rows.map(r => r.month))].sort();
+  const nextMonth = (m) => { const [y, mo] = m.split("-").map(Number); const d = new Date(y, mo, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+  const videoId = (raw) => { const s = (raw || "").trim(); const m = s.match(/(?:v=|youtu\.be\/|shorts\/|live\/)([\w-]{11})/); return m ? m[1] : /^[\w-]{11}$/.test(s) ? s : null; };
+
+  function queueSave(id, patch) {
+    const row = plan.rows.find(r => r.id === id); if (row) Object.assign(row, patch);
+    const p = pending.get(id) || { patch: {} };
+    Object.assign(p.patch, patch);
+    clearTimeout(p.timer);
+    $("plan-saving").textContent = L.saving;
+    p.timer = setTimeout(async () => {
+      pending.delete(id);
+      try { await state.db.doc("plan/" + id).update({ ...p.patch, updatedAt: new Date().toISOString() }); $("plan-saving").textContent = L.saved; }
+      catch (e) { console.warn(e); $("plan-saving").textContent = L.saveErr; }
+    }, 600);
+    pending.set(id, p);
+  }
+
+  function cell(tag, value, onInput, attrs = {}) {
+    const n = el(tag, attrs);
+    if (tag === "select") { for (const [v, label] of attrs.options) n.append(el("option", { value: v, text: label })); n.removeAttribute("options"); }
+    n.value = value ?? "";
+    n.addEventListener(tag === "select" || attrs.type === "date" ? "change" : "input", () => onInput(n.value));
+    return n;
+  }
+
+  function renderPillars() {
+    const box = $("pillars"); box.replaceChildren();
+    const inMonth = plan.rows.filter(r => r.month === plan.month);
+    plan.pillars.forEach((p, i) => {
+      const n = inMonth.filter(r => r.pillar === p.id).length;
+      const input = el("input", { value: p.name, "aria-label": L.hPillar + " " + (i + 1) });
+      input.value = p.name;
+      input.addEventListener("change", async () => {
+        plan.pillars[i] = { ...p, name: input.value.trim() || p.name };
+        try { await state.db.doc("settings/pillars").set({ items: plan.pillars }); } catch (e) { console.warn(e); }
+      });
+      box.append(el("span", { class: "pillar-chip" }, el("span", { class: "dot", style: `background:${PILLAR_COLORS[i % 4]}` }), input,
+        el("b", { class: n === PER_PILLAR ? "" : "off", text: L.slotsOf(n, PER_PILLAR) })));
+    });
+  }
+
+  function renderPlan(force) {
+    if (!state.db) return;
+    const ms = months();
+    if (!plan.month || !ms.includes(plan.month)) plan.month = ms.find(m => m >= new Date().toISOString().slice(0, 7)) || ms[ms.length - 1] || null;
+    const sel = $("plan-month"); sel.replaceChildren(...ms.map(m => el("option", { value: m, text: monthLabel(m) }))); if (plan.month) sel.value = plan.month;
+    renderPillars();
+    const tbody = $("plan-rows");
+    if (!force && tbody.contains(document.activeElement)) return;   // never yank a cell out from under the typist
+    tbody.replaceChildren();
+    const rows = plan.rows.filter(r => r.month === plan.month).sort((a, b) => a.slot - b.slot);
+    if (!rows.length) { tbody.append(el("tr", {}, el("td", { colspan: 10, class: "empty", text: L.planEmpty }))); return; }
+    const pillarOpts = [["", L.pillarNone], ...plan.pillars.map(p => [p.id, p.name])];
+    const opt = (list) => [["", "—"], ...list.map((x, i) => [String(i), x])];
+    for (const r of rows) {
+      const save = (k) => (v) => queueSave(r.id, { [k]: v });
+      const fmtN = (n) => (n == null || n === "") ? "" : f.int(n);
+      const num = (k) => (v) => { const n = parseInt(String(v).replace(/[^\d]/g, ""), 10); queueSave(r.id, { [k]: Number.isFinite(n) ? n : null }); };
+      const refBox = el("div", { class: "ref" });
+      if (r.ref_id) refBox.append(
+        el("a", { href: `https://www.youtube.com/watch?v=${r.ref_id}`, target: "_blank", rel: "noopener", text: r.ref_title || r.ref_id }),
+        el("small", { text: [r.ref_channel, r.ref_ratio ? times(r.ref_ratio) : null, r.ref_views ? f.int(r.ref_views) + " " + L.colViews.toLowerCase() : null].filter(Boolean).join(" · ") }));
+      const refIn = el("input", { placeholder: L.refPh, "aria-label": L.hRef });
+      refIn.addEventListener("change", () => {
+        const id = videoId(refIn.value); if (!id) return;
+        const v = (state.data?.videos || []).find(x => x.id === id);
+        const ch = v ? channelsByKey().get(v.ch) : null;
+        queueSave(r.id, { ref_id: id, ref_title: v?.title || "", ref_channel: ch?.title || "", ref_ratio: v?.ratio ?? null, ref_views: v?.views ?? null });
+        refIn.value = ""; renderPlan(true);
+      });
+      refBox.append(refIn);
+      const pIdx = plan.pillars.findIndex(p => p.id === r.pillar);
+      tbody.append(el("tr", {},
+        el("td", { class: "n", style: pIdx >= 0 ? `box-shadow: inset 3px 0 0 ${PILLAR_COLORS[pIdx % 4]}` : null, text: r.slot }),
+        el("td", {}, cell("select", r.pillar, (v) => { save("pillar")(v); renderPlan(); }, { options: pillarOpts, "aria-label": L.hPillar })),
+        el("td", { class: "c-title" }, cell("textarea", r.title, save("title"), { rows: 2, "aria-label": L.hTitle })),
+        el("td", {}, cell("textarea", r.pattern, save("pattern"), { rows: 2, "aria-label": L.hPattern })),
+        el("td", {}, refBox),
+        el("td", {}, refsCell(r)),
+        el("td", {}, cell("input", fmtN(r.tam_views), num("tam_views"), { inputmode: "numeric", "aria-label": L.hTam })),
+        el("td", { title: r.views_basis || L.estHelp }, el("div", { class: "est" },
+          cell("input", fmtN(r.views_mid), num("views_mid"), { class: "mid", inputmode: "numeric", "aria-label": L.hExpected }),
+          el("div", { class: "range" },
+            cell("input", fmtN(r.views_floor), num("views_floor"), { inputmode: "numeric", placeholder: L.floorPh, "aria-label": L.floorPh }), "–",
+            cell("input", fmtN(r.views_ceiling), num("views_ceiling"), { inputmode: "numeric", placeholder: L.ceilPh, "aria-label": L.ceilPh })))),
+        el("td", {},
+          cell("input", fmtN(r.views_real), num("views_real"), { inputmode: "numeric", "aria-label": L.hReal }),
+          r.views_real && r.views_mid ? el("span", { class: "vs " + (r.views_real >= r.views_mid ? "up" : "down"), text: L.vsExpected(times(r.views_real / r.views_mid)) }) : null),
+        el("td", {}, cell("select", r.status, save("status"), { options: opt(L.statuses), "aria-label": L.hStatus, class: "st" }))));
+    }
+  }
+  const ytUrl = (id) => `https://www.youtube.com/watch?v=${id}`;
+  function refFromId(id) {
+    const v = (state.data?.videos || []).find(x => x.id === id);
+    const ch = v ? channelsByKey().get(v.ch) : null;
+    return { id, title: v?.title || "", channel: ch?.title || "", ratio: v?.ratio ?? null, views: v?.views ?? null };
+  }
+  function refsCell(r) {
+    const box = el("div", { class: "refs" });
+    const list = Array.isArray(r.format_refs) ? r.format_refs : [];
+    list.forEach((x, i) => box.append(el("div", { class: "fref" },
+      el("a", { href: ytUrl(x.id), target: "_blank", rel: "noopener", text: x.title || x.id }),
+      el("small", { text: [x.channel, x.ratio ? times(x.ratio) : null, x.views ? f.int(x.views) + " " + L.colViews.toLowerCase() : null].filter(Boolean).join(" · ") }),
+      el("button", { class: "x", type: "button", "aria-label": L.removeRef, title: L.removeRef, text: "×",
+        onclick: () => { queueSave(r.id, { format_refs: list.filter((_, j) => j !== i) }); renderPlan(true); } }))));
+    const add = el("input", { placeholder: L.addRefPh, "aria-label": L.addRefPh });
+    add.addEventListener("change", () => {
+      const id = videoId(add.value); if (!id) return;
+      queueSave(r.id, { format_refs: [...list, refFromId(id)] });
+      add.value = ""; renderPlan(true);
+    });
+    box.append(add);
+    return box;
+  }
+
+  // Column widths: dragged by the viewer, remembered in this browser only.
+  const COL_DEFAULTS = { n: 44, pillar: 120, title: 260, pattern: 220, ref: 240, refs: 320, tam: 120, expected: 140, real: 120, status: 120 };
+  const colWidths = { ...COL_DEFAULTS, ...loadLocal("board-plan-cols", {}) };
+  function applyCols() { document.querySelectorAll("#plan-cols col").forEach(c => { c.style.width = colWidths[c.dataset.col] + "px"; }); }
+  applyCols();
+  document.querySelectorAll(".sheet thead th").forEach((th, i) => {
+    const key = document.querySelectorAll("#plan-cols col")[i].dataset.col;
+    const grip = el("span", { class: "grip", title: L.resizeHint, "aria-hidden": "true" });
+    grip.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); grip.setPointerCapture(e.pointerId); grip.classList.add("on");
+      const x0 = e.clientX, w0 = colWidths[key];
+      const move = (ev) => { colWidths[key] = Math.max(40, Math.round(w0 + ev.clientX - x0)); applyCols(); };
+      const up = () => { grip.classList.remove("on"); grip.removeEventListener("pointermove", move); grip.removeEventListener("pointerup", up); saveLocal("board-plan-cols", colWidths); };
+      grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", up);
+    });
+    grip.addEventListener("dblclick", () => { colWidths[key] = COL_DEFAULTS[key]; applyCols(); saveLocal("board-plan-cols", colWidths); });
+    th.append(grip);
+  });
+
+  $("plan-rows").addEventListener("focusout", () => setTimeout(() => { if (!$("plan-rows").contains(document.activeElement)) renderPlan(); }, 0));
+  $("plan-month").addEventListener("change", e => { plan.month = e.target.value; saveLocal("board-plan-month", plan.month); renderPlan(); });
+
+  async function createMonth(m) {
+    for (let i = 1; i <= SLOTS; i++) {
+      const pillar = plan.pillars[Math.floor((i - 1) / PER_PILLAR)]?.id || "";
+      try { await state.db.doc(`plan/${m}-${i}`).set({ month: m, slot: i, pillar, title: "", pattern: "", ref_id: "", format_refs: [], tam_views: null, status: "0", updatedAt: new Date().toISOString() }); }
+      catch (e) { console.warn(e); toast(L.saveErr); return; }
+    }
+    plan.month = m; saveLocal("board-plan-month", m);
+  }
+  $("plan-new").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    if (btn.disabled) return;
+    btn.disabled = true;   // one click, one month: a double click used to create two
+    const ms = months();
+    try { await createMonth(ms.length ? nextMonth(ms[ms.length - 1]) : nextMonth(new Date().toISOString().slice(0, 7))); }
+    finally { btn.disabled = false; }
+  });
+
+  function addToPlan(v, ch) {
+    if (!plan.month) { toast(L.noPlan); return; }
+    const free = plan.rows.filter(r => r.month === plan.month && !r.ref_id).sort((a, b) => a.slot - b.slot)[0];
+    if (!free) { toast(L.planFull(monthLabel(plan.month))); return; }
+    queueSave(free.id, { ref_id: v.id, ref_title: v.title, ref_channel: ch?.title || "", ref_ratio: v.ratio, ref_views: v.views });
+    renderPlan();
+    toast(L.addedToPlan(monthLabel(plan.month), free.slot));
+  }
+
   // ---------- events ----------
   function showView(view) {
     document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x.dataset.view === view));
     $("view-videos").hidden = view !== "videos";
     $("view-list").hidden = view !== "list";
+    $("view-plan").hidden = view !== "plan";
   }
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { showView(b.dataset.view); saveLocal("board-view", b.dataset.view); }));
   $("sort").addEventListener("change", e => { state.sort = e.target.value; state.shown = PAGE; renderVideos(); });
@@ -575,6 +853,15 @@
       state.roster = snap.docs.map(d => ({ key: d.id, ...d.data() }));
       renderAll(); ensureLoaded();
     }, err => console.warn("competitors", err));
+    db.collection("plan").onSnapshot(snap => {
+      plan.rows = snap.docs.map(d => ({ id: d.id, ...d.data(), ...(pending.get(d.id)?.patch || {}) }));
+      renderPlan();
+    }, err => console.warn("plan", err));
+    db.doc("settings/pillars").onSnapshot(snap => {
+      plan.pillars = snap.exists && Array.isArray(snap.data().items) ? snap.data().items : [];
+      renderPlan();
+    }, () => {});
+    renderVideos();
     db.doc("settings/board").onSnapshot(snap => {
       if (snap.exists && typeof snap.data().includeOwn === "boolean") { state.includeOwn = snap.data().includeOwn; renderAll(); ensureLoaded(); }
     }, () => {});

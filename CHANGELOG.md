@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
 
+## [0.5.1] — 2026-09-27
+
+### Added
+- **`topic_tam.py`**: the TAM of a video topic and the views it could bring
+  this channel, from the competitor board's data — videos and channels on the
+  topic, the views it moved, its ratio spread, and your median × its 25th /
+  50th / 90th percentile ratio as floor / expected / ceiling, with your own
+  record on the topic next to it. `heuristic`, no API calls.
+  `competitor-ideation` sizes each idea with it.
+- **Monthly plan tab** on the competitor board: 8 videos a month (2 per
+  pillar), editable on the page; the agent writes ideas into it with
+  `ArtifactData`, backing outliers verbatim from the board.
+- `discovery.market_factor` in `config.json`: how many foreign-market views
+  equal one in yours. Defaults to 1.0; foreign-language views are divided by
+  it and the language split follows `language` (es, pt, fr, de, it; any other
+  language, English included, counts everything as home).
+
 ## [0.5.0] — 2026-09-27
 
 ### Added

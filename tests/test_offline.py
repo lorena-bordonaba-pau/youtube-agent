@@ -407,6 +407,23 @@ def test_board_page_only_fetches_what_it_publishes():
     assert all(not f.startswith("http") for f in fetched), fetched
 
 
+def test_topic_tam_projects_from_the_topic_not_the_title():
+    """Expected views come from what the topic multiplies elsewhere, applied to
+    your own median; fewer than 5 videos on a topic is not enough to project."""
+    sys.path.insert(0, str(TOOLS))
+    import topic_tam as tt
+    vids = [{"title": f"Claude skills para marketing {i}", "ch": f"c{i}", "id": str(i),
+             "views": 10000 * (i + 1), "ratio": r} for i, r in enumerate([1, 1, 2, 3, 3])]
+    out = tt.measure(vids, "skills && marketing", own_median=10000, market_factor=1.45)
+    assert out["videos"] == 5 and out["median_ratio"] == 2
+    assert out["expected"]["mid"] == 20000
+    assert out["expected"]["floor"] <= out["expected"]["mid"] <= out["expected"]["ceiling"]
+    assert tt.measure(vids[:4], "skills", 10000, 1.45)["expected"] is None
+    assert tt.is_home("Cómo usar Claude para tu marca", "es")
+    assert not tt.is_home("How I use Claude", "es")
+    assert tt.is_home("How I use Claude", "en"), "English channels have no foreign split"
+    assert tt.is_home("Anything at all", "ja"), "unlisted languages count as home"
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0
