@@ -44,6 +44,12 @@ Three ways to get from an outlier to an idea. Name which one each idea uses:
    `config/channels_lists.json`. If very few come back, drop to
    `--min-ratio 1.5` before concluding there is nothing.
 
+   **If there is a competitor board** (`memory/competitor_board.md` holds its
+   URL), sync it with the `competitor-board` skill and use its
+   `data.top_organic_outliers` too. It covers every long-form video of the last
+   6 months, not a sample, and it has already dropped the videos whose views
+   look bought as ads.
+
 2. **Hand-saved outliers**
    `python3 tools/yt_outliers_playlist.py --days 7`
    Whatever was saved during the week. If the playlist is not configured the
@@ -66,12 +72,18 @@ Three ways to get from an outlier to an idea. Name which one each idea uses:
    good outlier that does not fit the channel's archetype gets dropped, and you
    say why.
 
+**Before building on any outlier, check its likes per 1k views against the
+channel's usual.** Views that arrive without likes are paid reach (ads), and
+the ratio they post says nothing about the format or the title. Affiliate links
+are no signal: almost every channel carries them.
+
 **The order adapts.** If step 1 returns a 10x outlier, prioritise it and go
 deep even though the manual said transcribe everything first.
 
 ## SOURCES
 
-Steps 1-2 `derived` (the ratio is computed over each channel's mean). Step 3
+Steps 1-2 `derived` (the ratio is computed over each channel's mean; the
+board uses the median). The board's `ad_suspect` flag is `heuristic`. Step 3
 `youtube_api`. Step 4 `heuristic` — declare it.
 
 ## OUTPUT

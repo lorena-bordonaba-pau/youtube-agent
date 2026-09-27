@@ -11,8 +11,8 @@ API data and is honest about what it measured and what it is guessing.
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-agent-8A63D2.svg)](https://claude.com/claude-code)
-[![29 tools](https://img.shields.io/badge/tools-29-success.svg)](TOOLS.md)
-[![19 skills](https://img.shields.io/badge/skills-19-success.svg)](#the-skills)
+[![30 tools](https://img.shields.io/badge/tools-30-success.svg)](TOOLS.md)
+[![20 skills](https://img.shields.io/badge/skills-20-success.svg)](#the-skills)
 
 [Quick start](#quick-start) · [What you can ask](#what-you-can-ask-it) · [How it works](#how-it-works) · [Español](docs/README_es.md)
 
@@ -108,6 +108,7 @@ No commands to learn. You talk, it runs the tools and shows its sources.
 | *"Give me titles for this video"* | Generates them, scores each with the rubric, backs them with real search terms |
 | *"Is this thumbnail any good?"* | Measures contrast and saturation, then **opens it** and answers the judgement axes |
 | *"What's blowing up in my niche?"* | Scans your competitor list for outliers, filtered by freshness |
+| *"Make me a competitor board"* | A private web page with every long-form video your competitors published in 6 months: thumbnail, date, outlier multiplier, views bought as ads flagged. Add @handles on the page, then ask it to sync |
 | *"What should I record this week?"* | Ideas from real outliers, crossed against what already works for you |
 | *"Write the script"* | Uses your voice profile, built from your own transcripts — never invented |
 | *"Where do people drop off?"* | 101-point retention curve, flags concentrated exits |
@@ -143,9 +144,9 @@ flowchart LR
 
     SK --> TL
 
-    subgraph TL ["🔧 29 tools"]
+    subgraph TL ["🔧 30 tools"]
         direction TB
-        T1["20 data"]
+        T1["21 data"]
         T2["4 image"]
         T3["4 utilities"]
     end
@@ -191,14 +192,15 @@ which then calibrates the rubrics and feeds later answers.
 | Path | What it is |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | The operating contract: identity, honesty rules, transparency protocol |
-| [`TOOLS.md`](TOOLS.md) | All 29 tools with their command and quota cost |
+| [`TOOLS.md`](TOOLS.md) | All 30 tools with their command and quota cost |
 | [`LIMITS.md`](LIMITS.md) | What the harness **cannot** do. Read it before asking the impossible |
-| `.claude/skills/` | 19 skills, each with a fixed tool execution order |
+| `.claude/skills/` | 20 skills, each with a fixed tool execution order |
 | `.claude/agents/` | `youtube-strategist`: content pillars and editorial structure |
 | `.claude/commands/` | `/kickoff`, `/competitors`, `/pillars`, `/audit`, `/radar` |
 | `.claude/hooks/` | Ask before spending credits or quota; keep the strategist inside `memory/` |
 | `memory/` | Profile, voice, positioning, SOPs. **Starts empty** |
-| `tools/` | 21 data · 4 image · 4 utilities |
+| `tools/` | 22 data · 4 image · 4 utilities |
+| `artifacts/` | The competitor board page, published as a private Claude artifact |
 | `config/rubrics/` | Scoring rubrics. **Start uncalibrated** |
 | `tests/` | Offline suite: no credentials, no network, no quota |
 | `data/` | Credentials, cache, history, reports. Git-ignored |
@@ -212,6 +214,7 @@ which then calibrates the rubrics and feeds later answers.
 | `channel-analytics` | Audit with real data: performance, retention, traffic |
 | `channel-identity` | Positioning and differentiation against your neighbourhood |
 | `competitor-ideation` | Ideas from real competitor outliers |
+| `competitor-board` | Create and sync the competitor board page |
 | `packaging` | Titles and thumbnails scored with the rubric |
 | `keywords-seo` | Keywords, tags, and the search gap |
 | `script-writing` | Scripts in your real voice, with a retention structure |

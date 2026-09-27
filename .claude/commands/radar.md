@@ -55,6 +55,12 @@ python3 tools/yt_search.py --query "topic in your language"
 remember it **does not filter by language**: if the top results are in another
 language, that does not prove the gap in yours is closed.
 
+## 4.5 Leave out bought views
+
+Before an outlier goes into the table, check its likes per 1k views against the
+channel's usual. Views that arrive without likes are ad reach: drop the video
+and say so. Affiliate links prove nothing, almost every channel carries them.
+
 ## 5. Filter against the channel's rules
 
 Read `memory/rules.md` and `memory/creator_profile.md`. Discard what does not
@@ -76,3 +82,6 @@ high ratio on a huge channel does not mean the same thing as on a small one.
 3. **One recommendation** and the reason for it.
 4. If an outlier changes what was known about the niche, propose updating
    `memory/`.
+5. If there is a competitor board (`memory/competitor_board.md`), sync it with
+   the `competitor-board` skill and end with its link. If there is none, offer
+   to create one in a single line.

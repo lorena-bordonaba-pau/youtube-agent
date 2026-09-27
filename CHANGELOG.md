@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
 
+## [0.5.0] — 2026-09-27
+
+### Added
+- **Competitor board.** A private web page (a Claude artifact) with every
+  long-form video your competitors published in the last 6 months: thumbnail,
+  date, views, outlier multiplier and views per hour. You add or remove
+  @handles on the page and switch channels on and off; the agent syncs the data
+  when you ask it to, because the page cannot call the YouTube API itself.
+  `tools/competitor_board.py` builds the data, the `competitor-board` skill
+  creates, syncs and reads it, and `/radar` and `competitor-ideation` refresh
+  it when one exists. Page copy follows `language` in `config/config.json`
+  (Spanish or English).
+- **Bought views are flagged.** A video above its channel's median with under
+  20% of the channel's usual likes per 1k views is marked as a likely ad and
+  left out of the baseline. On a real board, one ad-promoted video posted 323x
+  with 25M views and 0.4 likes per 1k. Affiliate links are no signal: almost
+  every channel carries them. `/radar` and `competitor-ideation` now apply the
+  same check before quoting an outlier.
+- Two offline tests: the ad flag (and hidden likes not tripping it), and the
+  page fetching nothing but its own published files.
+
 ## [0.4.0] — 2026-09-27
 
 ### Added

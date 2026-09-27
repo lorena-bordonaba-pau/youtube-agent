@@ -1,0 +1,583 @@
+<title>Competitor Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  /* One deliberate look: white paper, black ink, grey structure, red only where it means "this one". */
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #f4f4f5;
+    --surface-2: #ebebed;
+    --line: #e4e4e7;
+    --ink: #0c0c0d;
+    --muted: #66666d;
+    --faint: #a3a3aa;
+    --red: #e11d2e;
+    --red-ink: #c0121f;
+    --red-soft: #fdebed;
+    --font: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); }
+  body { margin: 0; color: var(--ink); font: 15px/1.4 var(--font); padding-inline: 16px; padding-block: 24px 56px; }
+  button, input, select { font: inherit; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  :focus-visible { outline: 2px solid var(--red); outline-offset: 2px; border-radius: 6px; }
+
+  .shell { max-width: 1480px; margin: 0 auto; display: grid; gap: 24px; }
+  header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; }
+  .brand h1 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -.02em; }
+  .mark { width: 34px; height: 24px; flex: none; }
+  .tabs { display: inline-flex; gap: 24px; }
+  .tabs button { border: 0; background: none; padding: 0 0 14px; color: var(--muted); cursor: pointer; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--red); }
+  .tabs button:hover { color: var(--ink); }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 24px; align-items: start; }
+  @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } .side { order: -1; } }
+
+  .panel { background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 24px; min-width: 0; }
+  .panel.side { background: var(--surface); border-color: transparent; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .panel-head h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+
+  .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14.5px; }
+  .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch .track { width: 34px; height: 20px; border-radius: 999px; background: var(--surface-2); position: relative; transition: background .15s; flex: none; }
+  .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .15s; }
+  .switch input:checked + .track { background: var(--red); }
+  .switch input:checked + .track::after { transform: translateX(14px); }
+  .switch input:focus-visible + .track { outline: 2px solid var(--red); outline-offset: 2px; }
+
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 20px; }
+  .filters .switch { margin-left: auto; color: var(--muted); }
+  .select { position: relative; }
+  .select select { appearance: none; background: var(--surface); border: 1px solid transparent; border-radius: 999px; padding: 9px 36px 9px 16px; cursor: pointer; font-weight: 500; }
+  .select select:hover { border-color: var(--line); }
+  .select::after { content: ""; position: absolute; right: 16px; top: 50%; width: 7px; height: 7px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .search { background: var(--surface); border: 1px solid transparent; border-radius: 999px; padding: 9px 16px; min-width: 0; flex: 1 1 200px; max-width: 300px; }
+  .search:focus { background: var(--bg); border-color: var(--line); }
+  .search::placeholder { color: var(--faint); }
+
+  .table-wrap { margin-top: 20px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 720px; font-variant-numeric: tabular-nums; }
+  thead th { color: var(--muted); font-weight: 600; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; text-align: left; padding: 12px 20px; white-space: nowrap; border-bottom: 1.5px solid var(--ink); }
+  thead th.num { text-align: center; }
+  th button { background: none; border: 0; color: inherit; cursor: pointer; padding: 0; display: inline-flex; gap: 6px; align-items: center; font: inherit; letter-spacing: inherit; text-transform: inherit; }
+  th button[data-active="true"] { color: var(--ink); }
+  .arrow { font-size: 10px; }
+  th button[data-active="true"] .arrow { color: var(--red); }
+  tbody td { padding: 14px 20px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:hover td { background: #fafafa; }
+  td.num { text-align: center; white-space: nowrap; font-weight: 500; }
+  .vid { display: flex; gap: 20px; align-items: center; min-width: 0; }
+  .thumb { width: 144px; aspect-ratio: 16 / 9; border-radius: 8px; flex: none; background: var(--surface); position: relative; overflow: hidden; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .dur { position: absolute; right: 5px; bottom: 5px; background: rgba(12,12,13,.85); color: #fff; font-size: 11px; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
+  .vid-title { font-weight: 600; font-size: 15.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .vid-title:hover { text-decoration: underline; text-decoration-color: var(--red); text-underline-offset: 3px; }
+  .meta { color: var(--muted); margin-top: 3px; font-size: 14px; }
+  .own-tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--red); margin-left: 6px; }
+  .ad-tag { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; font-weight: 600; color: #3a3a40; background: var(--surface); padding: 2px 9px; border-radius: 999px; }
+  .ad-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
+
+  .pill { display: inline-block; min-width: 52px; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 14px; text-align: center; background: var(--surface); color: #3a3a40; }
+  .pill.hot { background: var(--red); color: #fff; }
+  .pill.warm { background: var(--ink); color: #fff; }
+  .pill.na { background: none; color: var(--faint); }
+  .pill.ad { background: none; color: var(--faint); border: 1px dashed var(--faint); text-decoration: line-through; }
+
+  .more { display: flex; justify-content: center; margin-top: 18px; }
+  .btn { background: var(--surface); border: 0; border-radius: 999px; padding: 9px 18px; cursor: pointer; font-weight: 600; }
+  .btn:hover { background: var(--surface-2); }
+  .btn.primary { background: var(--ink); color: #fff; }
+  .btn.primary:hover { background: var(--red); }
+  .btn.small { padding: 6px 12px; font-size: 13.5px; background: var(--bg); border: 1px solid var(--line); }
+  .btn.small:hover { border-color: var(--ink); }
+  .btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 18px; color: var(--muted); font-size: 13px; align-items: center; }
+  .legend .pill { min-width: 0; font-size: 12px; padding: 2px 8px; margin-right: 4px; }
+  .footnote { color: var(--muted); font-size: 13px; margin-top: 12px; max-width: 90ch; line-height: 1.5; }
+  .empty { padding: 48px 20px; text-align: center; color: var(--muted); }
+
+  .side h3 { margin: 0 0 14px; font-size: 18px; font-weight: 700; }
+  .add { background: var(--bg); border-radius: 12px; padding: 16px; display: grid; gap: 10px; border: 1px solid var(--line); }
+  .add label { color: var(--muted); font-size: 14px; }
+  .add-row { display: flex; gap: 8px; }
+  .add-row input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+  .add-row input:focus { border-color: var(--ink); outline: none; }
+  .add-msg { font-size: 13px; color: var(--muted); min-height: 1em; }
+  .add-msg.err { color: var(--red-ink); }
+  .check-all { display: flex; align-items: center; gap: 12px; margin: 20px 0 10px; padding-inline: 12px; font-weight: 600; cursor: pointer; }
+  .chan-list { background: var(--bg); border-radius: 12px; padding: 6px 0; max-height: 660px; overflow-y: auto; border: 1px solid var(--line); }
+  .chan { display: flex; align-items: center; gap: 12px; padding: 9px 12px; cursor: pointer; }
+  .chan:hover { background: var(--surface); }
+  .chan .name { font-weight: 600; line-height: 1.25; }
+  .chan .subs { color: var(--muted); font-size: 13.5px; }
+  .chan .count { margin-left: auto; color: var(--faint); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; flex: none; background: var(--surface-2); object-fit: cover; display: grid; place-items: center; font-weight: 700; color: var(--muted); }
+  input[type="checkbox"] { appearance: none; width: 19px; height: 19px; border-radius: 5px; border: 1.5px solid var(--faint); background: var(--bg); flex: none; display: grid; place-items: center; cursor: pointer; margin: 0; }
+  input[type="checkbox"]:checked, input[type="checkbox"]:indeterminate { background: var(--red); border-color: var(--red); }
+  input[type="checkbox"]:checked::after { content: ""; width: 5px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+  input[type="checkbox"]:indeterminate::after { content: ""; width: 9px; height: 2px; background: #fff; }
+
+  .roster { display: grid; margin-top: 20px; }
+  .roster-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 13px 4px; border-bottom: 1px solid var(--line); }
+  .roster-row .handle { color: var(--muted); font-size: 14px; }
+  .status { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--surface); color: var(--ink); }
+  .status.pending { color: var(--muted); background: none; border: 1px dashed var(--faint); }
+  .status.error { background: var(--red-soft); color: var(--red-ink); }
+  .sync-note { background: var(--surface); border-radius: 12px; padding: 16px 18px; margin-top: 20px; color: var(--muted); line-height: 1.5; }
+  .sync-note code { background: var(--bg); border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px; color: var(--ink); font-size: 14px; }
+  @media (max-width: 560px) {
+    .panel { padding: 16px; }
+    .roster-row { grid-template-columns: 36px minmax(0, 1fr); }
+    .roster-row .status, .roster-row .btn { grid-column: 2; justify-self: start; }
+    .filters .switch { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 34 24" aria-hidden="true"><rect width="34" height="24" rx="6" fill="#e11d2e"/><path d="M14 7v10l8-5z" fill="#fff"/></svg>
+      <h1 data-t="title"></h1>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-videos" aria-selected="true" data-view="videos" data-t="tabVideos"></button>
+      <button role="tab" id="tab-list" aria-selected="false" data-view="list" data-t="tabList"></button>
+    </div>
+  </header>
+
+  <div class="layout" id="view-videos">
+    <section class="panel">
+      <div class="panel-head">
+        <h2 data-t="bestVideos"></h2>
+        <label class="switch"><input type="checkbox" id="own-toggle" checked><span class="track"></span><span data-t="includeOwn"></span></label>
+      </div>
+      <div class="filters">
+        <div class="select"><select id="sort" data-t-aria="sortBy">
+          <option value="ratio" data-t="colOutlier"></option>
+          <option value="views" data-t="colViews"></option>
+          <option value="vph" data-t="colVph"></option>
+          <option value="date" data-t="newest"></option>
+        </select></div>
+        <div class="select"><select id="period" data-t-aria="period">
+          <option value="7" data-t="p7"></option>
+          <option value="30" data-t="p30"></option>
+          <option value="90" data-t="p90"></option>
+          <option value="183" data-t="p183" selected></option>
+        </select></div>
+        <input class="search" id="q" type="search" data-t-ph="search" data-t-aria="search">
+        <label class="switch" data-t-title="adsHelp"><input type="checkbox" id="ads-toggle" checked><span class="track"></span><span id="ads-label"></span></label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th><span data-t="colVideos"></span> <span id="count" style="color:var(--faint)"></span></th>
+            <th class="num"><button data-sort="views"><span data-t="colViews"></span> <span class="arrow"></span></button></th>
+            <th class="num"><button data-sort="ratio"><span data-t="colOutlier"></span> <span class="arrow"></span></button></th>
+            <th class="num"><button data-sort="vph"><span data-t="colVph"></span> <span class="arrow"></span></button></th>
+          </tr></thead>
+          <tbody id="rows"><tr><td colspan="4" class="empty" data-t="loading"></td></tr></tbody>
+        </table>
+      </div>
+      <div class="more"><button class="btn" id="more" hidden data-t="more"></button></div>
+      <div class="legend">
+        <span><span class="pill hot">3x</span><span data-t="legendHot"></span></span>
+        <span><span class="pill warm">2x</span><span data-t="legendWarm"></span></span>
+        <span><span class="pill">1x</span><span data-t="legendNormal"></span></span>
+        <span><span class="pill ad">9x</span><span data-t="legendAd"></span></span>
+      </div>
+      <p class="footnote" id="footnote"></p>
+    </section>
+
+    <aside class="panel side">
+      <h3 data-t="addTitle"></h3>
+      <form class="add" id="add-form-side">
+        <label for="add-side" data-t="addLabelShort"></label>
+        <div class="add-row"><input id="add-side" placeholder="@channel" autocomplete="off"><button class="btn primary" type="submit" data-t="add"></button></div>
+        <div class="add-msg" id="add-msg-side"></div>
+      </form>
+      <label class="check-all"><input type="checkbox" id="all"><span data-t="selectAll"></span></label>
+      <div class="chan-list" id="chan-list"></div>
+    </aside>
+  </div>
+
+  <section class="panel" id="view-list" hidden>
+    <div class="panel-head"><h2 data-t="listTitle"></h2><span id="roster-count" style="color:var(--muted)"></span></div>
+    <form class="add" id="add-form-list" style="margin-top:20px;max-width:560px">
+      <label for="add-list" data-t="addLabel"></label>
+      <div class="add-row"><input id="add-list" placeholder="@channel" autocomplete="off"><button class="btn primary" type="submit" data-t="add"></button></div>
+      <div class="add-msg" id="add-msg-list"></div>
+    </form>
+    <div class="roster" id="roster"></div>
+    <div class="sync-note" id="sync-note"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.getElementById(s);
+  const PAGE = 60;
+
+  // ---------- copy, in the language set in config/config.json ----------
+  const T = {
+    es: {
+      locale: "es-ES", title: "Competidores", tabVideos: "Vídeos", tabList: "Lista de competidores",
+      bestVideos: "Los mejores vídeos de tus competidores", includeOwn: "Incluye mi canal",
+      sortBy: "Ordenar por", period: "Periodo", newest: "Más recientes",
+      p7: "Última semana", p30: "Último mes", p90: "Últimos 3 meses", p183: "Últimos 6 meses",
+      search: "Buscar en títulos", colVideos: "Vídeos", colViews: "Vistas", colOutlier: "Outlier", colVph: "Vistas por hora",
+      loading: "Cargando vídeos…", loadingShort: "cargando…", more: "Mostrar más",
+      hideAds: (n) => `Ocultar posibles anuncios (${n})`,
+      adsHelp: "Vídeos con vistas muy por encima de lo normal y casi sin likes: huella de vistas compradas en anuncios",
+      legendHot: "3x o más", legendWarm: "de 2x a 3x", legendNormal: "lo normal del canal", legendAd: "posible anuncio, no cuenta",
+      addTitle: "Añadir competidores", addLabelShort: "@ del canal o enlace", addLabel: "Escribe el @ del competidor o pega el enlace de su canal",
+      add: "Añadir", selectAll: "Seleccionar todo", listTitle: "Tu lista de competidores",
+      channels: (n) => `${n} canales`, videosN: (n) => `${n} vídeos`, pending: "Pendiente", pendingSync: "Pendiente de sincronizar",
+      notFound: "No encontrado", remove: "Quitar", confirm: "Confirmar", yourChannel: "Tu canal", firstOne: "Añade el @ de tu primer competidor.",
+      inPeriod: "Vídeos en el periodo", paid: "patrocinio declarado",
+      adTag: (p) => `Posible anuncio · likes al ${p}% de lo normal`,
+      adTitle: (lpk, p) => `${lpk} likes por cada 1.000 vistas, un ${p}% de lo normal en este canal`,
+      adPill: "No cuenta como outlier: probables vistas de anuncio",
+      noVideos: "No hay vídeos con estos filtros. Marca algún competidor o amplía el periodo.",
+      loadFail: "No se han podido cargar los vídeos. Recarga la página.",
+      badHandle: "Escribe un @ válido, por ejemplo @canal.", noDb: "La lista compartida no está disponible en esta vista, así que no se puede guardar.",
+      already: (k) => `@${k} ya está en la lista.`, added: (k) => `Añadido @${k}.`, addedPending: (k) => `Añadido @${k}. Sus vídeos llegarán en la próxima sincronización.`,
+      full: "La lista está llena. Quita algún canal antes de añadir otro.", saveFail: "No se ha podido guardar. Vuelve a intentarlo en unos segundos.",
+      subs: (n, f) => n >= 1e6 ? `${f.dec(n / 1e6)} M suscriptores` : n >= 1e3 ? `${f.int(Math.round(n / 1e3))} mil suscriptores` : `${f.int(n)} suscriptores`,
+      ago: (d) => d < 1 ? "hoy" : d === 1 ? "hace 1 día" : d < 30 ? `hace ${d} días` : Math.floor(d / 30) === 1 ? "hace 1 mes" : `hace ${Math.floor(d / 30)} meses`,
+      syncNote: `Los canales nuevos aparecen como <b>pendientes</b> hasta la siguiente sincronización: la página no puede llamar a la API de YouTube por sí sola. Para traer sus vídeos, pídele a Claude en el harness: <code>sincroniza el radar de competidores</code>.`,
+      foot: (d, f) => `Datos de la API de YouTube del ${f.date(d.generated_at)}. ` +
+        `Outlier = vistas del vídeo / mediana de vistas de ese canal en los últimos ${d.window_days} días, sin contar los posibles anuncios (cálculo propio sobre datos de la API). ` +
+        `"Posible anuncio" es una estimación propia, no un dato de YouTube: vídeo por encima de la mediana de su canal con menos del ${Math.round(d.ad_like_share * 100)}% de sus likes habituales por cada 1.000 vistas, la huella de vistas compradas en anuncios. Los enlaces de afiliado no sirven como señal porque casi todos los canales los llevan. ` +
+        `"Patrocinio declarado" es la marca de promoción pagada que pone el creador (dato de la API). ` +
+        `Se excluyen vídeos de menos de ${Math.round(d.min_seconds / 60)} min para dejar fuera los Shorts. ` +
+        `Vistas por hora = vistas / horas desde la publicación, una media de toda su vida, no la velocidad actual. Los vídeos recientes aún no han acumulado todas sus vistas.`,
+    },
+    en: {
+      locale: "en-US", title: "Competitors", tabVideos: "Videos", tabList: "Competitor list",
+      bestVideos: "Your competitors' best videos", includeOwn: "Include my channel",
+      sortBy: "Sort by", period: "Period", newest: "Newest",
+      p7: "Last week", p30: "Last month", p90: "Last 3 months", p183: "Last 6 months",
+      search: "Search titles", colVideos: "Videos", colViews: "Views", colOutlier: "Outlier", colVph: "Views per hour",
+      loading: "Loading videos…", loadingShort: "loading…", more: "Show more",
+      hideAds: (n) => `Hide likely ads (${n})`,
+      adsHelp: "Videos with far more views than usual and almost no likes: the footprint of views bought as ads",
+      legendHot: "3x or more", legendWarm: "2x to 3x", legendNormal: "the channel's usual", legendAd: "likely ad, not counted",
+      addTitle: "Add competitors", addLabelShort: "Channel @ or link", addLabel: "Type the competitor's @ or paste their channel link",
+      add: "Add", selectAll: "Select all", listTitle: "Your competitor list",
+      channels: (n) => `${n} channels`, videosN: (n) => `${n} videos`, pending: "Pending", pendingSync: "Waiting for sync",
+      notFound: "Not found", remove: "Remove", confirm: "Confirm", yourChannel: "Your channel", firstOne: "Add your first competitor's @.",
+      inPeriod: "Videos in the period", paid: "declared sponsorship",
+      adTag: (p) => `Likely ad · likes at ${p}% of usual`,
+      adTitle: (lpk, p) => `${lpk} likes per 1,000 views, ${p}% of this channel's usual`,
+      adPill: "Not counted as an outlier: likely ad views",
+      noVideos: "No videos match these filters. Tick a competitor or widen the period.",
+      loadFail: "The videos could not be loaded. Reload the page.",
+      badHandle: "Type a valid @, for example @channel.", noDb: "The shared list is not available in this view, so it cannot be saved.",
+      already: (k) => `@${k} is already on the list.`, added: (k) => `Added @${k}.`, addedPending: (k) => `Added @${k}. Their videos arrive with the next sync.`,
+      full: "The list is full. Remove a channel before adding another.", saveFail: "Could not save. Try again in a few seconds.",
+      subs: (n, f) => n >= 1e6 ? `${f.dec(n / 1e6)}M subscribers` : n >= 1e3 ? `${f.int(Math.round(n / 1e3))}K subscribers` : `${f.int(n)} subscribers`,
+      ago: (d) => d < 1 ? "today" : d === 1 ? "1 day ago" : d < 30 ? `${d} days ago` : Math.floor(d / 30) === 1 ? "1 month ago" : `${Math.floor(d / 30)} months ago`,
+      syncNote: `New channels show as <b>pending</b> until the next sync: the page cannot call the YouTube API on its own. To fetch their videos, ask Claude in the harness: <code>sync the competitor board</code>.`,
+      foot: (d, f) => `YouTube API data from ${f.date(d.generated_at)}. ` +
+        `Outlier = the video's views / that channel's median views over the last ${d.window_days} days, leaving likely ads out (our own calculation over API data). ` +
+        `"Likely ad" is our own estimate, not YouTube data: a video above its channel's median with under ${Math.round(d.ad_like_share * 100)}% of the channel's usual likes per 1,000 views, the footprint of views bought as ads. Affiliate links are no signal: almost every channel carries them. ` +
+        `"Declared sponsorship" is the paid-promotion flag the creator sets (API data). ` +
+        `Videos under ${Math.round(d.min_seconds / 60)} min are left out to exclude Shorts. ` +
+        `Views per hour = views / hours since publication, a lifetime average, not the current velocity. Recent videos have not finished accumulating views.`,
+    },
+  };
+  let L = T[(navigator.language || "en").slice(0, 2)] || T.en;
+  let f = null;
+  function setLang(code) {
+    L = T[code] || L;
+    const int = new Intl.NumberFormat(L.locale);
+    const dec = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 1 });
+    const date = new Intl.DateTimeFormat(L.locale, { day: "numeric", month: "short", year: "numeric" });
+    f = { int: (n) => int.format(n), dec: (n) => dec.format(n), date: (iso) => date.format(new Date(iso)) };
+    document.documentElement.lang = code;
+    document.querySelectorAll("[data-t]").forEach(n => { n.textContent = L[n.dataset.t]; });
+    document.querySelectorAll("[data-t-aria]").forEach(n => n.setAttribute("aria-label", L[n.dataset.tAria]));
+    document.querySelectorAll("[data-t-ph]").forEach(n => n.setAttribute("placeholder", L[n.dataset.tPh]));
+    document.querySelectorAll("[data-t-title]").forEach(n => n.setAttribute("title", L[n.dataset.tTitle]));
+    $("sync-note").innerHTML = L.syncNote;
+  }
+  setLang((navigator.language || "en").slice(0, 2) in T ? (navigator.language || "en").slice(0, 2) : "en");
+
+  const state = {
+    data: null,            // index.json + the loaded ch/*.json videos
+    roster: null,          // db docs {key, handle, enabled, addedAt}; null = no shared store in this view
+    includeOwn: true, hideAds: true,
+    sort: "ratio", period: 183, q: "", shown: PAGE,
+    db: null,
+  };
+
+  // ---------- helpers ----------
+  const normKey = (raw) => {
+    let s = (raw || "").trim();
+    const m = s.match(/youtube\.com\/(@[\w.\-]+)/i);
+    if (m) s = m[1];
+    s = s.replace(/^@/, "").toLowerCase();
+    return /^[a-z0-9._\-]{3,100}$/.test(s) ? s : null;
+  };
+  const subsLabel = (n) => n == null ? "" : L.subs(n, f);
+  const ago = (iso) => L.ago(Math.floor((Date.now() - new Date(iso)) / 864e5));
+  const times = (r) => (r >= 10 ? f.int(Math.round(r)) : f.dec(r)) + "x";
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") n.className = v;
+      else if (k === "text") n.textContent = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? "" : v);
+    }
+    for (const k of kids) if (k != null) n.append(k);
+    return n;
+  };
+  const avatar = (ch, fallback) => ch?.avatar
+    ? el("img", { class: "avatar", src: ch.avatar, alt: "" })
+    : el("span", { class: "avatar", text: (fallback || "?").replace(/^@/, "").slice(0, 1).toUpperCase() });
+  const saveLocal = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const loadLocal = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
+
+  // ---------- derived ----------
+  const channelsByKey = () => new Map((state.data?.channels || []).filter(c => !c.error).map(c => [c.key, c]));
+  const ownChannel = () => (state.data?.channels || []).find(c => c.own && !c.error);
+
+  // The stored list merged with the synced data.
+  function competitorRows() {
+    const byKey = channelsByKey();
+    if (state.roster) {
+      return state.roster.map(r => ({ ...r, ch: byKey.get(r.key) || null,
+        failed: (state.data?.channels || []).some(c => c.error && c.key === r.key) }));
+    }
+    // No shared store: fall back to the synced channels, with ticks remembered in this browser.
+    const off = new Set(loadLocal("board-off", []));
+    return [...byKey.values()].filter(c => !c.own)
+      .map(c => ({ key: c.key, handle: c.handle, enabled: !off.has(c.key), ch: c, failed: false }));
+  }
+
+  function visibleVideos() {
+    const on = new Set(competitorRows().filter(r => r.enabled && r.ch).map(r => r.key));
+    const own = ownChannel();
+    if (own && state.includeOwn) on.add(own.key);
+    const cutoff = Date.now() - state.period * 864e5;
+    const q = state.q.trim().toLowerCase();
+    const inScope = (state.data?.videos || []).filter(v =>
+      on.has(v.ch) && new Date(v.published_at) >= cutoff && (!q || v.title.toLowerCase().includes(q)));
+    state.adsInScope = inScope.filter(v => v.ad_suspect).length;
+    const list = state.hideAds ? inScope.filter(v => !v.ad_suspect) : inScope;
+    const key = { ratio: v => v.ratio ?? -1, views: v => v.views, vph: v => v.vph, date: v => +new Date(v.published_at) }[state.sort];
+    return list.sort((a, b) => key(b) - key(a));
+  }
+
+  // ---------- render ----------
+  function pill(r, ad) {
+    if (r == null) return el("span", { class: "pill na", text: "—" });
+    if (ad) return el("span", { class: "pill ad", title: L.adPill, text: times(r) });
+    return el("span", { class: r >= 3 ? "pill hot" : r >= 2 ? "pill warm" : "pill", text: times(r) });
+  }
+
+  function renderVideos() {
+    if (!state.data) return;
+    const tbody = $("rows");
+    const byKey = channelsByKey();
+    const list = visibleVideos();
+    $("count").textContent = `· ${f.int(list.length)}` + (loading.size ? ` · ${L.loadingShort}` : "");
+    tbody.replaceChildren();
+    if (!list.length && !loading.size) tbody.append(el("tr", {}, el("td", { colspan: 4, class: "empty", text: L.noVideos })));
+    for (const v of list.slice(0, state.shown)) {
+      const ch = byKey.get(v.ch);
+      const url = `https://www.youtube.com/watch?v=${v.id}`;
+      const share = v.like_share != null ? Math.round(v.like_share * 100) : null;
+      tbody.append(el("tr", {},
+        el("td", {}, el("div", { class: "vid" },
+          el("a", { class: "thumb", href: url, target: "_blank", rel: "noopener", "aria-label": v.title },
+            v.thumb ? el("img", { src: v.thumb, alt: "", loading: "lazy" }) : null,
+            el("span", { class: "dur", text: v.duration })),
+          el("div", { style: "min-width:0" },
+            el("a", { class: "vid-title", href: url, target: "_blank", rel: "noopener", text: v.title }),
+            el("div", { class: "meta" }, `${ch?.title || v.ch} • ${subsLabel(ch?.subs)}`,
+              ch?.own ? el("span", { class: "own-tag", text: L.yourChannel }) : null),
+            el("div", { class: "meta" }, `${ago(v.published_at)} · ${f.date(v.published_at)}` + (v.paid ? ` · ${L.paid}` : "")),
+            v.ad_suspect ? el("span", { class: "ad-tag", title: L.adTitle(f.dec(v.lpk), share), text: L.adTag(share) }) : null))),
+        el("td", { class: "num", text: f.int(v.views) }),
+        el("td", { class: "num" }, pill(v.ratio, v.ad_suspect)),
+        el("td", { class: "num", text: f.dec(v.vph) })));
+    }
+    $("more").hidden = list.length <= state.shown;
+    $("ads-label").textContent = L.hideAds(state.adsInScope || 0);
+    document.querySelectorAll("th button[data-sort]").forEach(b => {
+      const on = b.dataset.sort === state.sort;
+      b.dataset.active = on;
+      b.querySelector(".arrow").textContent = on ? "▼" : "↕";
+    });
+    $("sort").value = state.sort;
+  }
+
+  function renderChecklist() {
+    const box = $("chan-list");
+    const rows = competitorRows();
+    const counts = {};
+    const cutoff = Date.now() - state.period * 864e5;
+    for (const v of state.data?.videos || []) if (new Date(v.published_at) >= cutoff) counts[v.ch] = (counts[v.ch] || 0) + 1;
+    box.replaceChildren();
+    if (!rows.length) box.append(el("div", { class: "empty", text: L.firstOne }));
+    for (const r of rows) {
+      const id = "chk-" + r.key;
+      box.append(el("label", { class: "chan", for: id },
+        el("input", { type: "checkbox", id, checked: r.enabled, onchange: (e) => setEnabled(r.key, e.target.checked) }),
+        avatar(r.ch, r.handle),
+        el("div", { style: "min-width:0" },
+          el("div", { class: "name", text: r.ch?.title || r.handle }),
+          el("div", { class: "subs", text: r.ch ? subsLabel(r.ch.subs) : r.failed ? L.notFound : L.pendingSync })),
+        r.ch && loaded.has(r.key) ? el("span", { class: "count", title: L.inPeriod, text: counts[r.key] || 0 }) : null));
+    }
+    const on = rows.filter(r => r.enabled).length;
+    $("all").checked = rows.length > 0 && on === rows.length;
+    $("all").indeterminate = on > 0 && on < rows.length;
+  }
+
+  const confirming = new Set();
+  function renderRoster() {
+    const box = $("roster");
+    const rows = competitorRows();
+    $("roster-count").textContent = L.channels(rows.length);
+    box.replaceChildren();
+    for (const r of rows) {
+      const status = r.ch ? el("span", { class: "status", text: L.videosN(r.ch.n_videos) })
+        : r.failed ? el("span", { class: "status error", text: L.notFound })
+        : el("span", { class: "status pending", text: L.pending });
+      const ask = confirming.has(r.key);
+      box.append(el("div", { class: "roster-row" },
+        avatar(r.ch, r.handle),
+        el("div", { style: "min-width:0" },
+          el("div", { style: "font-weight:600", text: r.ch?.title || r.handle }),
+          el("div", { class: "handle", text: [r.ch?.handle || r.handle, r.ch ? subsLabel(r.ch.subs) : null].filter(Boolean).join(" · ") })),
+        status,
+        state.roster ? el("button", { class: ask ? "btn small danger" : "btn small", type: "button",
+          text: ask ? L.confirm : L.remove,
+          onclick: () => ask ? removeCompetitor(r.key) : (confirming.add(r.key), renderRoster(),
+            setTimeout(() => { confirming.delete(r.key); renderRoster(); }, 4000)) }) : el("span")));
+    }
+  }
+
+  function renderAll() {
+    renderVideos(); renderChecklist(); renderRoster();
+    $("own-toggle").closest(".switch").hidden = !ownChannel();
+    $("own-toggle").checked = state.includeOwn;
+    if (state.data) $("footnote").textContent = L.foot(state.data, f);
+  }
+
+  // ---------- per-channel data, fetched only when a channel is switched on ----------
+  const loaded = new Set(), loading = new Set();
+  function ensureLoaded() {
+    if (!state.data) return;
+    const byKey = channelsByKey();
+    const want = competitorRows().filter(r => r.enabled && byKey.has(r.key)).map(r => r.key);
+    const own = ownChannel();
+    if (own && state.includeOwn) want.push(own.key);
+    const todo = want.filter(k => !loaded.has(k) && !loading.has(k));
+    if (!todo.length) return;
+    todo.forEach(k => loading.add(k));
+    renderVideos();
+    Promise.all(todo.map(k => fetch("ch/" + encodeURIComponent(k) + ".json")
+      .then(r => r.ok ? r.json() : []).catch(() => [])
+      .then(vs => { loading.delete(k); loaded.add(k); state.data.videos.push(...vs); })))
+      .then(() => renderAll());
+  }
+
+  // ---------- writes ----------
+  async function setEnabled(key, enabled) {
+    if (state.roster) {
+      const r = state.roster.find(x => x.key === key); if (r) r.enabled = enabled;
+      renderAll(); ensureLoaded();
+      try { await state.db.doc("competitors/" + key).update({ enabled }); } catch (e) { console.warn(e); }
+    } else {
+      const off = new Set(loadLocal("board-off", []));
+      enabled ? off.delete(key) : off.add(key);
+      saveLocal("board-off", [...off]); renderAll(); ensureLoaded();
+    }
+  }
+  async function setAll(enabled) {
+    if (!state.roster) { saveLocal("board-off", enabled ? [] : competitorRows().map(r => r.key)); renderAll(); return ensureLoaded(); }
+    const rows = state.roster.filter(r => r.enabled !== enabled);
+    rows.forEach(r => { r.enabled = enabled; });
+    renderAll(); ensureLoaded();
+    for (const r of rows) { try { await state.db.doc("competitors/" + r.key).update({ enabled }); } catch (e) { console.warn(e); } }
+  }
+  async function addCompetitor(raw, msgEl, input) {
+    msgEl.className = "add-msg";
+    const key = normKey(raw);
+    if (!key) { msgEl.className = "add-msg err"; msgEl.textContent = L.badHandle; return; }
+    if (!state.db || !state.roster) { msgEl.className = "add-msg err"; msgEl.textContent = L.noDb; return; }
+    if (state.roster.some(r => r.key === key)) { msgEl.textContent = L.already(key); return; }
+    try {
+      await state.db.doc("competitors/" + key).set({ handle: "@" + key, enabled: true, addedAt: new Date().toISOString() });
+      input.value = "";
+      msgEl.textContent = channelsByKey().has(key) ? L.added(key) : L.addedPending(key);
+    } catch (e) {
+      msgEl.className = "add-msg err";
+      msgEl.textContent = e?.code === "quota_exceeded" ? L.full : L.saveFail;
+    }
+  }
+  async function removeCompetitor(key) {
+    confirming.delete(key);
+    try { await state.db.doc("competitors/" + key).delete(); } catch (e) { console.warn(e); }
+  }
+
+  // ---------- events ----------
+  function showView(view) {
+    document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x.dataset.view === view));
+    $("view-videos").hidden = view !== "videos";
+    $("view-list").hidden = view !== "list";
+  }
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { showView(b.dataset.view); saveLocal("board-view", b.dataset.view); }));
+  $("sort").addEventListener("change", e => { state.sort = e.target.value; state.shown = PAGE; renderVideos(); });
+  document.querySelectorAll("th button[data-sort]").forEach(b => b.addEventListener("click", () => { state.sort = b.dataset.sort; state.shown = PAGE; renderVideos(); }));
+  $("period").addEventListener("change", e => { state.period = +e.target.value; state.shown = PAGE; renderVideos(); renderChecklist(); });
+  let qt; $("q").addEventListener("input", e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value; state.shown = PAGE; renderVideos(); }, 150); });
+  $("ads-toggle").addEventListener("change", e => { state.hideAds = e.target.checked; saveLocal("board-hide-ads", state.hideAds); state.shown = PAGE; renderVideos(); });
+  $("more").addEventListener("click", () => { state.shown += PAGE; renderVideos(); });
+  $("all").addEventListener("change", e => setAll(e.target.checked));
+  $("own-toggle").addEventListener("change", async e => {
+    state.includeOwn = e.target.checked; renderVideos(); ensureLoaded();
+    if (state.db) { try { await state.db.doc("settings/board").set({ includeOwn: state.includeOwn }); } catch {} }
+    else saveLocal("board-own", state.includeOwn);
+  });
+  for (const s of ["side", "list"]) {
+    $("add-form-" + s).addEventListener("submit", e => { e.preventDefault(); addCompetitor($("add-" + s).value, $("add-msg-" + s), $("add-" + s)); });
+  }
+
+  // ---------- boot ----------
+  showView(loadLocal("board-view", "videos"));
+  state.includeOwn = loadLocal("board-own", true);
+  state.hideAds = loadLocal("board-hide-ads", true);
+  $("ads-toggle").checked = state.hideAds;
+  $("ads-label").textContent = L.hideAds(0);
+
+  fetch("index.json").then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(d => { state.data = { ...d, videos: [] }; if (d.lang) setLang(d.lang); renderAll(); ensureLoaded(); })
+    .catch(() => $("rows").replaceChildren(el("tr", {}, el("td", { colspan: 4, class: "empty", text: L.loadFail }))));
+
+  (async () => {
+    const db = await window.claude?.use?.("db");
+    if (!db) return;
+    state.db = db;
+    db.collection("competitors").orderBy("addedAt").onSnapshot(snap => {
+      state.roster = snap.docs.map(d => ({ key: d.id, ...d.data() }));
+      renderAll(); ensureLoaded();
+    }, err => console.warn("competitors", err));
+    db.doc("settings/board").onSnapshot(snap => {
+      if (snap.exists && typeof snap.data().includeOwn === "boolean") { state.includeOwn = snap.data().includeOwn; renderAll(); ensureLoaded(); }
+    }, () => {});
+  })();
+})();
+</script>
