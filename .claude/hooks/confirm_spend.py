@@ -18,6 +18,8 @@ SPENDERS = [
     (r"tools/generate_image\.py", "--dry-run", "spends fal.ai credits"),
     (r"tools/refine_image\.py", "--dry-run", "spends fal.ai credits"),
     (r"tools/yt_search\.py", None, "costs 100 YouTube API units per query"),
+    (r"tools/yt_discover_channels\.py", None,
+     "costs 100 YouTube API units per search term"),
     (r"tools/kw_research\.py", "--no-competition",
      "costs 100 YouTube API units per keyword (search.list)"),
 ]

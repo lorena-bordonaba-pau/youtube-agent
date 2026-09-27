@@ -298,6 +298,7 @@ def test_spend_hook_asks_only_when_money_or_quota_is_at_stake():
     assert decision("python3 tools/refine_image.py --image a.png") == "ask"
     assert decision("python3 tools/yt_search.py --query x") == "ask"
     assert decision("python3 tools/kw_research.py --kw x") == "ask"
+    assert decision("python3 tools/yt_discover_channels.py --terms x") == "ask"
     assert decision("python3 tools/generate_image.py --prompt x --dry-run") is None
     assert decision("python3 tools/kw_research.py --kw x --no-competition") is None
     assert decision("python3 tools/yt_report.py") is None
@@ -316,6 +317,57 @@ def test_strategist_can_only_write_to_memory():
     assert exit_code("memory/sop/pillars_sop.md") == 0
     assert exit_code(str(ROOT / "tools" / "init.py")) == 2
     assert exit_code(str(ROOT / "memory" / ".." / "CLAUDE.md")) == 2
+
+
+def test_discovery_keeps_only_videos_clearing_every_threshold():
+    from datetime import datetime, timedelta, timezone
+    from lib import discovery
+    now = datetime(2026, 9, 27, tzinfo=timezone.utc)
+    th = discovery.thresholds({"discovery": {"min_views": 50_000}})
+    assert th["min_views"] == 50_000 and th["min_ratio"] == 3.0
+
+    def v(vid, cid, views, days_ago, dur=600, title="How I did it"):
+        when = (now - timedelta(days=days_ago)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return {"video_id": vid, "channel_id": cid, "channel_title": cid,
+                "title": title, "views": views, "duration_s": dur,
+                "published_at": when, "language": "en", "term": "t"}
+    videos = [v("ok", "A", 90_000, 10),
+              v("low_ratio", "B", 90_000, 10),
+              v("few_views", "A", 10_000, 10),
+              v("short", "A", 90_000, 10, dur=45),
+              v("old", "A", 90_000, 200),
+              v("pod", "C", 90_000, 10, title="The Podcast ep. 12")]
+    found = discovery.outliers(videos, {"A": 20_000, "B": 60_000, "C": 10_000}, th, now)
+    assert sorted(f["video_id"] for f in found) == ["ok", "pod"]
+    assert next(f for f in found if f["video_id"] == "pod")["not_solo"]
+
+    rows = discovery.group_by_channel(found, existing={"C": "inspiration"})
+    assert next(r for r in rows if r["channel_id"] == "C")["already_in"] == "inspiration"
+    assert next(r for r in rows if r["channel_id"] == "A")["languages"] == ["en"]
+
+
+def test_channel_list_edits_keep_one_list_per_channel_and_the_docs():
+    from lib import discovery
+    cfg = {"_instructions": ["keep me"], "competitors": [], "inspiration": []}
+    cfg = discovery.add_channel(cfg, "competitors", {"channel_id": "X", "name": "x"})
+    cfg = discovery.add_channel(cfg, "inspiration", {"channel_id": "X", "name": "x"})
+    assert cfg["competitors"] == [] and cfg["inspiration"][0]["channel_id"] == "X"
+    assert cfg["_instructions"] == ["keep me"]
+    assert discovery.remove_channel(cfg, "X")["inspiration"] == []
+    try:
+        discovery.add_channel(cfg, "_instructions", {"channel_id": "Y"})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a documentation key was accepted as a list")
+
+
+def test_strategy_template_starts_the_kickoff():
+    """init.py reads the Stage line; an unfilled strategy must start at the start."""
+    text = (ROOT / "memory" / "strategy.md").read_text(encoding="utf-8")
+    assert "**Stage:**" in text
+    if "NOT POPULATED" in text:
+        assert "**Stage:** not started" in text
 
 
 def test_data_directories_exist_on_a_fresh_clone():

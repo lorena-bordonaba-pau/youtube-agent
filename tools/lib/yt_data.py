@@ -128,6 +128,9 @@ def video_stats(video_ids: list[str]) -> list[dict]:
                 "thumbnail": best.get("url"),
                 "duration": cd.get("duration"),
                 "duration_s": seconds(cd.get("duration", "")),
+                # Declared by the uploader; often missing. Free: same call.
+                "language": (sn.get("defaultAudioLanguage")
+                             or sn.get("defaultLanguage") or "")[:2] or None,
                 "views": views,
                 "likes": likes,
                 "comments": comentarios,
@@ -173,13 +176,22 @@ def playlist_items(playlist_id: str, days: int | None = None) -> list[dict]:
 
 
 def search(query: str, max_results: int = 10, order: str = "viewCount",
-           duration: str = "medium", days: int | None = None) -> list[dict]:
-    """search.list — COSTS 100 QUOTA UNITS. Always cache it."""
+           duration: str = "medium", days: int | None = None,
+           language: str | None = None, region: str | None = None) -> list[dict]:
+    """search.list — COSTS 100 QUOTA UNITS. Always cache it.
+
+    `language` / `region` bias the ranking (relevanceLanguage, regionCode);
+    they do not filter, so results in other languages can still appear.
+    """
     yt = auth.youtube(public_only=True)
     params = {
         "part": "snippet", "q": query, "type": "video", "order": order,
         "maxResults": max_results,
     }
+    if language:
+        params["relevanceLanguage"] = language
+    if region:
+        params["regionCode"] = region.upper()
     if duration and duration != "any":
         params["videoDuration"] = duration
     if days:
