@@ -114,28 +114,38 @@ python3 tools/generate_image.py --type thumbnail --prompt "a test" --dry-run --m
 
 ---
 
-## Step 4 — Tell it who you are
+## Step 4 — Build the strategy: `/kickoff`
 
 **This is the step people skip, and the one that decides whether the agent is
 any use.** Without it you get textbook advice.
 
-**ASK THE USER** for: their channel topic, their language, and who watches —
-then fill in:
+Open Claude Code in the directory and run **`/kickoff`**. No strategy
+knowledge needed: it asks one question at a time, in plain words, with
+examples —
 
-**`CLAUDE.md`, section 1.** Replace the bracketed placeholders. Be as specific
-as a brief, not as a bio: *"people newly diagnosed with coeliac disease who do
-not know where to start"* is a niche; *"people interested in cooking"* is not.
+1. What the channel sells (or that it sells nothing) and the one objective.
+2. Who the viewer is: age, place, what they already know, what they want,
+   what stops them.
+3. Which neighbouring topics that viewer also cares about.
+4. Four provisional content pillars built from those answers.
+5. What you can say that others in your niche cannot.
 
-**`config/config.json`:**
-- `channel_context` — describe the channel the way you would to a consultant
-  charging by the hour.
-- `language` / `region` — drive keyword autocomplete and transcription
-  (`en`/`us` by default).
+It writes `memory/strategy.md`, fills in section 1 of `CLAUDE.md` and
+`channel_context` / `language` / `region` in `config/config.json` — showing
+you the changes before writing.
 
-**`config/channels_lists.json`** — competitors, inspirations, neighbourhood.
-You can leave it empty and ask the agent to propose them after step 2.
+If the channel already has videos, it measures them first and ends with an
+evaluation: what there is, what would be right, and the gaps that matter most.
 
-**Check:** `python3 tools/init.py` no longer says `NOT PERSONALISED`.
+**Then run `/competitors`** (needs the API key from step 1). It searches for
+the channels already winning with your audience — in any language, because a
+topic winning abroad and missing at home is the best opportunity there is —
+and asks you about each one before adding it to `config/channels_lists.json`.
+It ends by backing your pillars with real outlier videos.
+
+Ideas, titles, thumbnails and scripts come after, whenever you ask for them.
+
+**Check:** `python3 tools/init.py` no longer says `Strategy: NOT STARTED`.
 
 ---
 

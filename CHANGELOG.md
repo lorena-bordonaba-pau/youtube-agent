@@ -3,7 +3,7 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
 
-## [Unreleased]
+## [0.5.0] — 2026-09-27
 
 ### Added
 - **Competitor board.** A private web page (a Claude artifact) with every
@@ -23,6 +23,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
   same check before quoting an outlier.
 - Two offline tests: the ad flag (and hidden likes not tripping it), and the
   page fetching nothing but its own published files.
+
+## [0.4.0] — 2026-09-27
+
+### Added
+- **`/kickoff`** (`channel-kickoff` skill): builds the channel's strategy with
+  someone who knows nothing about YouTube strategy — business and objective,
+  audience profile, adjacent interests, four provisional pillars and
+  differentiation — one plain question at a time. On an existing channel it
+  measures first and ends with an evaluation: what there is, what would be
+  right, the gap and the action. Strategy only: competitors, ideas and
+  thumbnails are separate flows.
+- **`/competitors`** (`competitor-mapping` skill): maps the channels already
+  winning with the audience, in any language — a topic winning abroad and
+  missing at home is the best opportunity there is. Every channel enters a
+  list only after an explicit yes, and the pillars are backed with real
+  outliers.
+- **`yt_discover_channels.py`**: candidate channels from search terms, with
+  configurable thresholds (`discovery` in `config.json`), the declared
+  language of each channel and a flag for podcast/interview/live formats.
+- `yt_channels_list.py --add / --remove`, so validation writes the lists
+  deterministically.
+- `memory/strategy.md` with a stage that `init.py` reads to say which step is
+  next.
+- `youtube-strategist` cold-start mode: pillars from the market when there is
+  no catalogue yet.
+- `competitor-ideation` builds ideas per pillar, in batches of 8, naming the
+  technique behind each.
+- Three offline tests (27 in total).
+
+### Fixed
+- A Spanish fragment left in `yt_outliers_channels`' notes.
 
 ## [0.3.0] — 2026-09-27
 

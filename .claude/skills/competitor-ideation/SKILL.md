@@ -8,7 +8,33 @@ description: Next-video ideas drawn from real outliers among competitors and ins
 ## WHEN
 
 Next-video ideas, competitor analysis, "what is working in the niche", the
-weekly opportunity review.
+weekly opportunity review. Always started by the creator.
+
+If `memory/strategy.md` is `NOT POPULATED`, say that ideas without a strategy
+are guesses and offer `/kickoff` first. If it is at `**Stage:** strategy`, the
+pillars are not market-backed yet: offer `/competitors`, or go ahead and label
+the ideas as resting on provisional pillars.
+
+## HOW IDEAS ARE BUILT
+
+**Every idea belongs to a pillar.** Plan in batches of 8 — two per pillar —
+so that after a month each pillar has been tested twice. Then review with
+`/pillars`: learn, iterate, and scale what worked. One idea per pillar is too
+little to conclude anything.
+
+Three ways to get from an outlier to an idea. Name which one each idea uses:
+
+- **Bring it over.** A title structure or format proven in another niche or
+  another market, applied to this channel's topic. The structure travels; the
+  topic is yours. The strongest source is a winner abroad with no equivalent
+  in the creator's language.
+- **Idea first, outlier second.** Start from something the creator genuinely
+  wants to say, then find a format YouTube has already proven and fit the idea
+  into it. The idea is original; the packaging is not a gamble.
+- **Same title, different video.** Only for titles so general that nobody owns
+  them ("if I had to start X today, this is what I would do"), and only when
+  the creator brings something the original could not. Otherwise it is a copy
+  and it competes with the original.
 
 ## EXECUTION ORDER
 
@@ -40,7 +66,9 @@ weekly opportunity review.
    measure absolute demand.
 
 5. **Prioritise against the channel, not in the abstract**
-   Read `memory/creator_profile.md` and `memory/MEMORY.md`. An idea with a
+   Read `memory/strategy.md`, `memory/creator_profile.md` and
+   `memory/MEMORY.md`. An idea that attracts a viewer the objective does not
+   need gets dropped, however strong its outlier. An idea with a
    good outlier that does not fit the channel's archetype gets dropped, and you
    say why.
 
@@ -60,7 +88,8 @@ board uses the median). The board's `ad_suspect` flag is `heuristic`. Step 3
 
 ## OUTPUT
 
-Prioritised ideas. Each with:
+Prioritised ideas, grouped by pillar. Each with:
+- The pillar it tests and the technique it uses.
 - The outlier backing it: title, channel, ratio and URL **verbatim** from the
   tool.
 - Why it worked there and what changes when bringing it to this channel.

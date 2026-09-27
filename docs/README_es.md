@@ -10,7 +10,7 @@ reales de la API y que es honesto sobre qué ha medido y qué está estimando.
 [![tests](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/lorena-bordonaba-pau/youtube-agent/actions/workflows/tests.yml)
 [![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-informational.svg)](../LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![29 herramientas](https://img.shields.io/badge/herramientas-29-success.svg)](../TOOLS.md)
+[![30 herramientas](https://img.shields.io/badge/herramientas-30-success.svg)](../TOOLS.md)
 
 [Inicio rápido](#inicio-rápido) · [Qué le puedes pedir](#qué-le-puedes-pedir) · [Cómo funciona](#cómo-funciona) · [English](../README.md)
 
@@ -81,7 +81,12 @@ La clave se saca en [Google Cloud Console](https://console.cloud.google.com/) �
 tras activar **YouTube Data API v3**. Sin pantalla de consentimiento, sin
 navegador.
 
-Después abre Claude Code en el directorio. El hook de arranque te dice qué falta.
+Después abre Claude Code en el directorio y ejecuta **`/kickoff`**. Construye
+contigo la estrategia del canal —qué vendes, para quién, tus pilares de
+contenido— preguntando en lenguaje llano, sin necesidad de saber de estrategia.
+Luego **`/competitors`** mapea quién ya gana con tu audiencia, en cualquier
+idioma, y te pregunta canal a canal. El hook de arranque siempre te dice cuál
+es el siguiente paso.
 
 **[→ Guía de instalación completa, incluida la analítica de tu canal](install.md)**
 
@@ -135,7 +140,7 @@ flowchart LR
 
     SK --> TL
 
-    subgraph TL ["🔧 29 herramientas"]
+    subgraph TL ["🔧 30 herramientas"]
         direction TB
         T1["21 de datos"]
         T2["4 de imagen"]
