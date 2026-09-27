@@ -137,7 +137,7 @@ def run():
     # machine, and those are not the same thing.
     source = SOURCE_API if method == "subtitulos_youtube" else SOURCE_DERIVED
     env = envelope(TOOL, source, data, {"video": args.video, "lang": args.lang}, hit,
-                notes=[f"Transcrito via {method}. Toda transcript_cache automatica "
+                notes=[f"Transcribed via {method}. Every automatic transcript "
                        "has recognition errors: do not quote it verbatim as the "
                        "author's words without checking the video."])
     emit(env, args, lambda e: base.md_header(e) + "\n" + e["data"]["text"])

@@ -73,14 +73,14 @@ def run():
                              if o.get("days", 0) <= args.max_days]
         return payload_data
 
-    key = f"{TOOL}:{args.items or 'todas'}:{args.min_ratio}:{args.sample}"
+    key = f"{TOOL}:{args.items or 'all'}:{args.min_ratio}:{args.sample}"
     payload_data, hit = cache.memo("other_channel", key, fetch, not args.no_cache)
     payload_data = filtrar_por_edad(payload_data)
 
     total = sum(len(c["outliers"]) for c in payload_data)
     env = envelope(TOOL, SOURCE_DERIVED,
                 {"channels": payload_data, "total_outliers": total},
-                {"list": args.items or "todas", "min_ratio": args.min_ratio,
+                {"list": args.items or "all", "min_ratio": args.min_ratio,
                  "sample": args.sample}, hit,
                 notes=["`ratio` = views / mean of THAT channel's last N uploads.",
                        f"Filtrado a outliers de <= {args.max_days} days. Un outlier "

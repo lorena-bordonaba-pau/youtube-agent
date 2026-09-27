@@ -1,9 +1,14 @@
 ---
 name: monetisation
-description: Partner Programme thresholds, subscriber and watch-hour projection. Triggered by "when do I monetise", "how far am I from YPP", "will I hit the requirements".
+description: Partner Programme thresholds, subscriber and watch-hour projection. Triggered by "when do I monetise", "how far am I from YPP", "will I hit the requirements". In Spanish, "cuándo monetizo", "cuánto me falta para YPP", "voy a llegar a los requisitos".
 ---
 
 # Monetisation
+
+## WHEN
+
+Checking the channel against the Partner Programme thresholds, or projecting
+when it will reach them from the real subscriber and watch-hour trend.
 
 ## EXECUTION ORDER
 

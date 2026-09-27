@@ -189,6 +189,9 @@ which then calibrates the rubrics and feeds later answers.
 | [`TOOLS.md`](TOOLS.md) | All 28 tools with their command and quota cost |
 | [`LIMITS.md`](LIMITS.md) | What the harness **cannot** do. Read it before asking the impossible |
 | `.claude/skills/` | 17 skills, each with a fixed tool execution order |
+| `.claude/agents/` | `youtube-strategist`: content pillars and editorial structure |
+| `.claude/commands/` | `/radar`, `/pillars`, `/audit` |
+| `.claude/hooks/` | Ask before spending credits or quota; keep the strategist inside `memory/` |
 | `memory/` | Profile, voice, positioning, SOPs. **Starts empty** |
 | `tools/` | 20 data · 4 image · 4 utilities |
 | `config/rubrics/` | Scoring rubrics. **Start uncalibrated** |

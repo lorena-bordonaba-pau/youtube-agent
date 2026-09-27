@@ -4,3 +4,8 @@ google-auth-httplib2==0.2.0
 google-api-python-client==2.126.0
 rich==13.7.1
 Pillow>=10.0.0
+PyYAML==6.0.3  # score_titles / score_thumbnail read the rubrics
+
+# System tools, not pip packages (only yt_transcript.py needs them):
+#   yt-dlp       captions and audio download
+#   whisper-cli  local transcription when a video has no captions

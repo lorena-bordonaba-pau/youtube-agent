@@ -1,6 +1,6 @@
 ---
 name: script-writing
-description: Write video scripts in the channel's real voice with a validated retention structure. Triggered by "write the script", "give me the hook", "structure this video", "how do I open this one".
+description: Write video scripts in the channel's real voice with a validated retention structure. Triggered by "write the script", "give me the hook", "structure this video", "how do I open this one". In Spanish, "escribe el guion", "dame el hook", "estructura este vídeo", "cómo abro este vídeo".
 ---
 
 # Script

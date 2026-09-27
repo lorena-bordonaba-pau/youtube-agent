@@ -1,9 +1,14 @@
 ---
 name: keywords-seo
-description: Keywords, tags, description and the search gap. Triggered by "what keywords should I use", "optimise the SEO", "give me the tags", "how do people find me".
+description: Keywords, tags, description and the search gap. Triggered by "what keywords should I use", "optimise the SEO", "give me the tags", "how do people find me". In Spanish, "qué keywords uso", "optimiza el SEO", "dame las etiquetas", "cómo me encuentran".
 ---
 
 # Keywords and SEO
+
+## WHEN
+
+Choosing keywords and tags, writing or reviewing a description, or finding
+the search gap: what people search for that the channel does not answer yet.
 
 ## EXECUTION ORDER
 

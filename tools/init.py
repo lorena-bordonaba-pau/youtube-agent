@@ -57,7 +57,7 @@ def main() -> None:
                      if l.strip()]
             last = json.loads(rows[-1])
             d = dias_desde(last["date"])
-            freshness = "hoy" if d == 0 else f"hace {d} days"
+            freshness = "today" if d == 0 else f"{d} days ago"
             lines.append(
                 f"Last snapshot: {last['date']} ({freshness}) — "
                 f"{last['subs']} subs, {last['views']} views/"

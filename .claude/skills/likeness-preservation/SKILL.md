@@ -65,3 +65,11 @@ There is no need to repeat it in `--prompt`; verify it with `--dry-run`.
 
 `source: generated`. A well-preserved face is still an artefact, not a
 photograph: if it is used publicly, say so.
+
+## OUTPUT
+
+1. The generated image, after opening it and checking the identity against the
+   table above.
+2. Which reference was used as `likeness`.
+3. If the face is not recognisably the creator: say so plainly and ask for a
+   better reference instead of delivering it.

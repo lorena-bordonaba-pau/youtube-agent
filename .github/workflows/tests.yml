@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyyaml
+          pip install -r requirements.txt
 
       - name: Run the offline suite
         run: python tests/test_offline.py
@@ -63,6 +63,9 @@ jobs:
           echo "clean"
 
       - name: Config templates stay empty
+        # Only the public template must ship empty. A private fork that holds
+        # a real channel's config runs every other check, but not this one.
+        if: github.repository == 'lorena-bordonaba-pau/youtube-agent'
         run: |
           python - <<'PY'
           import json, sys
@@ -70,7 +73,8 @@ jobs:
           if c.get("channel_context"):
               sys.exit("config/config.json ships with someone's channel context")
           l = json.load(open("config/channels_lists.json"))
-          if any(l.get(k) for k in ("competencia", "inspiracion", "vecindario")):
+          # Every list, whatever its name; `_`-prefixed keys are documentation.
+          if any(v for k, v in l.items() if not k.startswith("_")):
               sys.exit("config/channels_lists.json ships with real channels")
           print("templates are empty, as they should be")
           PY

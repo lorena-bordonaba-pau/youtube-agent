@@ -24,11 +24,11 @@ def run():
     p.add_argument("--prompt", required=True, help="what should be in the image")
     p.add_argument("--type", default="thumbnail", dest="kind",
                    choices=list(ig.SPEC), help="where the image is going")
-    p.add_argument("--ref", action="append", default=[], metavar="ORIGEN:ROL",
+    p.add_argument("--ref", action="append", default=[], metavar="SOURCE:ROLE",
                    help="reference: path, URL or video_id, plus its role "
                         "(likeness|style|composition|packaging). Repeatable, max 3")
     p.add_argument("--model", help="model slug; defaults to the one in the config")
-    p.add_argument("--provider", choices=["fal", "mcp"], help="fuerza provider_name")
+    p.add_argument("--provider", choices=["fal", "mcp"], help="force the provider")
     p.add_argument("--out", help="output path; defaults to data/images/")
     p.add_argument("--dry-run", action="store_true",
                    help="show the final prompt without spending credits")
@@ -52,7 +52,7 @@ def run():
                json.dumps(e["data"]["call"], ensure_ascii=False, indent=2) +
                "\n```")
 
-    slug = ig.model_slug(cfg, "generate", args.model)
+    slug = ig.model_slug(cfg, ig.action_for(refs), args.model)
 
     ig.warn_if_repeated(slug, args.kind, prompt)
 
@@ -64,7 +64,7 @@ def run():
         }, params, notes=ig.WARNINGS + [
             "Dry run: fal.ai was not called, there is no cost."])
         emit(env, args, lambda e: base.md_header(e) +
-               f"\n\n**Modelo**: `{e['data']['model_slug']}`\n\n**Prompt final**\n\n> " +
+               f"\n\n**Model**: `{e['data']['model_slug']}`\n\n**Final prompt**\n\n> " +
                e["data"]["final_prompt"])
 
     key = ig.fal_key(cfg)
@@ -111,7 +111,7 @@ def run():
         f"python3 tools/export_image.py --image {dest} --type {args.kind}",
     ])
     emit(env, args, lambda e: base.md_header(e) +
-           f"\n\n`{e['data']['file']}`\n\nModelo: `{e['data']['model_slug']}`")
+           f"\n\n`{e['data']['file']}`\n\nModel: `{e['data']['model_slug']}`")
 
 
 if __name__ == "__main__":

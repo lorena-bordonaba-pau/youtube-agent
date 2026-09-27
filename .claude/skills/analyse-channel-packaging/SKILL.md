@@ -1,6 +1,6 @@
 ---
 name: analyse-channel-packaging
-description: Extract a channel's profile and banner branding before generating new packaging. Triggered by "analyse my banner", "what is this channel's visual brand", "review my channel packaging".
+description: Extract a channel's profile and banner branding before generating new packaging. Triggered by "analyse my banner", "what is this channel's visual brand", "review my channel packaging". In Spanish, "analiza mi banner", "cómo es la marca visual de este canal", "revisa mi packaging de canal".
 ---
 
 # Channel packaging analysis
@@ -49,13 +49,13 @@ be generic or will break an identity that already works.
    Identity elements are preserved unless a full, explicit rebrand was asked
    for.
 
-## OUTPUT
-
-A brief in 5-8 bullets: what works, what is lost on mobile, what contradicts
-the positioning, and what would stay untouched in a redesign.
-
 ## SOURCES
 
 `view_channel_packaging` is `derived`: pixel metrics over images from the API.
 The brand reading is the agent's judgement over files it has opened, and is
 declared as such. `channel_positioning.md` is `config`, with its date.
+
+## OUTPUT
+
+A brief in 5-8 bullets: what works, what is lost on mobile, what contradicts
+the positioning, and what would stay untouched in a redesign.

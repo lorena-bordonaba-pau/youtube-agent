@@ -3,6 +3,47 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
 
+## [0.3.0] — 2026-09-27
+
+### Added
+- **`youtube-strategist` subagent.** Defines, measures and reviews content
+  pillars, diagnoses ideation vs distribution, and reads the competition's
+  editorial structure rather than only its outliers. It reads its method from
+  `memory/sop/` and says so when a SOP has not been written yet. It may only
+  write inside `memory/` (its own PreToolUse hook), and ends every answer with
+  a structured handoff block.
+- **Spend guard.** A PreToolUse hook asks before any command that spends
+  fal.ai credits (`generate_image`, `refine_image` without `--dry-run`) or 100
+  API units (`yt_search`, `kw_research` without `--no-competition`). It asks,
+  it never blocks.
+- **`deny` rules** on `data/auth/` and `.env`, so tokens and keys never enter
+  the model's context.
+- **`/pillars` and `/audit`** commands as entry points.
+- Spanish trigger phrases in every skill description.
+- Every skill now follows the same skeleton: WHEN … SOURCES → OUTPUT.
+- Seven offline tests (24 in total), each guarding a failure that actually
+  happened or a rule that was only prose.
+
+### Fixed
+- **Every generation with a reference image was blocked.** The prompt added
+  "Remove any watermark...", and fal.ai's content checker rejects the word
+  "watermark" with `content_policy_violation`. Reworded with the same intent.
+- **`generate_image` ignored references.** It always used the `generate` slug,
+  which is text-to-image and discards `image_urls`. Any `--ref` now selects the
+  `edit` model, and a `likeness` reference selects `edit_gpt`.
+- `yt_channels_list` (and so `/radar`) crashed with `'str' object is not a
+  mapping`: the `_instructions` key in `channels_lists.json` was read as a
+  list. Keys starting with `_` are now skipped.
+- `PyYAML` was missing from `requirements.txt`, so the scoring tools failed on
+  a clean install. CI installed it separately, which hid the problem.
+- The CI check that config templates ship empty looked for the old Spanish
+  keys, so it always passed. It now checks every list, whatever its name.
+- Spanish left inside English messages by the translation ("hace 5 days",
+  "Transcrito via", "**Modelo**", ...). The mangled-strings test now looks for
+  them. One test wrote into `datos/` instead of `data/`.
+- A skill description containing ": " made its front matter invalid YAML.
+  Now guarded by a test.
+
 ## [0.2.1] — 2026-09-17
 
 ### Fixed

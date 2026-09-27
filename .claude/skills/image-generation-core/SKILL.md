@@ -1,6 +1,6 @@
 ---
 name: image-generation-core
-description: Base rules for generating any channel image — thumbnails, banner, profile picture, graphics. Triggered by "generate an image", "make me a thumbnail", "create the banner", or before any other skill in the visual branch.
+description: Base rules for generating any channel image — thumbnails, banner, profile picture, graphics. Triggered by "generate an image", "make me a thumbnail", "create the banner", or before any other skill in the visual branch. In Spanish, "genera una imagen", "hazme una miniatura", "créame el banner", o antes de cualquier otra skill de la rama visual.
 ---
 
 # Image generation: base rules
@@ -98,3 +98,10 @@ generates with a different model without saying so.
 `generate_image` returns `source: generated`. It is neither data nor a
 measurement: **it says nothing about how it will perform**. When delivering the
 image, name the model that produced it. `export_image` is `derived`.
+
+## OUTPUT
+
+1. The file path, after opening it and checking it matches the request.
+2. The model that generated it, named explicitly (`source: generated`).
+3. The final prompt, when it matters for the next iteration.
+4. One concrete adjustment if something is off — not a numbered menu.

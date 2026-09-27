@@ -15,7 +15,7 @@ def run():
     args = p.parse_args()
 
     payload_data = yt_data.load_channels(args.items)
-    env = envelope(TOOL, SOURCE_CONFIG, payload_data, {"list": args.items or "todas"})
+    env = envelope(TOOL, SOURCE_CONFIG, payload_data, {"list": args.items or "all"})
     emit(env, args, lambda e: base.md_header(e) + "\n" + base.md_table(
         e["data"], ["list_type", "name", "channel_id", "notes"]))
 

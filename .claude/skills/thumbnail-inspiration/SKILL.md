@@ -1,6 +1,6 @@
 ---
 name: thumbnail-inspiration
-description: Analyse a reference thumbnail and generate one inspired by it, adapting its design principles to your own content. Triggered by "make me a thumbnail like this one", "I like this thumbnail", "take inspiration from this video".
+description: Analyse a reference thumbnail and generate one inspired by it, adapting its design principles to your own content. Triggered by "make me a thumbnail like this one", "I like this thumbnail", "take inspiration from this video". In Spanish, "hazme una miniatura como esta", "me gusta esta miniatura", "inspírate en este vídeo".
 ---
 
 # Thumbnail inspired by a reference
@@ -62,3 +62,10 @@ next to theirs in the feed, competing with the original and losing.
 The generated image is `source: generated`: an artefact, not a prediction. The
 reference's score is `heuristic`, unvalidated against CTR. When delivering,
 name the model and say what it was inspired by.
+
+## OUTPUT
+
+1. The design formula extracted from the reference, in 5-8 bullets.
+2. What was kept and what was changed, and why.
+3. The generated thumbnail, opened and checked, with the model named.
+4. One concrete adjustment — not a numbered menu.
