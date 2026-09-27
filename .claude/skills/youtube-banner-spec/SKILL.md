@@ -57,3 +57,10 @@ most frequent failure and the most invisible one from a desktop.
 
 The image is `source: generated`. The dimensions after `export_image` are
 `derived` and verifiable in the file.
+
+## OUTPUT
+
+1. The banner file at exactly 2560x1440, opened and checked.
+2. Confirmation that everything important sits inside the centre band, checked
+   with the top and bottom thirds covered.
+3. The model that generated it, named explicitly.

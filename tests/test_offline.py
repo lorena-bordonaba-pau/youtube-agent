@@ -84,7 +84,7 @@ def test_score_titles_runs_and_is_labelled_heuristic():
 def test_score_thumbnail_leaves_judgement_axes_open():
     """The 60% it cannot measure must come back unanswered, not invented."""
     from PIL import Image
-    img = ROOT / "datos" / "images" / "_test.jpg"
+    img = ROOT / "data" / "images" / "_test.jpg"
     img.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGB", (1280, 720), (20, 90, 180)).save(img)
     try:
@@ -132,10 +132,27 @@ def test_dry_run_spends_nothing_and_shows_the_prompt():
         "the banner safe-zone rule is missing from the prompt"
 
 
+def test_references_switch_to_the_edit_model():
+    """The `generate` slug is text-to-image and discards `image_urls`: with a
+    reference it produced faces that were not the creator's."""
+    ref = ROOT / "data" / "images" / "_ref.png"
+    ref.parent.mkdir(parents=True, exist_ok=True)
+    from PIL import Image
+    Image.new("RGB", (64, 64)).save(ref)
+    try:
+        r = _run(str(TOOLS / "generate_image.py"), "--prompt", "a test",
+                 "--ref", f"{ref}:likeness", "--dry-run")
+        models = ig.load()["fal"]["models"]
+        assert json.loads(r.stdout)["data"]["model_slug"] == \
+            (models.get("edit_gpt") or models["edit"])
+    finally:
+        ref.unlink(missing_ok=True)
+
+
 def test_export_image_is_deterministic_and_exact():
     from PIL import Image
-    src = ROOT / "datos" / "images" / "_src.png"
-    out = ROOT / "datos" / "images" / "_out.jpg"
+    src = ROOT / "data" / "images" / "_src.png"
+    out = ROOT / "data" / "images" / "_out.jpg"
     src.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGB", (1920, 1080), (200, 30, 30)).save(src)
     try:
@@ -186,7 +203,10 @@ def test_no_mangled_english_in_user_facing_strings():
     reads. Cheap to guard, embarrassing to ship."""
     import re
     bad = [r"\berr\b(?!or)", r"\benvelope (el|the|los|las)\b", r"payload_data/",
-           r"\bmodel_slug\b(?=[ .,])", r"\bthumbnail_cache\b(?=[ .,])"]
+           r"\bmodel_slug\b(?=[ .,])", r"\bthumbnail_cache\b(?=[ .,])",
+           # Spanish left behind inside English messages by the translation
+           r"\bhace \{?\w+\}? days\b", r"\bTranscrito\b", r"\*\*Modelo\*\*",
+           r"\bListas disponibles\b", r"\bo pasa --", r"\bORIGEN:ROL\b"]
     pat = re.compile("|".join(bad))
     hits = []
     for f in list(TOOLS.rglob("*.py")) + list((ROOT / "config").rglob("*.yaml")):
@@ -212,6 +232,90 @@ def test_skill_names_match_their_folders():
         else:
             bad.append(f"{d.name} has no name in its front matter")
     assert not bad, "\n".join(bad)
+
+
+def test_front_matter_is_valid_yaml():
+    """An unquoted ": " inside a description makes the front matter invalid
+    YAML. A lenient loader may still show the skill, but fields after it (an
+    agent's `hooks`, for one) are then at the mercy of the parser."""
+    import yaml
+    claude = ROOT / ".claude"
+    bad = []
+    for f in sorted([*claude.glob("skills/*/SKILL.md"), *claude.glob("agents/*.md"),
+                     *claude.glob("commands/*.md")]):
+        text = f.read_text(encoding="utf-8")
+        if not text.startswith("---"):
+            continue
+        try:
+            meta = yaml.safe_load(text.split("---", 2)[1])
+            assert isinstance(meta, dict) and meta.get("description")
+        except Exception as e:  # noqa: BLE001
+            bad.append(f"{f.relative_to(ROOT)}: {str(e).splitlines()[0]}")
+    assert not bad, "\n".join(bad)
+
+
+def test_skills_share_one_skeleton():
+    """Every skill says when it applies, where its figures come from and what
+    it delivers, in that order. Skill-specific sections go in between."""
+    bad = []
+    for f in sorted((ROOT / ".claude" / "skills").glob("*/SKILL.md")):
+        heads = [l[3:].strip() for l in f.read_text(encoding="utf-8").splitlines()
+                 if l.startswith("## ")]
+        need = ["WHEN", "SOURCES", "OUTPUT"]
+        if [h for h in heads if h in need] != need or heads[0] != "WHEN" \
+                or heads[-1] != "OUTPUT":
+            bad.append(f"{f.parent.name}: {heads}")
+    assert not bad, "skills off the WHEN … SOURCES → OUTPUT skeleton:\n" + "\n".join(bad)
+
+
+def test_channel_lists_ignore_documentation_keys():
+    """channels_lists.json carries an `_instructions` key. Read as a list, it
+    broke every tool that loads all lists at once (radar included)."""
+    r = _run(str(TOOLS / "yt_channels_list.py"), "--json")
+    assert json.loads(r.stdout)["source"] == "config"
+
+
+def test_reference_prompt_avoids_blocked_wording():
+    """fal.ai's content checker rejects "watermark": with it in the prompt,
+    every generation with a reference failed with content_policy_violation."""
+    prompt = ig.compose_prompt("thumbnail", "a test", [{"role": "likeness"}])
+    assert "watermark" not in prompt.lower(), prompt
+
+
+def test_spend_hook_asks_only_when_money_or_quota_is_at_stake():
+    """`Bash(python3 tools/*)` is allowed wholesale; the hook is what stops an
+    image generation or a 100-unit search from running without a yes."""
+    hook = ROOT / ".claude" / "hooks" / "confirm_spend.py"
+
+    def decision(command):
+        r = subprocess.run([sys.executable, str(hook)], capture_output=True, text=True,
+                           input=json.dumps({"tool_input": {"command": command}}))
+        assert r.returncode == 0, r.stderr
+        return json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] \
+            if r.stdout.strip() else None
+
+    assert decision("python3 tools/generate_image.py --prompt x") == "ask"
+    assert decision("python3 tools/refine_image.py --image a.png") == "ask"
+    assert decision("python3 tools/yt_search.py --query x") == "ask"
+    assert decision("python3 tools/kw_research.py --kw x") == "ask"
+    assert decision("python3 tools/generate_image.py --prompt x --dry-run") is None
+    assert decision("python3 tools/kw_research.py --kw x --no-competition") is None
+    assert decision("python3 tools/yt_report.py") is None
+
+
+def test_strategist_can_only_write_to_memory():
+    hook = ROOT / ".claude" / "hooks" / "memory_only.py"
+
+    def exit_code(path):
+        return subprocess.run(
+            [sys.executable, str(hook)], capture_output=True, text=True,
+            env={"CLAUDE_PROJECT_DIR": str(ROOT)},
+            input=json.dumps({"tool_input": {"file_path": path}})).returncode
+
+    assert exit_code(str(ROOT / "memory" / "channel_positioning.md")) == 0
+    assert exit_code("memory/sop/pillars_sop.md") == 0
+    assert exit_code(str(ROOT / "tools" / "init.py")) == 2
+    assert exit_code(str(ROOT / "memory" / ".." / "CLAUDE.md")) == 2
 
 
 def test_data_directories_exist_on_a_fresh_clone():

@@ -1,6 +1,6 @@
 ---
 name: channel-analytics
-description: Audit and diagnose your own channel with real data — performance, retention, traffic, audience, and comparison against earlier snapshots. Triggered by "how's the channel doing?", "audit my videos", "why did it drop", "what's working".
+description: Audit and diagnose your own channel with real data — performance, retention, traffic, audience, and comparison against earlier snapshots. Triggered by "how's the channel doing?", "audit my videos", "why did it drop", "what's working". In Spanish, "¿cómo va el canal?", "audita mis vídeos", "por qué ha bajado", "qué está funcionando".
 ---
 
 # Channel audit

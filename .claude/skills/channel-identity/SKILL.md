@@ -1,9 +1,15 @@
 ---
 name: channel-identity
-description: Channel positioning, differentiation against the competitive neighbourhood, and niche reframing. Triggered by "how do I position myself", "what makes me different", "where do I take the channel", "who is my real competition".
+description: Channel positioning, differentiation against the competitive neighbourhood, and niche reframing. Triggered by "how do I position myself", "what makes me different", "where do I take the channel", "who is my real competition". In Spanish, "cómo me posiciono", "en qué me diferencio", "hacia dónde llevo el canal", "quién es mi competencia real".
 ---
 
 # Identity and positioning
+
+## WHEN
+
+Deciding how the channel positions itself, what sets it apart from the
+competitive neighbourhood, where to take the niche next, or who the real
+competition is. Not for a single video's packaging: that is `packaging`.
 
 ## EXECUTION ORDER
 

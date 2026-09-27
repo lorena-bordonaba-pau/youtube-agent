@@ -51,3 +51,9 @@ it has to be recognisable at, not the one in your editor.
 ## SOURCES
 
 `source: generated` for the image; `derived` for the resizing.
+
+## OUTPUT
+
+1. The final profile picture, exported with `--type profile_image`.
+2. The 32x32 check: whether it is still recognisable at comment size.
+3. The model that generated it, named explicitly.

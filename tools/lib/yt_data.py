@@ -206,11 +206,12 @@ def load_channels(items: str | None = None) -> list[dict]:
     if not path.exists():
         raise ToolError(f"Missing {path}", EXIT_NO_DATA)
     with open(path, encoding="utf-8") as f:
-        cfg = json.load(f)
+        # Keys starting with "_" are documentation (`_instructions`), not lists.
+        cfg = {k: v for k, v in json.load(f).items() if not k.startswith("_")}
     if items and items not in cfg:
         raise ToolError(
             f"List {items!r} does not exist in {path.name}.", EXIT_NO_DATA,
-            f"Listas disponibles: {', '.join(cfg)}")
+            f"Available lists: {', '.join(cfg)}")
     out = []
     for kind, entries in cfg.items():
         if items and kind != items:

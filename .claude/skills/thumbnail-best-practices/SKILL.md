@@ -78,3 +78,11 @@ failure the tool is designed to prevent.
 The rubric is `heuristic` and **not validated against CTR** while
 `data/history/studio_ctr.json` does not exist. A score is never presented as
 a click prediction. `yt_thumbnails`' pixel metrics are `derived`.
+
+## OUTPUT
+
+1. The measured part first: `score_thumbnail`'s automatic 40% and
+   `yt_thumbnails`' pixel metrics, labelled with their `source`.
+2. The judgement axes answered after opening the image, one line each.
+3. The two or three rules above that the thumbnail breaks, each with the
+   concrete change that would fix it.

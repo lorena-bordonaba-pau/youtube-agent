@@ -1,6 +1,6 @@
 ---
 name: analyse-thumbnails
-description: Extract a channel's thumbnail style, your own or someone else's, before generating a new one. Triggered by "what are my thumbnails like", "analyse this channel's style", "what visual pattern does my competition follow".
+description: Extract a channel's thumbnail style, your own or someone else's, before generating a new one. Triggered by "what are my thumbnails like", "analyse this channel's style", "what visual pattern does my competition follow". In Spanish, "cómo son mis miniaturas", "analiza el estilo de este canal", "qué patrón visual sigue mi competencia".
 ---
 
 # Thumbnail style analysis
@@ -50,6 +50,12 @@ breaks it, and reading a competitor's visual pattern.
    A consistent style that performs badly is a consistent style that performs
    badly.
 
+## SOURCES
+
+Pixel metrics `derived`. Views and outliers `derived` over `youtube_api`. The
+style reading is the agent's judgement over images it has opened, and is
+declared as such. The rubric is `heuristic`, unvalidated against CTR.
+
 ## OUTPUT
 
 1. **A style brief in 5-8 bullets**, each with its frequency ("4 of 5").
@@ -57,9 +63,3 @@ breaks it, and reading a competitor's visual pattern.
 3. If there is a face, the `video_id` of the best likeness reference.
 4. What must be **kept** so the brand is not broken, and what is **weak**
    measured against the rubric.
-
-## SOURCES
-
-Pixel metrics `derived`. Views and outliers `derived` over `youtube_api`. The
-style reading is the agent's judgement over images it has opened, and is
-declared as such. The rubric is `heuristic`, unvalidated against CTR.

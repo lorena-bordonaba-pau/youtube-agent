@@ -29,7 +29,7 @@ def run():
     p.add_argument("--type", default="preserve", dest="kind", choices=list(ig.SPEC),
                    help="defaults to `preserve`: keeps the original's shape. "
                         "Only change it when a new shape was asked for")
-    p.add_argument("--ref", action="append", default=[], metavar="ORIGEN:ROL",
+    p.add_argument("--ref", action="append", default=[], metavar="SOURCE:ROLE",
                    help="extra reference, typically the likeness photo")
     p.add_argument("--model", help="slug of the editing model")
     p.add_argument("--provider", choices=["fal", "mcp"])
@@ -73,7 +73,7 @@ def run():
                     notes=ig.WARNINGS + [
                         "Dry run: fal.ai was not called, there is no cost."])
         emit(env, args, lambda e: base.md_header(e) +
-               f"\n\n**Modelo**: `{e['data']['model_slug']}`\n\n**Prompt final**\n\n> " +
+               f"\n\n**Model**: `{e['data']['model_slug']}`\n\n**Final prompt**\n\n> " +
                e["data"]["final_prompt"])
 
     key = ig.fal_key(cfg)
@@ -111,7 +111,7 @@ def run():
         "sometimes changes things it was not asked to.",
     ])
     emit(env, args, lambda e: base.md_header(e) +
-           f"\n\n`{e['data']['file']}`\n\nModelo: `{e['data']['model_slug']}`")
+           f"\n\n`{e['data']['file']}`\n\nModel: `{e['data']['model_slug']}`")
 
 
 if __name__ == "__main__":

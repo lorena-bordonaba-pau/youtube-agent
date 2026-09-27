@@ -1,6 +1,6 @@
 ---
 name: competitor-ideation
-description: Next-video ideas drawn from real outliers among competitors and inspirations. Triggered by "ideas for this week", "what should I record", "what's blowing up in my niche", "analyse my competition".
+description: Next-video ideas drawn from real outliers among competitors and inspirations. Triggered by "ideas for this week", "what should I record", "what's blowing up in my niche", "analyse my competition". In Spanish, "ideas para la semana", "qué grabo ahora", "qué está petando en mi nicho", "analiza a mi competencia".
 ---
 
 # Ideation from competitors

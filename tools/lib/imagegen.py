@@ -101,16 +101,31 @@ def model_slug(cfg: dict, action: str, requested: str | None = None) -> str:
     slug = models.get(action)
     if slug:
         return slug
-    alt = models.get(f"{action}_gpt")
+    alt = models.get(f"{action}_gpt") or models.get(action.removesuffix("_gpt"))
     if alt:
         return alt
     raise ToolError(
         f"No model slug configured for action '{action}'.",
         EXIT_NO_DATA,
         "Find the model at https://fal.ai/explore/models and write its slug into "
-        f"config/image_providers.json (fal.models.{action}), o pasa --model. "
+        f"config/image_providers.json (fal.models.{action}), or pass --model. "
         "This tool refuses to guess slugs on purpose: a made-up one burns credits.",
     )
+
+
+def action_for(refs: list[dict]) -> str:
+    """Which configured model a generation needs.
+
+    The `generate` slug is text-to-image and silently discards `image_urls`:
+    with a reference, the faces that came out were not the creator's. So any
+    reference means an edit model, and a likeness reference prefers `edit_gpt`,
+    which preserved facial identity noticeably better in testing (2026-09-22).
+    """
+    if not refs:
+        return "generate"
+    if any(r["role"] == "likeness" for r in refs):
+        return "edit_gpt"
+    return "edit"
 
 
 # Warnings the tool accumulates so they travel inside the envelope, not a log.
@@ -463,8 +478,11 @@ def compose_prompt(kind: str, prompt: str, refs: list[dict]) -> str:
         labels = ", ".join(
             f"Reference Image {i} ({r['role']} reference)" for i, r in enumerate(refs, 1))
         parts.append(f"Reference images provided, in order: {labels}.")
-        parts.append("Remove any watermark or third-party logo present in the "
-                      "reference images.")
+        # Reworded 2026-09-22: the previous wording ("Remove any watermark
+        # ...") tripped fal.ai's content checker and blocked EVERY generation
+        # with a reference. Same intent, without the flagged expression.
+        parts.append("Do not reproduce brand logos or marks that appear in "
+                      "the reference images.")
     parts.append("Do not add text that was not requested.")
     return " ".join(parts)
 

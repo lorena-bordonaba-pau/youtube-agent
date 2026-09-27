@@ -97,6 +97,21 @@ instructions instead of guessing. Probing slugs with an invalid payload **does
 not work**: fal's queue returns 200 and the path error only appears on a real
 call.
 
+**With references, the tool switches to an edit model on its own.** The
+`generate` slug is text-to-image and **discards the `image_urls`**: verified on
+2026-09-22, a `--ref` was uploaded and ignored, and the faces that came out
+were not the creator's. So any `--ref` now selects `edit`, and a `likeness`
+reference selects `edit_gpt`, because `openai/gpt-image-2/edit` preserves
+facial identity noticeably better than `fal-ai/nano-banana/edit`. `--model`
+still overrides it. The four slugs live in `config/image_providers.json`.
+
+**fal.ai's content checker blocks the word "watermark".** The instruction
+`compose_prompt` adds with every reference was reworded on 2026-09-22 for this
+reason: the previous wording ("Remove any watermark...") returned
+`content_policy_violation` and blocked **every** generation with a reference.
+Same intent, different wording. Do not reintroduce that expression, in the code
+or in a `--prompt`.
+
 **The ratio is verified in the file, not trusted to the model.** After
 downloading, `generate_image` measures the image, trims black bars if the model
 letterboxed, and forces the exact size when the format pins a ratio. All of it

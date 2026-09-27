@@ -1,6 +1,6 @@
 ---
 name: image-refinement
-description: Edit an image that already exists instead of regenerating it from scratch. Triggered by "change the background", "remove the logo", "make it darker", "same but without the text".
+description: Edit an image that already exists instead of regenerating it from scratch. Triggered by "change the background", "remove the logo", "make it darker", "same but without the text". In Spanish, "cámbiale el fondo", "quítale el logo", "hazlo más oscuro", "igual pero sin el texto".
 ---
 
 # Image refinement

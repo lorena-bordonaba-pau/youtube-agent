@@ -91,7 +91,7 @@ def run():
         delta = {k: round(summary[k] - previo[k], 2)
                  for k in ("subs", "views", "net_subs", "dependencia_top2_pct")
                  if isinstance(previo.get(k), (int, float))}
-        delta["desde"] = previo["date"]
+        delta["since"] = previo["date"]
 
     if not args.no_snapshot:
         SNAPSHOTS.parent.mkdir(parents=True, exist_ok=True)

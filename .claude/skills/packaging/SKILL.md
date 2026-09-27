@@ -1,6 +1,6 @@
 ---
 name: packaging
-description: A video's titles, thumbnail and description, scored with the channel's calibrated rubric. Triggered by "give me titles", "score this title", "review my thumbnail", "improve the packaging".
+description: A video's titles, thumbnail and description, scored with the channel's calibrated rubric. Triggered by "give me titles", "score this title", "review my thumbnail", "improve the packaging". In Spanish, "dame títulos", "puntúa este título", "revisa mi miniatura", "mejora el packaging".
 ---
 
 # Packaging: titles and thumbnails

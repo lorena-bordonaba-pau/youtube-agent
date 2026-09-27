@@ -4,6 +4,10 @@
       "Bash(python3 tools/*)",
       "Bash(yt-dlp *)",
       "Bash(whisper-cli *)"
+    ],
+    "deny": [
+      "Read(/data/auth/**)",
+      "Read(/.env)"
     ]
   },
   "hooks": {
@@ -13,6 +17,17 @@
           {
             "type": "command",
             "command": "python3 tools/init.py"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/confirm_spend.py"
           }
         ]
       }
