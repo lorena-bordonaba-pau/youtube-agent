@@ -30,6 +30,13 @@ data/images/*
 # it even in a private repo.
 # memory/
 
+# --- Claude Code: personal, never shared ---
+# Your own permission tweaks, private notes to the agent, and the MCP servers
+# you connect (start from .mcp.json.example).
+.claude/settings.local.json
+CLAUDE.local.md
+.mcp.json
+
 # --- Python ---
 __pycache__/
 *.pyc

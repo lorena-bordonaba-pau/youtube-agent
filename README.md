@@ -194,7 +194,7 @@ which then calibrates the rubrics and feeds later answers.
 | [`CLAUDE.md`](CLAUDE.md) | The operating contract: identity, honesty rules, transparency protocol |
 | [`TOOLS.md`](TOOLS.md) | All 31 tools with their command and quota cost |
 | [`LIMITS.md`](LIMITS.md) | What the harness **cannot** do. Read it before asking the impossible |
-| `.claude/skills/` | 20 skills, each with a fixed tool execution order |
+| `.claude/skills/` | 21 skills, each with a fixed tool execution order |
 | `.claude/agents/` | `youtube-strategist`: content pillars and editorial structure |
 | `.claude/commands/` | `/kickoff`, `/competitors`, `/pillars`, `/audit`, `/radar` |
 | `.claude/hooks/` | Ask before spending credits or quota; keep the strategist inside `memory/` |
@@ -215,6 +215,7 @@ which then calibrates the rubrics and feeds later answers.
 | `channel-identity` | Positioning and differentiation against your neighbourhood |
 | `competitor-ideation` | Ideas from real competitor outliers |
 | `competitor-board` | Create and sync the competitor board page |
+| `competitor-scan` | `/radar`: the weekly scan — what moved recently and where the gap in your language is |
 | `packaging` | Titles and thumbnails scored with the rubric |
 | `keywords-seo` | Keywords, tags, and the search gap |
 | `script-writing` | Scripts in your real voice, with a retention structure |
@@ -222,7 +223,7 @@ which then calibrates the rubrics and feeds later answers.
 | `transparency` | What the agent is, what it has, in what order it runs |
 | **Visual branch** | `image-generation-core` · `image-refinement` · `likeness-preservation` · `thumbnail-best-practices` · `thumbnail-inspiration` · `analyse-thumbnails` · `analyse-channel-packaging` · `youtube-banner-spec` · `youtube-profile-spec` |
 
-Plus the `youtube-strategist` subagent for content pillars, and the `/radar` command for the weekly competitor scan.
+Plus the `youtube-strategist` subagent for content pillars. Every command is a thin entry point that hands over to one skill or to the subagent, so the execution order always lives in one file.
 
 ---
 

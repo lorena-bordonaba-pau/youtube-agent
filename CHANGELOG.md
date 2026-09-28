@@ -3,6 +3,25 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
 
+## [0.5.2] — 2026-09-28
+
+### Changed
+- **`/radar` runs the new `competitor-scan` skill.** The weekly scan lived
+  inside the command; it now has the same skeleton as every other skill, and
+  the command is a thin entry point like the rest. `transparency` also knows
+  where to read commands and the subagent.
+- **The SessionStart hook uses `$CLAUDE_PROJECT_DIR`.** With a relative path
+  it failed when Claude Code was opened from a subfolder.
+- **`.mcp.json` is no longer shipped.** A fork loaded the Higgsfield server
+  even though the default provider is fal.ai. Copy `.mcp.json.example` if you
+  use an image MCP; `.mcp.json` is git-ignored.
+
+### Added
+- `.gitignore` covers `.claude/settings.local.json` and `CLAUDE.local.md`.
+- Tests: every command hands over to a skill or agent that exists, every hook
+  command reaches its script through `$CLAUDE_PROJECT_DIR`, and the personal
+  Claude Code files stay ignored.
+
 ## [0.5.1] — 2026-09-27
 
 ### Added
