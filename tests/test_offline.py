@@ -7,6 +7,7 @@ call cannot be tested here; the shape of what surrounds it can.
 Run with:  python3 -m pytest tests/ -q      (or: python3 tests/test_offline.py)
 """
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -317,6 +318,67 @@ def test_strategist_can_only_write_to_memory():
     assert exit_code("memory/sop/pillars_sop.md") == 0
     assert exit_code(str(ROOT / "tools" / "init.py")) == 2
     assert exit_code(str(ROOT / "memory" / ".." / "CLAUDE.md")) == 2
+
+
+def test_commands_hand_over_to_something_that_exists():
+    """A command is a thin entry point: it names the skill or agent that holds
+    the execution order. If that name is renamed or deleted, the command still
+    shows up in `/` and silently runs nothing."""
+    claude = ROOT / ".claude"
+    skills = {d.name for d in (claude / "skills").iterdir() if d.is_dir()}
+    agents = {f.stem for f in (claude / "agents").glob("*.md")}
+    bad = []
+    for f in sorted((claude / "commands").glob("*.md")):
+        text = f.read_text(encoding="utf-8")
+        named = re.findall(r"`([a-z0-9-]+)` (?:skill|agent)", text)
+        if not named:
+            bad.append(f"{f.name} names no skill or agent")
+        bad += [f"{f.name} hands over to {n!r}, which does not exist"
+                for n in named if n not in skills | agents]
+    assert not bad, "\n".join(bad)
+
+
+def test_hooks_run_from_any_working_directory():
+    """A hook command with a relative path breaks as soon as Claude Code is
+    opened from a subfolder. Every script is reached through $CLAUDE_PROJECT_DIR."""
+    settings = json.loads((ROOT / ".claude" / "settings.json").read_text())
+    commands = [h["command"] for groups in settings.get("hooks", {}).values()
+                for g in groups for h in g.get("hooks", [])]
+    for f in (ROOT / ".claude" / "agents").glob("*.md"):
+        commands += re.findall(r"command: \"(.+)\"", f.read_text(encoding="utf-8"))
+    bad = [c for c in commands if "CLAUDE_PROJECT_DIR" not in c]
+    assert commands and not bad, f"relative hook paths: {bad}"
+
+
+def test_every_cited_script_exists():
+    """A skill, command, agent or example that tells the agent to run a script
+    that was renamed sends it to a dead end mid-flow."""
+    cited = set()
+    for f in [*(ROOT / ".claude").rglob("*.md"), *(ROOT / "examples").rglob("*.md")]:
+        cited |= set(re.findall(r"\b([a-z_]+\.py)\b", f.read_text(encoding="utf-8")))
+    have = {p.name for p in (ROOT / "tools").glob("*.py")} \
+        | {p.name for p in (ROOT / ".claude" / "hooks").glob("*.py")}
+    assert cited and cited <= have, f"cited but missing: {sorted(cited - have)}"
+
+
+def test_examples_are_labelled_fictional():
+    """The examples show a populated memory for a channel that does not exist.
+    Each file must say so, and none may carry something shaped like a real
+    video or channel ID that could be mistaken for a link."""
+    files = sorted((ROOT / "examples" / "memory").glob("*.md"))
+    assert files
+    for f in files:
+        text = f.read_text(encoding="utf-8")
+        assert "FICTIONAL EXAMPLE" in text and "Fictional example" in text, f.name
+        assert not re.search(r"\bUC[\w-]{22}\b|\b[\w-]{11}\b(?=\))", text), f.name
+        assert (ROOT / "memory" / f.name).exists(), f"{f.name} shows no real memory file"
+
+
+def test_personal_claude_files_stay_out_of_git():
+    ignored = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    for p in (".claude/settings.local.json", "CLAUDE.local.md", ".mcp.json"):
+        assert p in ignored, f"{p} must be git-ignored"
+    assert (ROOT / ".mcp.json.example").exists()
 
 
 def test_discovery_keeps_only_videos_clearing_every_threshold():

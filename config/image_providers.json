@@ -53,7 +53,7 @@
     "_note": [
       "Example using Higgsfield. Any image-generating MCP works: change `server`",
       "and the `tools` map to match your connector.",
-      "Declare the server in the project's .mcp.json.",
+      "Declare the server in the project's .mcp.json (copy .mcp.json.example).",
       "MCP tools cannot read local files: upload them or pass a URL."
     ]
   },

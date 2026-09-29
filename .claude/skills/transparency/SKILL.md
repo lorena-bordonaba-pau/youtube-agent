@@ -31,6 +31,9 @@ and had to correct itself the following turn after loading the real protocols.
    | What memory it keeps | `memory/MEMORY.md` and the files it indexes |
    | One skill's execution order | `.claude/skills/<skill>/SKILL.md` |
    | ALL the skills' order | every `SKILL.md`, one by one |
+   | What a slash command (`/radar`, `/audit`…) does | `.claude/commands/<command>.md`, then the skill or agent it hands over to |
+   | The subagents and what they may touch | `.claude/agents/*.md` (`youtube-strategist`, `claim-checker`) and `.claude/hooks/memory_only.py` |
+   | What a populated memory looks like | `examples/` — a **fictional** channel, never quoted as data |
    | How images are generated, with which provider | `config/image_providers.json` and `.claude/skills/image-generation-core/SKILL.md` |
    | Configuration, permissions, hooks | `.claude/settings.json` |
    | The competitor board page and how it syncs | `artifacts/competitor-board/index.html` and `.claude/skills/competitor-board/SKILL.md` |

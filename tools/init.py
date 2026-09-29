@@ -115,6 +115,29 @@ def main() -> None:
     else:
         lines.append(f"Strategy: {stage}")
 
+    # Memory freshness — nothing writes memory on its own, so the nudge lives
+    # here: SessionStart is the one hook whose output reaches the agent. The
+    # journal is the file that goes stale first: it only grows if someone
+    # records what each video did against what was predicted.
+    try:
+        files = [f for f in MEMORY_DIR.glob("*.md") if f.name != "MEMORY.md"]
+        empty = sum("NOT POPULATED" in f.read_text(encoding="utf-8").upper()
+                    for f in files)
+        journal = MEMORY_DIR / "conversation_journal.md"
+        age = ((datetime.now() - datetime.fromtimestamp(journal.stat().st_mtime)).days
+               if journal.exists() else None)
+        lines.append(f"Memory: {len(files)} files, {empty} not populated · "
+                     f"journal last updated "
+                     f"{'never' if age is None else f'{age} days ago'}")
+        if age is None or age > 14:
+            warnings.append((PRIORITY_OPTIONAL,
+                             "The history journal has not been updated in over "
+                             "2 weeks. Before this session ends, offer "
+                             "`/remember` to record outcomes and stable "
+                             "learnings (nothing is written without a yes)."))
+    except Exception as e:  # noqa: BLE001
+        lines.append(f"Memory: unreadable ({e})")
+
     # Real CTR from Studio — without it the rubrics stay unvalidated
     ctr = DATA_DIR / "history" / "studio_ctr.json"
     if ctr.exists():

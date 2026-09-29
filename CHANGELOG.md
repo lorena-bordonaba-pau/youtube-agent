@@ -3,6 +3,43 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
 
+## [0.6.0] — 2026-09-29
+
+### Added
+- **`/remember` and the `memory-review` skill.** Reviews the session for
+  stable learnings and proposes memory changes; writes only what you approve.
+  `rules.md` only ever gets rules you imposed explicitly.
+- **Memory freshness at session start.** `init.py` reports how many memory
+  files are populated and warns when the history journal has gone two weeks
+  untouched. SessionStart is the one hook whose output reaches the agent, so
+  the nudge lives there rather than in a PreCompact hook.
+- **`claim-checker` subagent** (read-only, Sonnet). Given a draft and the raw
+  tool outputs, it checks every figure, video ID, URL and channel name
+  verbatim and flags heuristic values presented as measurements.
+- **`examples/`**: a populated memory for a fictional channel, every file
+  labelled as such.
+- Tests: every script a skill, command, agent or example cites exists; the
+  examples are labelled fictional and carry nothing shaped like a real ID.
+
+## [0.5.2] — 2026-09-28
+
+### Changed
+- **`/radar` runs the new `competitor-scan` skill.** The weekly scan lived
+  inside the command; it now has the same skeleton as every other skill, and
+  the command is a thin entry point like the rest. `transparency` also knows
+  where to read commands and the subagent.
+- **The SessionStart hook uses `$CLAUDE_PROJECT_DIR`.** With a relative path
+  it failed when Claude Code was opened from a subfolder.
+- **`.mcp.json` is no longer shipped.** A fork loaded the Higgsfield server
+  even though the default provider is fal.ai. Copy `.mcp.json.example` if you
+  use an image MCP; `.mcp.json` is git-ignored.
+
+### Added
+- `.gitignore` covers `.claude/settings.local.json` and `CLAUDE.local.md`.
+- Tests: every command hands over to a skill or agent that exists, every hook
+  command reaches its script through `$CLAUDE_PROJECT_DIR`, and the personal
+  Claude Code files stay ignored.
+
 ## [0.5.1] — 2026-09-27
 
 ### Added

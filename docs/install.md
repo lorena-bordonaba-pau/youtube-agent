@@ -101,7 +101,8 @@ Two routes. The skills never name a provider; you choose in
 **fal.ai over REST:** add `FAL_KEY=` to `.env`
 (get one at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys)).
 
-**An image MCP** (Higgsfield or any other): declare the server in `.mcp.json`,
+**An image MCP** (Higgsfield or any other): copy `.mcp.json.example` to `.mcp.json`
+(git-ignored), declare the server there,
 set `"provider": "mcp"` in the config, and adjust the `tools` map. In this mode
 the tools do not generate: they return the exact call for the agent to run,
 because a script cannot invoke an MCP tool from the session.
