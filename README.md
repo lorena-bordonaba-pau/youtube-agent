@@ -194,11 +194,12 @@ which then calibrates the rubrics and feeds later answers.
 | [`CLAUDE.md`](CLAUDE.md) | The operating contract: identity, honesty rules, transparency protocol |
 | [`TOOLS.md`](TOOLS.md) | All 31 tools with their command and quota cost |
 | [`LIMITS.md`](LIMITS.md) | What the harness **cannot** do. Read it before asking the impossible |
-| `.claude/skills/` | 21 skills, each with a fixed tool execution order |
-| `.claude/agents/` | `youtube-strategist`: content pillars and editorial structure |
-| `.claude/commands/` | `/kickoff`, `/competitors`, `/pillars`, `/audit`, `/radar` |
+| `.claude/skills/` | 22 skills, each with a fixed tool execution order |
+| `.claude/agents/` | `youtube-strategist` (content pillars, editorial structure) and `claim-checker` (read-only: checks every figure against the tool outputs before delivery) |
+| `.claude/commands/` | `/kickoff`, `/competitors`, `/pillars`, `/audit`, `/radar`, `/remember` |
 | `.claude/hooks/` | Ask before spending credits or quota; keep the strategist inside `memory/` |
 | `memory/` | Profile, voice, positioning, SOPs. **Starts empty** |
+| `examples/` | A populated memory for a **fictional** channel, to show the shape of each file |
 | `tools/` | 23 data · 4 image · 4 utilities |
 | `artifacts/` | The competitor board page, published as a private Claude artifact |
 | `config/rubrics/` | Scoring rubrics. **Start uncalibrated** |
@@ -220,10 +221,11 @@ which then calibrates the rubrics and feeds later answers.
 | `keywords-seo` | Keywords, tags, and the search gap |
 | `script-writing` | Scripts in your real voice, with a retention structure |
 | `monetisation` | Partner Programme thresholds and projection |
+| `memory-review` | `/remember`: proposes memory updates from the session; writes only what you approve |
 | `transparency` | What the agent is, what it has, in what order it runs |
 | **Visual branch** | `image-generation-core` · `image-refinement` · `likeness-preservation` · `thumbnail-best-practices` · `thumbnail-inspiration` · `analyse-thumbnails` · `analyse-channel-packaging` · `youtube-banner-spec` · `youtube-profile-spec` |
 
-Plus the `youtube-strategist` subagent for content pillars. Every command is a thin entry point that hands over to one skill or to the subagent, so the execution order always lives in one file.
+Plus two subagents: `youtube-strategist` for content pillars, and `claim-checker`, which verifies long deliverables before they reach you. Every command is a thin entry point that hands over to one skill or to the subagent, so the execution order always lives in one file.
 
 ---
 

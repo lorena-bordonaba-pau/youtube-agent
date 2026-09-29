@@ -350,6 +350,30 @@ def test_hooks_run_from_any_working_directory():
     assert commands and not bad, f"relative hook paths: {bad}"
 
 
+def test_every_cited_script_exists():
+    """A skill, command, agent or example that tells the agent to run a script
+    that was renamed sends it to a dead end mid-flow."""
+    cited = set()
+    for f in [*(ROOT / ".claude").rglob("*.md"), *(ROOT / "examples").rglob("*.md")]:
+        cited |= set(re.findall(r"\b([a-z_]+\.py)\b", f.read_text(encoding="utf-8")))
+    have = {p.name for p in (ROOT / "tools").glob("*.py")} \
+        | {p.name for p in (ROOT / ".claude" / "hooks").glob("*.py")}
+    assert cited and cited <= have, f"cited but missing: {sorted(cited - have)}"
+
+
+def test_examples_are_labelled_fictional():
+    """The examples show a populated memory for a channel that does not exist.
+    Each file must say so, and none may carry something shaped like a real
+    video or channel ID that could be mistaken for a link."""
+    files = sorted((ROOT / "examples" / "memory").glob("*.md"))
+    assert files
+    for f in files:
+        text = f.read_text(encoding="utf-8")
+        assert "FICTIONAL EXAMPLE" in text and "Fictional example" in text, f.name
+        assert not re.search(r"\bUC[\w-]{22}\b|\b[\w-]{11}\b(?=\))", text), f.name
+        assert (ROOT / "memory" / f.name).exists(), f"{f.name} shows no real memory file"
+
+
 def test_personal_claude_files_stay_out_of_git():
     ignored = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
     for p in (".claude/settings.local.json", "CLAUDE.local.md", ".mcp.json"):

@@ -29,6 +29,6 @@ only required for the channel owner's private analytics.
 - 23 data tools: analytics, retention curve, traffic, outliers, keywords, transcripts
 - 4 image tools: provider-agnostic generation, editing, deterministic export, channel packaging
 - A guided start: /kickoff builds the strategy, /competitors maps the market in any language with the creator validating each channel
-- 21 skills with fixed tool execution orders, including one that forbids answering about itself from memory
+- 22 skills with fixed tool execution orders, including one that forbids answering about itself from memory
 - A strategist subagent for content pillars, and hooks that ask before spending credits or quota
 - Scoring rubrics that ship uncalibrated on purpose, to be built from your own channel

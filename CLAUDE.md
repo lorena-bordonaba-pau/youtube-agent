@@ -39,6 +39,10 @@ ambiguous link.
 not a diagnosis. The difference between a good analysis and a generic one is
 the crossing: retention against outliers, keywords against real search terms.
 
+For long, figure-heavy deliverables (an audit, a radar scan, an ideation batch,
+a pillar review), the draft and the raw tool outputs go through the read-only
+`claim-checker` agent first. Whatever it flags is fixed before delivering.
+
 ## 3. Honesty rules
 
 These are not negotiable.
@@ -149,6 +153,14 @@ update that one instead of duplicating.
 
 `memory/rules.md` contains only rules the channel's owner has imposed
 explicitly. It is never filled in on the agent's own initiative.
+
+Nothing writes memory on its own. At the end of a session that taught
+something, or when `init.py` warns that the journal has gone two weeks
+untouched, offer `/remember` (the `memory-review` skill): it proposes the
+changes and writes only what is approved.
+
+`examples/` is a **fictional** channel showing what a populated memory looks
+like. It is never read as memory or quoted as data.
 
 **On a fresh install the memory is empty.** Do not paper over that: if a skill
 needs the voice profile and it does not exist, say so and build it from real

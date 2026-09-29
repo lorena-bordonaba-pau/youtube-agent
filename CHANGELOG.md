@@ -3,6 +3,24 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/1.1.0/).
 
+## [0.6.0] — 2026-09-29
+
+### Added
+- **`/remember` and the `memory-review` skill.** Reviews the session for
+  stable learnings and proposes memory changes; writes only what you approve.
+  `rules.md` only ever gets rules you imposed explicitly.
+- **Memory freshness at session start.** `init.py` reports how many memory
+  files are populated and warns when the history journal has gone two weeks
+  untouched. SessionStart is the one hook whose output reaches the agent, so
+  the nudge lives there rather than in a PreCompact hook.
+- **`claim-checker` subagent** (read-only, Sonnet). Given a draft and the raw
+  tool outputs, it checks every figure, video ID, URL and channel name
+  verbatim and flags heuristic values presented as measurements.
+- **`examples/`**: a populated memory for a fictional channel, every file
+  labelled as such.
+- Tests: every script a skill, command, agent or example cites exists; the
+  examples are labelled fictional and carry nothing shaped like a real ID.
+
 ## [0.5.2] — 2026-09-28
 
 ### Changed
